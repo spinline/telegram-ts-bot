@@ -119,52 +119,22 @@ bot.command("app", async (ctx) => {
   });
 });
 
-// Mini App'ten gelen verileri dinle
-bot.on("message:web_app_data", async (ctx) => {
-  try {
-    const data = JSON.parse(ctx.message.web_app_data.data);
-    if (data.command === 'try_free') {
-      await handleTryFree(ctx);
+// Mini App'ten gelen verileri dinlemek için daha güvenli bir yöntem
+bot.on("message", async (ctx) => {
+  // Mesajın bir "web_app_data" içerip içermediğini kontrol et
+  if (ctx.message && "web_app_data" in ctx.message && ctx.message.web_app_data) {
+    try {
+      const data = JSON.parse(ctx.message.web_app_data.data);
+      if (data.command === 'try_free') {
+        await handleTryFree(ctx);
+      }
+    } catch (error) {
+      console.error("Error processing web_app_data", error);
     }
-  } catch (error) {
-    console.error("Error processing web_app_data", error);
   }
 });
 
 bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
-
-// Örnek bir HTTP isteği komutu
-bot.command("fetchdata", async (ctx) => {
-  try {
-    const response = await axios.get("https://jsonplaceholder.typicode.com/todos/1");
-    ctx.reply(`Veri çekildi: ${JSON.stringify(response.data)}`);
-  } catch (error) {
-    ctx.reply("Veri çekilirken bir hata oluştu.");
-  }
-});
-
-// "Open Mini App" düğmesine basıldığında
-bot.callbackQuery("open_mini_app", async (ctx) => {
-  const miniAppUrl = process.env.MINI_APP_URL || "";
-  if (!miniAppUrl) {
-    await ctx.answerCallbackQuery({ text: "Mini App şu anda mevcut değil.", show_alert: true });
-    return;
-  }
-  await ctx.reply("Aşağıdaki düğmeye tıklayarak Mini App'i açabilirsiniz:", {
-    reply_markup: new InlineKeyboard().webApp("📱 Uygulamayı Aç", miniAppUrl),
-  });
-});
-
-// OpenAPI dokümanını gösterme komutu (basit bir örnek)
-bot.command("openapi", (ctx) => {
-  if (openApiDocument) {
-    ctx.reply("OpenAPI dokümanı yüklendi. Detaylar konsolda.");
-    // Gerçek bir botta bu kadar büyük bir çıktıyı doğrudan göndermeyin.
-    // Bunun yerine belirli kısımlarını veya özetini gönderebilirsiniz.
-  } else {
-    ctx.reply("OpenAPI dokümanı yüklenemedi.");
-  }
-});
 
 // "Try for Free" düğmesine basıldığında (orijinal callback)
 bot.callbackQuery("try_free", async (ctx) => {
