@@ -4,9 +4,76 @@ import axios from "axios";
 const YAML = require("yamljs");
 import path from "path";
 import fs from "fs";
-import { createUser, getUserByUsername, getUserByTelegramId } from "./api";
+import { createUser, getUserByTelegramId } from "./api";
+import express from 'express';
+import cors from 'cors';
+import crypto from 'crypto';
 
-// Bot token'ınızı buraya girin
+// --- EXPRESS API SETUP ---
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(cors()); // Frontend'den gelen isteklere izin ver
+app.use(express.json());
+
+// Telegram'dan gelen veriyi doğrulamak için middleware
+const verifyTelegramWebAppData = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const initData = req.headers['x-telegram-init-data'] as string;
+  const botToken = process.env.BOT_TOKEN;
+
+  if (!initData || !botToken) {
+    return res.status(401).json({ error: 'Not authorized.' });
+  }
+
+  const params = new URLSearchParams(initData);
+  const hash = params.get('hash');
+  params.delete('hash');
+
+  const dataCheckString = Array.from(params.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n');
+
+  const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
+  const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+  if (calculatedHash === hash) {
+    // Doğrulama başarılı, isteğe devam et
+    return next();
+  }
+
+  return res.status(403).json({ error: 'Invalid hash.' });
+};
+
+// Mini App için hesap bilgisi endpoint'i
+app.post('/api/account', verifyTelegramWebAppData, async (req, res) => {
+  try {
+    const initData = req.headers['x-telegram-init-data'] as string;
+    const params = new URLSearchParams(initData);
+    const userParam = params.get('user');
+
+    if (!userParam) {
+      return res.status(400).json({ error: 'User data not found in initData' });
+    }
+
+    const userData = JSON.parse(userParam);
+    const telegramId = userData.id;
+
+    const user = await getUserByTelegramId(telegramId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error: any) {
+    console.error('API Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+// --- GRAMMY BOT SETUP ---
 const bot = new Bot<Context>(process.env.BOT_TOKEN || "");
 
 // OpenAPI YAML dosyasını yükle
@@ -52,6 +119,18 @@ bot.command("app", async (ctx) => {
   });
 });
 
+// Mini App'ten gelen verileri dinle
+bot.on("message:web_app_data", async (ctx) => {
+  try {
+    const data = JSON.parse(ctx.message.web_app_data.data);
+    if (data.command === 'try_free') {
+      await handleTryFree(ctx);
+    }
+  } catch (error) {
+    console.error("Error processing web_app_data", error);
+  }
+});
+
 bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
 
 // Örnek bir HTTP isteği komutu
@@ -87,61 +166,9 @@ bot.command("openapi", (ctx) => {
   }
 });
 
-// "Try for Free" düğmesine basıldığında
+// "Try for Free" düğmesine basıldığında (orijinal callback)
 bot.callbackQuery("try_free", async (ctx) => {
-  const telegramId = ctx.from?.id;
-  const username = ctx.from?.username;
-
-  if (!telegramId) {
-    await ctx.answerCallbackQuery("Hata!");
-    await ctx.reply("Telegram ID'niz alınamadı. Lütfen tekrar deneyin.");
-    return;
-  }
-
-  if (!username) {
-    await ctx.answerCallbackQuery();
-    await ctx.reply("Kayıt olabilmek için bir Telegram kullanıcı adınızın olması gerekmektedir.");
-    return;
-  }
-
-  try {
-    // Kullanıcının zaten var olup olmadığını Telegram ID ile kontrol et
-    const existingUser = await getUserByTelegramId(telegramId);
-    if (existingUser) {
-      await ctx.answerCallbackQuery();
-      await ctx.reply(`Bu Telegram hesabı ile zaten bir kullanıcı mevcut: <code>${existingUser.username}</code>\n\nHesap durumunuzu kontrol etmek için ana menüdeki "Hesap Durumu" düğmesini kullanabilirsiniz.`, { parse_mode: "HTML" });
-      return;
-    }
-
-    await ctx.answerCallbackQuery("Deneme hesabınız oluşturuluyor...");
-
-    const squadUuid = "bb0af2ad-9412-4804-931c-8318f29044e2";
-
-    // 3 gün sonrası için son kullanma tarihi oluştur
-    const expireAt = new Date();
-    expireAt.setDate(expireAt.getDate() + 3);
-
-    const newUser = {
-      username,
-      telegramId,
-      tag: "TRIAL", // Kullanıcıya TRIAL etiketini ekle
-      expireAt: expireAt.toISOString(),
-      trafficLimitBytes: 2 * 1024 * 1024 * 1024, // 2 GB
-      activeInternalSquads: [squadUuid],
-    };
-
-    const createdUser = await createUser(newUser);
-
-    const myAccountKeyboard = new InlineKeyboard().text("👤 Hesabım", "my_account");
-
-    await ctx.reply(`🎉 Deneme hesabınız başarıyla oluşturuldu, @${username}!\n\nHesabınız <b>3 gün</b> geçerlidir ve <b>2 GB</b> trafik limitiniz bulunmaktadır.\n\nAşağıdaki butona tıklayarak hesap detaylarınızı görebilirsiniz.`, {
-      parse_mode: "HTML",
-      reply_markup: myAccountKeyboard,
-    });
-  } catch (error: any) {
-    await ctx.answerCallbackQuery("Hata!");
-    await ctx.reply(`Kullanıcı oluşturulurken bir hata oluştu: ${error.message}`);
-  }
+  await handleTryFree(ctx);
 });
 
 // "Satın Al" düğmesine basıldığında
@@ -252,10 +279,86 @@ Uygulamanız yoksa aşağıdan indirebilirsiniz 👇
   }
 });
 
+// Mini App'ten gelen web_app_data mesajlarını dinle
+bot.on('web_app_data', async (ctx) => {
+  try {
+    const data = JSON.parse(ctx.message.web_app_data.data);
+    if (data.command === 'try_free') {
+      // "try_free" callback'indeki mantığı buraya taşı veya çağır
+      // Bu örnekte basit bir mesaj gönderiyoruz
+      await handleTryFree(ctx);
+    }
+  } catch (error) {
+    console.error("Error processing web_app_data", error);
+  }
+});
 
-async function startBot() {
+// "Try for Free" mantığını yeniden kullanılabilir bir fonksiyona taşıyalım
+async function handleTryFree(ctx: Context) {
+  const telegramId = ctx.from?.id;
+  const username = ctx.from?.username;
+
+  if (!telegramId) {
+    await ctx.answerCallbackQuery?.("Hata!");
+    await ctx.reply("Telegram ID'niz alınamadı. Lütfen tekrar deneyin.");
+    return;
+  }
+
+  if (!username) {
+    await ctx.answerCallbackQuery?.();
+    await ctx.reply("Kayıt olabilmek için bir Telegram kullanıcı adınızın olması gerekmektedir.");
+    return;
+  }
+
+  try {
+    // Kullanıcının zaten var olup olmadığını Telegram ID ile kontrol et
+    const existingUser = await getUserByTelegramId(telegramId);
+    if (existingUser) {
+      await ctx.answerCallbackQuery?.();
+      await ctx.reply(`Bu Telegram hesabı ile zaten bir kullanıcı mevcut: <code>${existingUser.username}</code>\n\nHesap durumunuzu kontrol etmek için ana menüdeki "Hesap Durumu" düğmesini kullanabilirsiniz.`, { parse_mode: "HTML" });
+      return;
+    }
+
+    await ctx.answerCallbackQuery?.("Deneme hesabınız oluşturuluyor...");
+
+    const squadUuid = "bb0af2ad-9412-4804-931c-8318f29044e2";
+
+    // 3 gün sonrası için son kullanma tarihi oluştur
+    const expireAt = new Date();
+    expireAt.setDate(expireAt.getDate() + 3);
+
+    const newUser = {
+      username,
+      telegramId,
+      tag: "TRIAL", // Kullanıcıya TRIAL etiketini ekle
+      expireAt: expireAt.toISOString(),
+      trafficLimitBytes: 2 * 1024 * 1024 * 1024, // 2 GB
+      activeInternalSquads: [squadUuid],
+    };
+
+    const createdUser = await createUser(newUser);
+
+    const myAccountKeyboard = new InlineKeyboard().text("👤 Hesabım", "my_account");
+
+    await ctx.reply(`🎉 Deneme hesabınız başarıyla oluşturuldu, @${username}!\n\nHesabınız <b>3 gün</b> geçerlidir ve <b>2 GB</b> trafik limitiniz bulunmaktadır.\n\nAşağıdaki butona tıklayarak hesap detaylarınızı görebilirsiniz.`, {
+      parse_mode: "HTML",
+      reply_markup: myAccountKeyboard,
+    });
+  } catch (error: any) {
+    await ctx.answerCallbackQuery?.("Hata!");
+    await ctx.reply(`Kullanıcı oluşturulurken bir hata oluştu: ${error.message}`);
+  }
+}
+
+async function startApp() {
+  // Start the Express server
+  app.listen(port, () => {
+    console.log(`API server listening on port ${port}`);
+  });
+
+  // Start the Telegram bot
   bot.start();
   console.log("Bot started!");
 }
 
-startBot();
+startApp();
