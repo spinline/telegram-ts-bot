@@ -26,7 +26,8 @@ const startKeyboard = new InlineKeyboard()
   .text("🚀 Try for Free", "try_free")
   .text("💳 Satın Al", "buy_subscription")
   .row()
-  .text("👤 Hesabım", "my_account");
+  .text("👤 Hesabım", "my_account")
+  .text("📱 Mini App", "open_mini_app");
 
 // /start komutuna yanıt ver
 bot.command("start", async (ctx) => {
@@ -40,6 +41,17 @@ Lütfen aşağıdaki seçeneklerden birini seçin:
   });
 });
 
+// Mini App'i açacak komut
+bot.command("app", async (ctx) => {
+  const miniAppUrl = process.env.MINI_APP_URL || "";
+  if (!miniAppUrl) {
+    return ctx.reply("Mini App şu anda mevcut değil.");
+  }
+  await ctx.reply("Aşağıdaki düğmeye tıklayarak Mini App'i açabilirsiniz:", {
+    reply_markup: new InlineKeyboard().webApp("📱 Uygulamayı Aç", miniAppUrl),
+  });
+});
+
 bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
 
 // Örnek bir HTTP isteği komutu
@@ -50,6 +62,18 @@ bot.command("fetchdata", async (ctx) => {
   } catch (error) {
     ctx.reply("Veri çekilirken bir hata oluştu.");
   }
+});
+
+// "Open Mini App" düğmesine basıldığında
+bot.callbackQuery("open_mini_app", async (ctx) => {
+  const miniAppUrl = process.env.MINI_APP_URL || "";
+  if (!miniAppUrl) {
+    await ctx.answerCallbackQuery({ text: "Mini App şu anda mevcut değil.", show_alert: true });
+    return;
+  }
+  await ctx.reply("Aşağıdaki düğmeye tıklayarak Mini App'i açabilirsiniz:", {
+    reply_markup: new InlineKeyboard().webApp("📱 Uygulamayı Aç", miniAppUrl),
+  });
 });
 
 // OpenAPI dokümanını gösterme komutu (basit bir örnek)
