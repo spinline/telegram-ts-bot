@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
-    "target": "es2021",
+    "target": "es2016",
     "module": "commonjs",
-    "lib": ["es2021"],
     "outDir": "./dist",
     "rootDir": "./src",
-    "strict": true,
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "resolveJsonModule": true // JSON dosyalarını import etmeye izin ver
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*"], // Sadece src klasöründeki dosyaları derle
+  "exclude": ["node_modules", "**/*.spec.ts"] // Bu klasörleri derleme dışı bırak
 }
