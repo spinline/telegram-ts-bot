@@ -249,20 +249,6 @@ Uygulamanız yoksa aşağıdan indirebilirsiniz 👇
   }
 });
 
-// Mini App'ten gelen web_app_data mesajlarını dinle
-bot.on('web_app_data', async (ctx) => {
-  try {
-    const data = JSON.parse(ctx.message.web_app_data.data);
-    if (data.command === 'try_free') {
-      // "try_free" callback'indeki mantığı buraya taşı veya çağır
-      // Bu örnekte basit bir mesaj gönderiyoruz
-      await handleTryFree(ctx);
-    }
-  } catch (error) {
-    console.error("Error processing web_app_data", error);
-  }
-});
-
 // "Try for Free" mantığını yeniden kullanılabilir bir fonksiyona taşıyalım
 async function handleTryFree(ctx: Context) {
   const telegramId = ctx.from?.id;
