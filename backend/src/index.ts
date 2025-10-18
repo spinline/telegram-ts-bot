@@ -277,7 +277,7 @@ async function handleTryFree(ctx: Context) {
 
     await ctx.answerCallbackQuery?.("Deneme hesabınız oluşturuluyor...");
 
-    const squadUuid = "bb0af2ad-9412-4804-931c-8318f29044e2";
+    const squadUuid = "sic1fdfa38-68bb-4648-8bba-bc18435560a3";
 
     // 3 gün sonrası için son kullanma tarihi oluştur
     const expireAt = new Date();
