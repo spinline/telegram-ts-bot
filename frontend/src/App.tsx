@@ -208,12 +208,20 @@ function AppContent() {
   };
 
   const openExternalLink = (url: string | undefined) => {
-    if (!url) return;
+    if (!url) {
+      console.warn('Açılacak URL bulunamadı.');
+      return;
+    }
 
-    if (typeof webApp.openTelegramLink === 'function') {
-      webApp.openTelegramLink(url);
-    } else if (typeof webApp.openLink === 'function') {
-      webApp.openLink(url);
+    // Telegram Web App fonksiyonları varsa kullan, yoksa standart window.open kullan
+    if (window.Telegram && window.Telegram.WebApp) {
+      if (typeof window.Telegram.WebApp.openTelegramLink === 'function') {
+        window.Telegram.WebApp.openTelegramLink(url);
+      } else if (typeof window.Telegram.WebApp.openLink === 'function') {
+        window.Telegram.WebApp.openLink(url);
+      } else {
+        window.open(url, '_blank', 'noopener');
+      }
     } else {
       window.open(url, '_blank', 'noopener');
     }

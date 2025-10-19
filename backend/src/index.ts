@@ -111,9 +111,9 @@ Lütfen aşağıdaki seçeneklerden birini seçin:
 
 // Mini App'i açacak komut
 bot.command("app", async (ctx) => {
-  const miniAppUrl = process.env.MINI_APP_URL || "";
+  const miniAppUrl = process.env.MINI_APP_URL;
   if (!miniAppUrl) {
-    return ctx.reply("Mini App şu anda mevcut değil.");
+    return ctx.reply("Mini App URL'i ayarlanmamış. Lütfen yöneticinizle iletişime geçin.");
   }
   await ctx.reply("Aşağıdaki düğmeye tıklayarak Mini App'i açabilirsiniz:", {
     reply_markup: new InlineKeyboard().webApp("📱 Uygulamayı Aç", miniAppUrl),
