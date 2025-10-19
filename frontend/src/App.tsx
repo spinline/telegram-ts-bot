@@ -15,6 +15,8 @@ import {
   Loader,
   Alert,
   ThemeIcon,
+  Container, // Yeni eklendi: İçeriği ortalamak ve genişliği sınırlamak için
+  Progress, // Yeni eklendi: Kota kullanımını görselleştirmek için
 } from '@mantine/core';
 import { useColorScheme } from '@mantine/hooks';
 import {
@@ -25,6 +27,8 @@ import {
   IconBan,
   IconHelp,
   IconAlertTriangle,
+  IconGauge, // Yeni eklendi: Kota ikonu için
+  IconCalendar, // Yeni eklendi: Bitiş tarihi ikonu için
 } from '@tabler/icons-react';
 import '@mantine/core/styles.css';
 
@@ -243,94 +247,116 @@ function AppContent() {
       </AppShell.Header>
 
       <AppShell.Main>
-        <Stack>
-          {user ? (
-            <Card shadow="sm" padding="lg" radius="md" withBorder>
-              <Stack>
-                <Title order={4}>Hoş Geldin, {user.first_name}!</Title>
-                <Text size="sm" c="dimmed">
-                  Hesap bilgilerin aşağıda görüntüleniyor.
-                </Text>
+        <Container size="sm" py="xl"> {/* İçeriği ortalamak ve genişliği sınırlamak için Container kullanıldı */}
+          <Stack>
+            {user ? (
+              <Card shadow="sm" padding="lg" radius="md" withBorder>
+                <Stack gap="md"> {/* Stack bileşenine gap eklendi */}
+                  <Title order={4}>Hoş Geldin, {user.first_name}!</Title>
+                  <Text size="sm" c="dimmed">
+                    Hesap bilgilerin aşağıda görüntüleniyor.
+                  </Text>
 
-                {user.username && (
-                  <Badge color="blue" variant="light">
-                    Kullanıcı Adı: @{user.username}
-                  </Badge>
-                )}
+                  {user.username && (
+                    <Badge color="blue" variant="light" size="lg"> {/* Badge boyutu büyütüldü */}
+                      Kullanıcı Adı: @{user.username}
+                    </Badge>
+                  )}
 
-                {loading ? (
-                  <Group justify="center" my="lg">
-                    <Loader color="blue" />
-                  </Group>
-                ) : error ? (
-                  <Alert color="red" icon={<IconAlertTriangle />} title="Bir sorun oluştu">
-                    {error}
-                  </Alert>
-                ) : account ? (
-                  <Stack gap="sm">
-                    <Group gap="xs" align="center">
-                      <ThemeIcon color={statusConfig(account.status).color} variant="light" radius="xl">
-                        {statusConfig(account.status).icon}
-                      </ThemeIcon>
-                      <Badge color={statusConfig(account.status).color} size="lg" radius="sm">
-                        {statusConfig(account.status).label}
-                      </Badge>
+                  {loading ? (
+                    <Group justify="center" my="lg">
+                      <Loader color="blue" />
                     </Group>
+                  ) : error ? (
+                    <Alert color="red" icon={<IconAlertTriangle />} title="Bir sorun oluştu">
+                      {error}
+                    </Alert>
+                  ) : account ? (
+                    <Stack gap="sm">
+                      <Group gap="xs" align="center">
+                        <ThemeIcon color={statusConfig(account.status).color} variant="light" radius="xl">
+                          {statusConfig(account.status).icon}
+                        </ThemeIcon>
+                        <Badge color={statusConfig(account.status).color} size="lg" radius="sm">
+                          {statusConfig(account.status).label}
+                        </Badge>
+                      </Group>
 
-                    <Text size="sm" c="dimmed">
-                      Son Kullanma Tarihi: {formatExpireDate(account.expireAt)}
-                    </Text>
+                      <Group gap="xs" align="center">
+                        <ThemeIcon color="gray" variant="light" radius="xl">
+                          <IconCalendar size={16} />
+                        </ThemeIcon>
+                        <Text size="sm" c="dimmed">
+                          Son Kullanma Tarihi: {formatExpireDate(account.expireAt)}
+                        </Text>
+                      </Group>
 
-                    {accountStats && (
-                      <Stack gap={4}>
-                        <Text size="sm">Kota Kullanımı:</Text>
-                        <Code block>
-                          {`${formatBytes(accountStats.used)} / ${formatBytes(accountStats.limit)} (${accountStats.usagePercentage.toFixed(0)}% kullanıldı, ${formatBytes(accountStats.remaining)} kaldı)`}
-                        </Code>
-                      </Stack>
-                    )}
+                      {accountStats && (
+                        <Stack gap={4}>
+                          <Group gap="xs" align="center">
+                            <ThemeIcon color="grape" variant="light" radius="xl">
+                              <IconGauge size={16} />
+                            </ThemeIcon>
+                            <Text size="sm">Kota Kullanımı:</Text>
+                          </Group>
+                          <Progress
+                            value={accountStats.usagePercentage}
+                            size="lg"
+                            radius="xl"
+                            color="grape"
+                          />
+                          <Text size="sm" c="dimmed" mt={4}> {/* Yüzdeyi göstermek için Text bileşeni eklendi */}
+                            {`${accountStats.usagePercentage.toFixed(0)}% kullanıldı`}
+                          </Text>
+                          <Code block>
+                            {`${formatBytes(accountStats.used)} / ${formatBytes(accountStats.limit)} (${formatBytes(accountStats.remaining)} kaldı)`}
+                          </Code>
+                        </Stack>
+                      )}
 
-                    {account.happ?.cryptoLink && (
-                      <Button
-                        variant="light"
-                        color="blue"
-                        onClick={() => openExternalLink(account.happ!.cryptoLink)}
-                      >
-                        Happ CryptoLink'i Aç
-                      </Button>
-                    )}
-                  </Stack>
-                ) : (
-                  <Alert color="yellow" icon={<IconAlertTriangle />} title="Bilgi">
-                    Hesap bilgileri bulunamadı.
-                  </Alert>
-                )}
+                      {account.happ?.cryptoLink && (
+                        <Button
+                          variant="light"
+                          color="blue"
+                          onClick={() => openExternalLink(account.happ!.cryptoLink)}
+                          fullWidth // Butonu tam genişlik yapar
+                        >
+                          Happ CryptoLink'i Aç
+                        </Button>
+                      )}
+                    </Stack>
+                  ) : (
+                    <Alert color="yellow" icon={<IconAlertTriangle />} title="Bilgi">
+                      Hesap bilgileri bulunamadı.
+                    </Alert>
+                  )}
 
-                <Group grow mt="md">
-                  <Button
-                    variant="light"
-                    color="blue"
-                    onClick={() => openExternalLink(account?.manageUrl ?? 'https://t.me/')}
-                    disabled={!account && !error}
-                  >
-                    Hesabımı Yönet
-                  </Button>
-                  <Button
-                    variant="filled"
-                    color="teal"
-                    onClick={() => openExternalLink(account?.subscriptionUrl ?? 'https://t.me/')}
-                  >
-                    Abonelik Satın Al
-                  </Button>
-                </Group>
-              </Stack>
-            </Card>
-          ) : (
-            <Card shadow="sm" padding="lg" radius="md" withBorder>
-              <Text>Kullanıcı bilgileri yüklenemedi. Lütfen uygulamanın Telegram üzerinden açıldığından emin olun.</Text>
-            </Card>
-          )}
-        </Stack>
+                  <Group grow mt="md">
+                    <Button
+                      variant="light"
+                      color="blue"
+                      onClick={() => openExternalLink(account?.manageUrl ?? 'https://t.me/')}
+                      disabled={!account && !error}
+                    >
+                      Hesabımı Yönet
+                    </Button>
+                    <Button
+                      variant="filled"
+                      color="teal"
+                      onClick={() => openExternalLink(account?.subscriptionUrl ?? 'https://t.me/')}
+                    >
+                      Abonelik Satın Al
+                    </Button>
+                  </Group>
+                </Stack>
+              </Card>
+            ) : (
+              <Card shadow="sm" padding="lg" radius="md" withBorder>
+                <Text>Kullanıcı bilgileri yüklenemedi. Lütfen uygulamanın Telegram üzerinden açıldığından emin olun.</Text>
+              </Card>
+            )}
+          </Stack>
+        </Container>
       </AppShell.Main>
     </AppShell>
   );
