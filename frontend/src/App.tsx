@@ -216,8 +216,6 @@ function AppContent() {
     );
   };
 
-  const statusDetails = statusConfig(account?.status ?? '');
-
   return (
     <AppShell
       header={{ height: 60 }}
