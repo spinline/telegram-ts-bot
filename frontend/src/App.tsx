@@ -15,8 +15,8 @@ import {
   Loader,
   Alert,
   ThemeIcon,
-  Container, // Yeni eklendi: İçeriği ortalamak ve genişliği sınırlamak için
-  Progress, // Yeni eklendi: Kota kullanımını görselleştirmek için
+  Container,
+  Progress,
 } from '@mantine/core';
 import { useColorScheme } from '@mantine/hooks';
 import {
@@ -27,10 +27,11 @@ import {
   IconBan,
   IconHelp,
   IconAlertTriangle,
-  IconGauge, // Yeni eklendi: Kota ikonu için
-  IconCalendar, // Yeni eklendi: Bitiş tarihi ikonu için
+  IconGauge,
+  IconCalendar,
 } from '@tabler/icons-react';
 import '@mantine/core/styles.css';
+import WelcomeScreen from './WelcomeScreen'; // WelcomeScreen bileşenini içe aktar
 
 // Telegram Web App script'inin eklediği global nesneyi tanımla
 declare global {
@@ -55,7 +56,8 @@ interface AccountResponse {
   };
 }
 
-function AppContent() {
+// Mevcut AppContent bileşenini AccountPage olarak yeniden adlandırıyoruz
+function AccountPage() {
   const webApp = window.Telegram.WebApp;
   const user = webApp.initDataUnsafe?.user;
   const { setColorScheme } = useMantineColorScheme();
@@ -63,10 +65,9 @@ function AppContent() {
   const [error, setError] = useState<string | null>(null);
   const [account, setAccount] = useState<AccountResponse | null>(null);
 
-  // Telegram'ın renk şemasına (koyu/açık mod) uyum sağla
   useEffect(() => {
     setColorScheme(webApp.colorScheme);
-    webApp.ready(); // Uygulamanın yüklendiğini Telegram'a bildir
+    webApp.ready();
   }, [setColorScheme, webApp.colorScheme, webApp]);
 
   useEffect(() => {
@@ -213,16 +214,13 @@ function AppContent() {
       return;
     }
 
-    // Telegram Web App ortamında openLink fonksiyonu varsa onu kullan
     if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
       window.Telegram.WebApp.openLink(url);
     } else {
-      // Aksi takdirde standart window.open kullan (happ:// için çalışmayacaktır)
       window.open(url, '_blank', 'noopener');
     }
   };
 
-  // Manuel tema değiştirme butonu (isteğe bağlı)
   const ColorSchemeToggle = () => {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     return (
@@ -250,18 +248,18 @@ function AppContent() {
       </AppShell.Header>
 
       <AppShell.Main>
-        <Container size="sm" py="xl"> {/* İçeriği ortalamak ve genişliği sınırlamak için Container kullanıldı */}
+        <Container size="sm" py="xl">
           <Stack>
             {user ? (
               <Card shadow="sm" padding="lg" radius="md" withBorder>
-                <Stack gap="md"> {/* Stack bileşenine gap eklendi */}
+                <Stack gap="md">
                   <Title order={4}>Hoş Geldin, {user.first_name}!</Title>
                   <Text size="sm" c="dimmed">
                     Hesap bilgilerin aşağıda görüntüleniyor.
                   </Text>
 
                   {user.username && (
-                    <Badge color="blue" variant="light" size="lg"> {/* Badge boyutu büyütüldü */}
+                    <Badge color="blue" variant="light" size="lg">
                       Kullanıcı Adı: @{user.username}
                     </Badge>
                   )}
@@ -308,7 +306,7 @@ function AppContent() {
                             radius="xl"
                             color="grape"
                           />
-                          <Text size="sm" c="dimmed" mt={4}> {/* Yüzdeyi göstermek için Text bileşeni eklendi */}
+                          <Text size="sm" c="dimmed" mt={4}>
                             {`${accountStats.usagePercentage.toFixed(0)}% kullanıldı`}
                           </Text>
                           <Code block>
@@ -321,10 +319,10 @@ function AppContent() {
                         <Button
                           variant="light"
                           color="blue"
-                          onClick={() => openExternalLink(account.happ!.cryptoLink)}
-                          fullWidth // Butonu tam genişlik yapar
+                          onClick={() => openExternalLink(account.manageUrl ?? 'https://t.me/')}
+                          fullWidth
                         >
-                          Happ CryptoLink'i Aç {/* Buton metni geri alındı */}
+                          Hesabımı Yönet
                         </Button>
                       )}
                     </Stack>
@@ -366,12 +364,40 @@ function AppContent() {
 }
 
 function App() {
-  // Tercih edilen renk şemasını al (sistem veya tarayıcı ayarı)
   const preferredColorScheme = useColorScheme();
+  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account'>('welcome');
+
+  const handleViewAccount = () => {
+    setCurrentScreen('account');
+  };
+
+  const handleBuySubscription = () => {
+    // Abonelik satın alma mantığı buraya gelecek
+    console.log('Abonelik satın al');
+  };
+
+  const handleInstallSetup = () => {
+    // Kurulum ve ayarlar mantığı buraya gelecek
+    console.log('Kurulum ve ayarlar');
+  };
+
+  const handleSupport = () => {
+    // Destek mantığı buraya gelecek
+    console.log('Destek');
+  };
 
   return (
     <MantineProvider defaultColorScheme={preferredColorScheme}>
-      <AppContent />
+      {currentScreen === 'welcome' ? (
+        <WelcomeScreen
+          onViewAccount={handleViewAccount}
+          onBuySubscription={handleBuySubscription}
+          onInstallSetup={handleInstallSetup}
+          onSupport={handleSupport}
+        />
+      ) : (
+        <AccountPage />
+      )}
     </MantineProvider>
   );
 }
