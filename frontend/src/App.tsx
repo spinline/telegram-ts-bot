@@ -31,7 +31,7 @@ import {
   IconCalendar,
 } from '@tabler/icons-react';
 import '@mantine/core/styles.css';
-import WelcomeScreen from './WelcomeScreen'; // WelcomeScreen bileşenini içe aktar
+import WelcomeScreen from './WelcomeScreen';
 
 // Telegram Web App script'inin eklediği global nesneyi tanımla
 declare global {
