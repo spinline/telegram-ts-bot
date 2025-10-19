@@ -321,10 +321,10 @@ function AppContent() {
                         <Button
                           variant="light"
                           color="blue"
-                          onClick={() => openExternalLink(account.manageUrl ?? 'https://t.me/')} // manageUrl kullanıldı
+                          onClick={() => openExternalLink(account.happ!.cryptoLink)}
                           fullWidth // Butonu tam genişlik yapar
                         >
-                          Happ Yönetim Paneli {/* Buton metni güncellendi */}
+                          Happ CryptoLink'i Aç {/* Buton metni geri alındı */}
                         </Button>
                       )}
                     </Stack>
