@@ -9,6 +9,66 @@ import express from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
 
+type TelegramInitUser = {
+  id: number;
+  username?: string;
+  first_name?: string;
+  last_name?: string;
+};
+
+const TRIAL_SQUAD_UUID = process.env.TRIAL_SQUAD_UUID || "c1fdfa38-68bb-4648-8bba-bc18435560a3";
+
+const toPositiveNumber = (value: string | number | undefined, fallback: number) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const TRIAL_DURATION_DAYS = toPositiveNumber(process.env.TRIAL_DURATION_DAYS, 3);
+const TRIAL_TRAFFIC_LIMIT_BYTES = toPositiveNumber(
+  process.env.TRIAL_TRAFFIC_LIMIT_BYTES,
+  2 * 1024 * 1024 * 1024
+);
+const TRIAL_TAG = process.env.TRIAL_TAG || "TRIAL";
+
+const formatTrialTrafficLimit = () => {
+  const gigabytes = TRIAL_TRAFFIC_LIMIT_BYTES / (1024 * 1024 * 1024);
+  return Number.isInteger(gigabytes) ? gigabytes.toString() : gigabytes.toFixed(2);
+};
+
+const buildTrialExpireDate = () => {
+  const expireAt = new Date();
+  expireAt.setDate(expireAt.getDate() + TRIAL_DURATION_DAYS);
+  return expireAt.toISOString();
+};
+
+const parseTelegramUserFromInitData = (initData: string): TelegramInitUser => {
+  const params = new URLSearchParams(initData);
+  const userParam = params.get('user');
+
+  if (!userParam) {
+    throw new Error('User data not found in initData');
+  }
+
+  try {
+    return JSON.parse(userParam) as TelegramInitUser;
+  } catch (error) {
+    throw new Error('User data could not be parsed');
+  }
+};
+
+const provisionTrialAccount = async (telegramId: number, username: string) => {
+  const payload = {
+    username,
+    telegramId,
+    tag: TRIAL_TAG,
+    expireAt: buildTrialExpireDate(),
+    trafficLimitBytes: TRIAL_TRAFFIC_LIMIT_BYTES,
+    activeInternalSquads: [TRIAL_SQUAD_UUID],
+  };
+
+  return createUser(payload);
+};
+
 // --- EXPRESS API SETUP ---
 const app = express();
 const port = process.env.PORT || 3000;
@@ -49,17 +109,18 @@ const verifyTelegramWebAppData = (req: express.Request, res: express.Response, n
 app.post('/api/account', verifyTelegramWebAppData, async (req, res) => {
   try {
     const initData = req.headers['x-telegram-init-data'] as string;
-    const params = new URLSearchParams(initData);
-    const userParam = params.get('user');
 
-    if (!userParam) {
-      return res.status(400).json({ error: 'User data not found in initData' });
+    if (!initData) {
+      return res.status(400).json({ error: 'Init data header is missing' });
     }
 
-    const userData = JSON.parse(userParam);
-    const telegramId = userData.id;
+    const telegramUser = parseTelegramUserFromInitData(initData);
 
-    const user = await getUserByTelegramId(telegramId);
+    if (!telegramUser.id) {
+      return res.status(400).json({ error: 'Telegram user id is missing' });
+    }
+
+    const user = await getUserByTelegramId(telegramUser.id);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -67,6 +128,51 @@ app.post('/api/account', verifyTelegramWebAppData, async (req, res) => {
 
     res.json(user);
   } catch (error: any) {
+    if (error instanceof Error && error.message.includes('User data')) {
+      return res.status(400).json({ error: error.message });
+    }
+    console.error('API Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/account/trial', verifyTelegramWebAppData, async (req, res) => {
+  try {
+    const initData = req.headers['x-telegram-init-data'] as string;
+
+    if (!initData) {
+      return res.status(400).json({ error: 'Init data header is missing' });
+    }
+
+    const telegramUser = parseTelegramUserFromInitData(initData);
+
+    if (!telegramUser.id) {
+      return res.status(400).json({ error: 'Telegram user id is missing' });
+    }
+
+    if (!telegramUser.username) {
+      return res.status(400).json({ error: 'Telegram username is required to create a trial account' });
+    }
+
+    const existingUser = await getUserByTelegramId(telegramUser.id);
+
+    if (existingUser) {
+      return res.status(409).json({
+        error: 'User already exists',
+        account: existingUser,
+      });
+    }
+
+    const account = await provisionTrialAccount(telegramUser.id, telegramUser.username);
+
+    res.status(201).json({
+      account,
+      created: true,
+    });
+  } catch (error: any) {
+    if (error instanceof Error && error.message.includes('User data')) {
+      return res.status(400).json({ error: error.message });
+    }
     console.error('API Error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -277,26 +383,14 @@ async function handleTryFree(ctx: Context) {
 
     await ctx.answerCallbackQuery?.("Deneme hesabınız oluşturuluyor...");
 
-    const squadUuid = "c1fdfa38-68bb-4648-8bba-bc18435560a3";
-
-    // 3 gün sonrası için son kullanma tarihi oluştur
-    const expireAt = new Date();
-    expireAt.setDate(expireAt.getDate() + 3);
-
-    const newUser = {
-      username,
-      telegramId,
-      tag: "TRIAL", // Kullanıcıya TRIAL etiketini ekle
-      expireAt: expireAt.toISOString(),
-      trafficLimitBytes: 2 * 1024 * 1024 * 1024, // 2 GB
-      activeInternalSquads: [squadUuid],
-    };
-
-    const createdUser = await createUser(newUser);
+    const createdUser = await provisionTrialAccount(telegramId, username);
 
     const myAccountKeyboard = new InlineKeyboard().text("👤 Hesabım", "my_account");
 
-    await ctx.reply(`🎉 Deneme hesabınız başarıyla oluşturuldu, @${username}!\n\nHesabınız <b>3 gün</b> geçerlidir ve <b>2 GB</b> trafik limitiniz bulunmaktadır.\n\nAşağıdaki butona tıklayarak hesap detaylarınızı görebilirsiniz.`, {
+    const trialDurationText = TRIAL_DURATION_DAYS === 1 ? '1 gün' : `${TRIAL_DURATION_DAYS} gün`;
+    const trialTrafficText = `${formatTrialTrafficLimit()} GB`;
+
+    await ctx.reply(`🎉 Deneme hesabınız başarıyla oluşturuldu, @${username}!\n\nHesabınız <b>${trialDurationText}</b> geçerlidir ve <b>${trialTrafficText}</b> trafik limitiniz bulunmaktadır.\n\nAşağıdaki butona tıklayarak hesap detaylarınızı görebilirsiniz.`, {
       parse_mode: "HTML",
       reply_markup: myAccountKeyboard,
     });
