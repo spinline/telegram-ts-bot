@@ -5,7 +5,7 @@ const YAML = require("yamljs");
 import path from "path";
 import fs from "fs";
 import { createUser, getUserByTelegramId } from "./api";
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
 
@@ -17,7 +17,7 @@ app.use(cors()); // Frontend'den gelen isteklere izin ver
 app.use(express.json());
 
 // Telegram'dan gelen veriyi doğrulamak için middleware
-const verifyTelegramWebAppData = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+const verifyTelegramWebAppData = (req: Request, res: Response, next: NextFunction) => {
   const initData = req.headers['x-telegram-init-data'] as string;
   const botToken = process.env.BOT_TOKEN;
 
@@ -38,7 +38,11 @@ const verifyTelegramWebAppData = (req: express.Request, res: express.Response, n
   const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
 
   if (calculatedHash === hash) {
-    // Doğrulama başarılı, isteğe devam et
+    // Doğrulama başarılı, user verisini req objesine ekle
+    const userParam = params.get('user');
+    if (userParam) {
+      (req as any).telegramUser = JSON.parse(userParam);
+    }
     return next();
   }
 
@@ -46,18 +50,15 @@ const verifyTelegramWebAppData = (req: express.Request, res: express.Response, n
 };
 
 // Mini App için hesap bilgisi endpoint'i
-app.post('/api/account', verifyTelegramWebAppData, async (req, res) => {
+app.get('/api/account', verifyTelegramWebAppData, async (req: Request, res: Response) => {
   try {
-    const initData = req.headers['x-telegram-init-data'] as string;
-    const params = new URLSearchParams(initData);
-    const userParam = params.get('user');
+    const telegramUser = (req as any).telegramUser;
 
-    if (!userParam) {
-      return res.status(400).json({ error: 'User data not found in initData' });
+    if (!telegramUser || !telegramUser.id) {
+      return res.status(400).json({ error: 'User data not found in Telegram initData' });
     }
 
-    const userData = JSON.parse(userParam);
-    const telegramId = userData.id;
+    const telegramId = telegramUser.id;
 
     const user = await getUserByTelegramId(telegramId);
 
