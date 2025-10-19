@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  MantineProvider,
   AppShell,
   Card,
   Text,
@@ -16,7 +15,6 @@ import {
   Alert,
   ThemeIcon,
 } from '@mantine/core';
-import { useColorScheme } from '@mantine/hooks';
 import {
   IconSun,
   IconMoon,
@@ -314,14 +312,7 @@ function AppContent() {
 }
 
 function App() {
-  // Tercih edilen renk şemasını al (sistem veya tarayıcı ayarı)
-  const preferredColorScheme = useColorScheme();
-
-  return (
-    <MantineProvider defaultColorScheme={preferredColorScheme}>
-      <AppContent />
-    </MantineProvider>
-  );
+  return <AppContent />;
 }
 
 export default App;
