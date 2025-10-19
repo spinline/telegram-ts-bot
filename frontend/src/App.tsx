@@ -212,18 +212,12 @@ function AppContent() {
       console.warn('Açılacak URL bulunamadı.');
       return;
     }
-    console.log('Harici link açılıyor:', url);
 
-    // Telegram Web App fonksiyonları varsa kullan, yoksa standart window.open kullan
-    if (window.Telegram && window.Telegram.WebApp) {
-      if (typeof window.Telegram.WebApp.openTelegramLink === 'function') {
-        window.Telegram.WebApp.openTelegramLink(url);
-      } else if (typeof window.Telegram.WebApp.openLink === 'function') {
-        window.Telegram.WebApp.openLink(url);
-      } else {
-        window.open(url, '_blank', 'noopener');
-      }
+    // Telegram Web App ortamında openLink fonksiyonu varsa onu kullan
+    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+      window.Telegram.WebApp.openLink(url);
     } else {
+      // Aksi takdirde standart window.open kullan (happ:// için çalışmayacaktır)
       window.open(url, '_blank', 'noopener');
     }
   };
