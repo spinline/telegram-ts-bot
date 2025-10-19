@@ -66,6 +66,7 @@ app.get('/api/account', verifyTelegramWebAppData, async (req: Request, res: Resp
       return res.status(404).json({ error: 'User not found' });
     }
 
+    console.log('User object sent to frontend:', user); // Frontend'e gönderilen user objesini logla
     res.json(user);
   } catch (error: any) {
     console.error('API Error:', error);
