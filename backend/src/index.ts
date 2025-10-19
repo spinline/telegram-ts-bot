@@ -89,13 +89,16 @@ try {
   console.error("Error loading OpenAPI document:", error);
 }
 
+// MINI_APP_URL'i burada al
+const miniAppUrl = process.env.MINI_APP_URL || "";
+
 // Başlangıç komutu için klavye oluştur
 const startKeyboard = new InlineKeyboard()
   .text("🚀 Try for Free", "try_free")
   .text("💳 Satın Al", "buy_subscription")
   .row()
   .text("👤 Hesabım", "my_account")
-  .text("📱 Mini App", "open_mini_app");
+  .webApp("📱 Mini App", miniAppUrl); // Doğrudan webApp butonu kullan
 
 // /start komutuna yanıt ver
 bot.command("start", async (ctx) => {
