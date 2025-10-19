@@ -56,7 +56,7 @@ interface AccountResponse {
   };
 }
 
-// Mevcut AppContent bileşenini AccountPage olarak yeniden adlandırıyoruz
+// AccountPage bileşeni, hesap detaylarını gösterecek
 function AccountPage() {
   const webApp = window.Telegram.WebApp;
   const user = webApp.initDataUnsafe?.user;
