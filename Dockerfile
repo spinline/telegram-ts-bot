@@ -2,37 +2,32 @@
 FROM node:18 AS builder
 
 # Create app directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-COPY package*.json ./
+# Copy the entire frontend directory
+COPY frontend ./frontend
 
-# Install all dependencies, including devDependencies needed for build
+# Install frontend dependencies and build
+WORKDIR /app/frontend
 RUN npm install
-
-# Copy application source code
-COPY . .
-
-# Build the TypeScript source code to JavaScript
-WORKDIR /usr/src/app/frontend # Frontend klasörüne geç
 RUN npm run build
 
-# ---
+# ---    
 
 # Stage 2: Create the production image
 FROM node:18-alpine
 
-WORKDIR /usr/src/app
+# Set working directory for the production image
+WORKDIR /app/frontend
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Copy frontend package.json for production dependencies
+COPY frontend/package*.json ./
 
 # Install only production dependencies
 RUN npm install --production
 
 # Copy the built application from the builder stage
-COPY --from=builder /usr/src/app/frontend/dist ./dist # Frontend dist klasörünü kopyala
+COPY --from=builder /app/frontend/dist ./dist/
 
 # The command to run the application
-CMD [ "node", "dist/index.js" ]
+CMD [ "npm", "run", "preview" ]
