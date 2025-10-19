@@ -80,6 +80,7 @@ function AppContent() {
 
       try {
         const response = await fetch('/api/account', {
+          method: 'POST', // Metodu GET yerine POST olarak değiştir
           headers: {
             'x-telegram-init-data': webApp.initData ?? '',
           },
