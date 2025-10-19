@@ -242,7 +242,7 @@ function AccountPage() {
     >
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between">
-          <Title order={3}>VPN Bot</Title>
+          <Title order={3}>AuronVPN</Title> {/* VPN Bot -> AuronVPN */}
           <ColorSchemeToggle />
         </Group>
       </AppShell.Header>

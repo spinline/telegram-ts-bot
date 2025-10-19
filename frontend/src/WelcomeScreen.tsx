@@ -1,6 +1,5 @@
 import { Button, Group, Stack, Text, Title, useMantineColorScheme, ActionIcon, ThemeIcon, Card, Container } from '@mantine/core';
 import { IconSun, IconMoon, IconShield, IconShoppingCart, IconSettings, IconUser, IconHeadset } from '@tabler/icons-react';
-import React from 'react';
 
 interface WelcomeScreenProps {
   onViewAccount: () => void;
@@ -30,7 +29,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
       <Card shadow="sm" padding="lg" radius="md" withBorder>
         <Stack align="center" gap="xl">
           <Group justify="space-between" w="100%">
-            <Title order={3}>UltimaVPN</Title>
+            <Title order={3}>AuronVPN</Title>
             <ColorSchemeToggle />
           </Group>
 
@@ -39,7 +38,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
           </ThemeIcon>
 
           <Stack align="center" gap="xs">
-            <Title order={2}>Ultima</Title>
+            <Title order={2}>Auron</Title>
             <Text c="dimmed">offline</Text>
             <Text c="dimmed">20 Ekim 2025 tarihine kadar</Text>
             <Text c="dimmed">deneme süresi</Text>
