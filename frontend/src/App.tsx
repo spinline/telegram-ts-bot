@@ -1,28 +1,255 @@
-import { useEffect } from 'react';
-import { MantineProvider, AppShell, Card, Text, Button, Group, Title, Stack, Badge, Code, useMantineColorScheme, ActionIcon } from '@mantine/core';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  MantineProvider,
+  AppShell,
+  Card,
+  Text,
+  Button,
+  Group,
+  Title,
+  Stack,
+  Badge,
+  Code,
+  useMantineColorScheme,
+  ActionIcon,
+  Loader,
+  Alert,
+  ThemeIcon,
+} from '@mantine/core';
 import { useColorScheme } from '@mantine/hooks';
-import { IconSun, IconMoon } from '@tabler/icons-react';
+import {
+  IconSun,
+  IconMoon,
+  IconCircleCheck,
+  IconClock,
+  IconBan,
+  IconHelp,
+  IconAlertTriangle,
+} from '@tabler/icons-react';
 import '@mantine/core/styles.css';
 
-// Telegram Web App script'inin eklediği global nesneyi tanımla
-declare global {
-  interface Window {
-    Telegram: {
-      WebApp: any;
-    };
-  }
+type AccountStatus =
+  | 'ACTIVE'
+  | 'INACTIVE'
+  | 'EXPIRED'
+  | 'SUSPENDED'
+  | 'LIMITED'
+  | 'DISABLED'
+  | 'TRIAL'
+  | 'PENDING'
+  | 'PAUSED'
+  | string;
+
+interface AccountResponse {
+  status: AccountStatus | null;
+  trafficLimitBytes: number | null;
+  usedTrafficBytes: number | null;
+  expireAt: string | null;
+  manageUrl?: string | null;
+  subscriptionUrl?: string | null;
 }
 
 function AppContent() {
   const webApp = window.Telegram.WebApp;
   const user = webApp.initDataUnsafe?.user;
   const { setColorScheme } = useMantineColorScheme();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [account, setAccount] = useState<AccountResponse | null>(null);
 
   // Telegram'ın renk şemasına (koyu/açık mod) uyum sağla
   useEffect(() => {
     setColorScheme(webApp.colorScheme);
     webApp.ready(); // Uygulamanın yüklendiğini Telegram'a bildir
   }, [setColorScheme, webApp.colorScheme, webApp]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const loadAccount = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch('/api/account', {
+          method: 'POST',
+          headers: {
+            'x-telegram-init-data': webApp.initData ?? '',
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Hesap bilgileri alınamadı: ${response.status}`);
+        }
+
+        const data: AccountResponse = await response.json();
+        if (!isMounted) return;
+        setAccount(data);
+      } catch (err) {
+        if (!isMounted || (err instanceof DOMException && err.name === 'AbortError')) {
+          return;
+        }
+        const message = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.';
+        setError(message);
+        setAccount(null);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadAccount();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [user, webApp.initData, webApp]);
+
+  const accountStats = useMemo(() => {
+    if (!account) {
+      return null;
+    }
+
+    const limit = account.trafficLimitBytes ?? 0;
+    const used = account.usedTrafficBytes ?? 0;
+    const remaining = Math.max(limit - used, 0);
+    const usagePercentage = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+
+    return {
+      limit,
+      used,
+      remaining,
+      usagePercentage,
+    };
+  }, [account]);
+
+  const formatBytes = (bytes: number) => {
+    if (!Number.isFinite(bytes)) {
+      return '0 B';
+    }
+
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let value = bytes;
+    let unitIndex = 0;
+
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex += 1;
+    }
+
+    return `${value.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+  };
+
+  const formatExpireDate = (isoDate?: string | null) => {
+    if (!isoDate) {
+      return 'Belirsiz';
+    }
+
+    const date = new Date(isoDate);
+    if (Number.isNaN(date.getTime())) {
+      return isoDate;
+    }
+
+    return date.toLocaleString('tr-TR', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  };
+
+  const statusConfig = (status: AccountResponse['status']) => {
+    const normalized = status?.toLowerCase();
+
+    switch (normalized) {
+      case 'active':
+        return {
+          color: 'teal',
+          label: 'Aktif',
+          icon: <IconCircleCheck size={16} />,
+        };
+      case 'inactive':
+        return {
+          color: 'gray',
+          label: 'Pasif',
+          icon: <IconClock size={16} />,
+        };
+      case 'expired':
+        return {
+          color: 'red',
+          label: 'Süresi Dolmuş',
+          icon: <IconBan size={16} />,
+        };
+      case 'limited':
+        return {
+          color: 'orange',
+          label: 'Limit Aşıldı',
+          icon: <IconAlertTriangle size={16} />,
+        };
+      case 'pending':
+        return {
+          color: 'yellow',
+          label: 'Beklemede',
+          icon: <IconClock size={16} />,
+        };
+      case 'suspended':
+        return {
+          color: 'orange',
+          label: 'Askıya Alındı',
+          icon: <IconAlertTriangle size={16} />,
+        };
+      case 'disabled':
+        return {
+          color: 'gray',
+          label: 'Devre Dışı',
+          icon: <IconBan size={16} />,
+        };
+      case 'trial':
+        return {
+          color: 'indigo',
+          label: 'Deneme',
+          icon: <IconClock size={16} />,
+        };
+      case 'paused':
+        return {
+          color: 'yellow',
+          label: 'Durduruldu',
+          icon: <IconClock size={16} />,
+        };
+      default:
+        return {
+          color: 'blue',
+          label: status ?? 'Bilinmiyor',
+          icon: <IconHelp size={16} />,
+        };
+    }
+  };
+
+  const openExternalLink = (url?: string | null) => {
+    if (!url) return;
+
+    if (typeof webApp.openTelegramLink === 'function') {
+      try {
+        webApp.openTelegramLink(url);
+        return;
+      } catch (err) {
+        console.error('Telegram link could not be opened:', err);
+      }
+    }
+
+    if (typeof webApp.openLink === 'function') {
+      webApp.openLink(url);
+    } else {
+      window.open(url, '_blank', 'noopener');
+    }
+  };
 
   // Manuel tema değiştirme butonu (isteğe bağlı)
   const ColorSchemeToggle = () => {
@@ -38,6 +265,8 @@ function AppContent() {
       </ActionIcon>
     );
   };
+
+  const statusDetails = statusConfig(account?.status ?? '');
 
   return (
     <AppShell
@@ -61,23 +290,67 @@ function AppContent() {
                   Hesap bilgilerin aşağıda görüntüleniyor.
                 </Text>
 
-                <Badge color="blue" variant="light">
-                  Kullanıcı Adı: @{user.username}
-                </Badge>
+                {user.username && (
+                  <Badge color="blue" variant="light">
+                    Kullanıcı Adı: @{user.username}
+                  </Badge>
+                )}
 
-                <Text size="sm">Abonelik Durumu:</Text>
-                <Badge color="teal" size="lg" radius="sm">
-                  🟢 Aktif
-                </Badge>
+                {loading ? (
+                  <Group justify="center" my="lg">
+                    <Loader color="blue" />
+                  </Group>
+                ) : error ? (
+                  <Alert color="red" icon={<IconAlertTriangle />} title="Bir sorun oluştu">
+                    {error}
+                  </Alert>
+                ) : account ? (
+                    <Stack gap="sm">
+                      <Group gap="xs" align="center">
+                        <ThemeIcon color={statusDetails.color} variant="light" radius="xl">
+                          {statusDetails.icon}
+                        </ThemeIcon>
+                        <Badge color={statusDetails.color} size="lg" radius="sm">
+                          {statusDetails.label}
+                        </Badge>
+                      </Group>
 
-                <Text size="sm">Kalan Kota:</Text>
-                <Code block>25.7 GB / 50 GB</Code>
+                      <Text size="sm" c="dimmed">
+                        Son Kullanma Tarihi: {formatExpireDate(account.expireAt ?? '')}
+                      </Text>
+
+                    {accountStats && (
+                      <Stack gap={4}>
+                        <Text size="sm">Kota Kullanımı:</Text>
+                        <Code block>
+                          {`${formatBytes(accountStats.used)} / ${formatBytes(accountStats.limit)} (${accountStats.usagePercentage.toFixed(0)}% kullanıldı, ${formatBytes(accountStats.remaining)} kaldı)`}
+                        </Code>
+                      </Stack>
+                    )}
+                  </Stack>
+                ) : (
+                  <Alert color="yellow" icon={<IconAlertTriangle />} title="Bilgi">
+                    Hesap bilgileri bulunamadı.
+                  </Alert>
+                )}
 
                 <Group grow mt="md">
-                  <Button variant="light" color="blue">
+                  <Button
+                    variant="light"
+                    color="blue"
+                    onClick={() => openExternalLink(account?.manageUrl)}
+                    disabled={!account?.manageUrl}
+                    title={!account?.manageUrl ? 'Yönlendirme bağlantısı mevcut değil.' : undefined}
+                  >
                     Hesabımı Yönet
                   </Button>
-                  <Button variant="filled" color="teal">
+                  <Button
+                    variant="filled"
+                    color="teal"
+                    onClick={() => openExternalLink(account?.subscriptionUrl)}
+                    disabled={!account?.subscriptionUrl}
+                    title={!account?.subscriptionUrl ? 'Satın alma bağlantısı henüz hazır değil.' : undefined}
+                  >
                     Abonelik Satın Al
                   </Button>
                 </Group>
