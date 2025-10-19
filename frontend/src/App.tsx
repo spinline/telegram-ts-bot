@@ -221,6 +221,148 @@ function AccountPage() {
     }
   };
 
+  return (
+    <Container size="sm" py="xl" mx="auto">
+      <Stack>
+        {user ? (
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Stack gap="md">
+              <Title order={4}>Hoş Geldin, {user.first_name}!</Title>
+              <Text size="sm" c="dimmed">
+                Hesap bilgilerin aşağıda görüntüleniyor.
+              </Text>
+
+              {user.username && (
+                <Badge color="blue" variant="light" size="lg">
+                  Kullanıcı Adı: @{user.username}
+                </Badge>
+              )}
+
+              {loading ? (
+                <Group justify="center" my="lg">
+                  <Loader color="blue" />
+                </Group>
+              ) : error ? (
+                <Alert color="red" icon={<IconAlertTriangle />} title="Bir sorun oluştu">
+                  {error}
+                </Alert>
+              ) : account ? (
+                <Stack gap="sm">
+                  <Group gap="xs" align="center">
+                    <ThemeIcon color={statusConfig(account.status).color} variant="light" radius="xl">
+                      {statusConfig(account.status).icon}
+                    </ThemeIcon>
+                    <Badge color={statusConfig(account.status).color} size="lg" radius="sm">
+                      {statusConfig(account.status).label}
+                    </Badge>
+                  </Group>
+
+                  <Group gap="xs" align="center">
+                    <ThemeIcon color="gray" variant="light" radius="xl">
+                      <IconCalendar size={16} />
+                    </ThemeIcon>
+                    <Text size="sm" c="dimmed">
+                      Son Kullanma Tarihi: {formatExpireDate(account.expireAt)}
+                    </Text>
+                  </Group>
+
+                  {accountStats && (
+                    <Stack gap={4}>
+                      <Group gap="xs" align="center">
+                        <ThemeIcon color="grape" variant="light" radius="xl">
+                          <IconGauge size={16} />
+                        </ThemeIcon>
+                        <Text size="sm">Kota Kullanımı:</Text>
+                      </Group>
+                      <Progress
+                        value={accountStats.usagePercentage}
+                        size="lg"
+                        radius="xl"
+                        color="grape"
+                      />
+                      <Text size="sm" c="dimmed" mt={4}>
+                        {`${accountStats.usagePercentage.toFixed(0)}% kullanıldı`}
+                      </Text>
+                      <Code block>
+                        {`${formatBytes(accountStats.used)} / ${formatBytes(accountStats.limit)} (${formatBytes(accountStats.remaining)} kaldı)`}
+                      </Code>
+                    </Stack>
+                  )}
+
+                  {account.happ?.cryptoLink && (
+                    <Button
+                      variant="light"
+                      color="blue"
+                      onClick={() => openExternalLink(account.manageUrl ?? 'https://t.me/')}
+                      fullWidth
+                    >
+                      Hesabımı Yönet
+                    </Button>
+                  )}
+                </Stack>
+              ) : (
+                <Alert color="yellow" icon={<IconAlertTriangle />} title="Bilgi">
+                  Hesap bilgileri bulunamadı.
+                </Alert>
+              )}
+
+              <Group grow mt="md">
+                <Button
+                  variant="light"
+                  color="blue"
+                  onClick={() => openExternalLink(account?.manageUrl ?? 'https://t.me/')}
+                  disabled={!account && !error}
+                >
+                  Hesabımı Yönet
+                </Button>
+                <Button
+                  variant="filled"
+                  color="teal"
+                  onClick={() => openExternalLink(account?.subscriptionUrl ?? 'https://t.me/')}
+                >
+                  Abonelik Satın Al
+                </Button>
+              </Group>
+            </Stack>
+          </Card>
+        ) : (
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Text>Kullanıcı bilgileri yüklenemedi. Lütfen uygulamanın Telegram üzerinden açıldığından emin olun.</Text>
+          </Card>
+        )}
+      </Stack>
+    </Container>
+  );
+}
+
+function App() {
+  const preferredColorScheme = useColorScheme();
+  const { setColorScheme } = useMantineColorScheme();
+  const webApp = window.Telegram.WebApp;
+
+  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account'>('welcome');
+
+  useEffect(() => {
+    setColorScheme(webApp.colorScheme);
+    webApp.ready();
+  }, [setColorScheme, webApp.colorScheme, webApp]);
+
+  const handleViewAccount = () => {
+    setCurrentScreen('account');
+  };
+
+  const handleBuySubscription = () => {
+    console.log('Abonelik satın al');
+  };
+
+  const handleInstallSetup = () => {
+    console.log('Kurulum ve ayarlar');
+  };
+
+  const handleSupport = () => {
+    console.log('Destek');
+  };
+
   const ColorSchemeToggle = () => {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     return (
@@ -236,168 +378,31 @@ function AccountPage() {
   };
 
   return (
-    <AppShell
-      header={{ height: 60 }}
-      padding="md"
-    >
-      <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
-          <Title order={3}>AuronVPN</Title> {/* VPN Bot -> AuronVPN */}
-          <ColorSchemeToggle />
-        </Group>
-      </AppShell.Header>
-
-      <AppShell.Main>
-        <Container size="sm" py="xl">
-          <Stack>
-            {user ? (
-              <Card shadow="sm" padding="lg" radius="md" withBorder>
-                <Stack gap="md">
-                  <Title order={4}>Hoş Geldin, {user.first_name}!</Title>
-                  <Text size="sm" c="dimmed">
-                    Hesap bilgilerin aşağıda görüntüleniyor.
-                  </Text>
-
-                  {user.username && (
-                    <Badge color="blue" variant="light" size="lg">
-                      Kullanıcı Adı: @{user.username}
-                    </Badge>
-                  )}
-
-                  {loading ? (
-                    <Group justify="center" my="lg">
-                      <Loader color="blue" />
-                    </Group>
-                  ) : error ? (
-                    <Alert color="red" icon={<IconAlertTriangle />} title="Bir sorun oluştu">
-                      {error}
-                    </Alert>
-                  ) : account ? (
-                    <Stack gap="sm">
-                      <Group gap="xs" align="center">
-                        <ThemeIcon color={statusConfig(account.status).color} variant="light" radius="xl">
-                          {statusConfig(account.status).icon}
-                        </ThemeIcon>
-                        <Badge color={statusConfig(account.status).color} size="lg" radius="sm">
-                          {statusConfig(account.status).label}
-                        </Badge>
-                      </Group>
-
-                      <Group gap="xs" align="center">
-                        <ThemeIcon color="gray" variant="light" radius="xl">
-                          <IconCalendar size={16} />
-                        </ThemeIcon>
-                        <Text size="sm" c="dimmed">
-                          Son Kullanma Tarihi: {formatExpireDate(account.expireAt)}
-                        </Text>
-                      </Group>
-
-                      {accountStats && (
-                        <Stack gap={4}>
-                          <Group gap="xs" align="center">
-                            <ThemeIcon color="grape" variant="light" radius="xl">
-                              <IconGauge size={16} />
-                            </ThemeIcon>
-                            <Text size="sm">Kota Kullanımı:</Text>
-                          </Group>
-                          <Progress
-                            value={accountStats.usagePercentage}
-                            size="lg"
-                            radius="xl"
-                            color="grape"
-                          />
-                          <Text size="sm" c="dimmed" mt={4}>
-                            {`${accountStats.usagePercentage.toFixed(0)}% kullanıldı`}
-                          </Text>
-                          <Code block>
-                            {`${formatBytes(accountStats.used)} / ${formatBytes(accountStats.limit)} (${formatBytes(accountStats.remaining)} kaldı)`}
-                          </Code>
-                        </Stack>
-                      )}
-
-                      {account.happ?.cryptoLink && (
-                        <Button
-                          variant="light"
-                          color="blue"
-                          onClick={() => openExternalLink(account.manageUrl ?? 'https://t.me/')}
-                          fullWidth
-                        >
-                          Hesabımı Yönet
-                        </Button>
-                      )}
-                    </Stack>
-                  ) : (
-                    <Alert color="yellow" icon={<IconAlertTriangle />} title="Bilgi">
-                      Hesap bilgileri bulunamadı.
-                    </Alert>
-                  )}
-
-                  <Group grow mt="md">
-                    <Button
-                      variant="light"
-                      color="blue"
-                      onClick={() => openExternalLink(account?.manageUrl ?? 'https://t.me/')}
-                      disabled={!account && !error}
-                    >
-                      Hesabımı Yönet
-                    </Button>
-                    <Button
-                      variant="filled"
-                      color="teal"
-                      onClick={() => openExternalLink(account?.subscriptionUrl ?? 'https://t.me/')}
-                    >
-                      Abonelik Satın Al
-                    </Button>
-                  </Group>
-                </Stack>
-              </Card>
-            ) : (
-              <Card shadow="sm" padding="lg" radius="md" withBorder>
-                <Text>Kullanıcı bilgileri yüklenemedi. Lütfen uygulamanın Telegram üzerinden açıldığından emin olun.</Text>
-              </Card>
-            )}
-          </Stack>
-        </Container>
-      </AppShell.Main>
-    </AppShell>
-  );
-}
-
-function App() {
-  const preferredColorScheme = useColorScheme();
-  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account'>('welcome');
-
-  const handleViewAccount = () => {
-    setCurrentScreen('account');
-  };
-
-  const handleBuySubscription = () => {
-    // Abonelik satın alma mantığı buraya gelecek
-    console.log('Abonelik satın al');
-  };
-
-  const handleInstallSetup = () => {
-    // Kurulum ve ayarlar mantığı buraya gelecek
-    console.log('Kurulum ve ayarlar');
-  };
-
-  const handleSupport = () => {
-    // Destek mantığı buraya gelecek
-    console.log('Destek');
-  };
-
-  return (
     <MantineProvider defaultColorScheme={preferredColorScheme}>
-      {currentScreen === 'welcome' ? (
-        <WelcomeScreen
-          onViewAccount={handleViewAccount}
-          onBuySubscription={handleBuySubscription}
-          onInstallSetup={handleInstallSetup}
-          onSupport={handleSupport}
-        />
-      ) : (
-        <AccountPage />
-      )}
+      <AppShell
+        header={{ height: 60 }}
+        padding="md"
+      >
+        <AppShell.Header>
+          <Group h="100%" px="md" justify="space-between">
+            <Title order={3}>AuronVPN</Title>
+            <ColorSchemeToggle />
+          </Group>
+        </AppShell.Header>
+
+        <AppShell.Main>
+          {currentScreen === 'welcome' ? (
+            <WelcomeScreen
+              onViewAccount={handleViewAccount}
+              onBuySubscription={handleBuySubscription}
+              onInstallSetup={handleInstallSetup}
+              onSupport={handleSupport}
+            />
+          ) : (
+            <AccountPage />
+          )}
+        </AppShell.Main>
+      </AppShell>
     </MantineProvider>
   );
 }
