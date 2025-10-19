@@ -28,25 +28,13 @@ import {
 } from '@tabler/icons-react';
 import '@mantine/core/styles.css';
 
-type AccountStatus =
-  | 'ACTIVE'
-  | 'INACTIVE'
-  | 'EXPIRED'
-  | 'SUSPENDED'
-  | 'LIMITED'
-  | 'DISABLED'
-  | 'TRIAL'
-  | 'PENDING'
-  | 'PAUSED'
-  | string;
-
 interface AccountResponse {
-  status: AccountStatus | null;
-  trafficLimitBytes: number | null;
-  usedTrafficBytes: number | null;
-  expireAt: string | null;
-  manageUrl?: string | null;
-  subscriptionUrl?: string | null;
+  status: 'active' | 'inactive' | 'expired' | 'suspended' | string;
+  trafficLimitBytes: number;
+  usedTrafficBytes: number;
+  expireAt: string;
+  manageUrl?: string;
+  subscriptionUrl?: string;
 }
 
 function AppContent() {
@@ -78,7 +66,6 @@ function AppContent() {
 
       try {
         const response = await fetch('/api/account', {
-          method: 'POST',
           headers: {
             'x-telegram-init-data': webApp.initData ?? '',
           },
@@ -149,7 +136,7 @@ function AppContent() {
     return `${value.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
   };
 
-  const formatExpireDate = (isoDate?: string | null) => {
+  const formatExpireDate = (isoDate: string) => {
     if (!isoDate) {
       return 'Belirsiz';
     }
@@ -187,41 +174,11 @@ function AppContent() {
           label: 'Süresi Dolmuş',
           icon: <IconBan size={16} />,
         };
-      case 'limited':
-        return {
-          color: 'orange',
-          label: 'Limit Aşıldı',
-          icon: <IconAlertTriangle size={16} />,
-        };
-      case 'pending':
-        return {
-          color: 'yellow',
-          label: 'Beklemede',
-          icon: <IconClock size={16} />,
-        };
       case 'suspended':
         return {
           color: 'orange',
           label: 'Askıya Alındı',
           icon: <IconAlertTriangle size={16} />,
-        };
-      case 'disabled':
-        return {
-          color: 'gray',
-          label: 'Devre Dışı',
-          icon: <IconBan size={16} />,
-        };
-      case 'trial':
-        return {
-          color: 'indigo',
-          label: 'Deneme',
-          icon: <IconClock size={16} />,
-        };
-      case 'paused':
-        return {
-          color: 'yellow',
-          label: 'Durduruldu',
-          icon: <IconClock size={16} />,
         };
       default:
         return {
@@ -232,19 +189,12 @@ function AppContent() {
     }
   };
 
-  const openExternalLink = (url?: string | null) => {
+  const openExternalLink = (url: string | undefined) => {
     if (!url) return;
 
     if (typeof webApp.openTelegramLink === 'function') {
-      try {
-        webApp.openTelegramLink(url);
-        return;
-      } catch (err) {
-        console.error('Telegram link could not be opened:', err);
-      }
-    }
-
-    if (typeof webApp.openLink === 'function') {
+      webApp.openTelegramLink(url);
+    } else if (typeof webApp.openLink === 'function') {
       webApp.openLink(url);
     } else {
       window.open(url, '_blank', 'noopener');
@@ -305,19 +255,19 @@ function AppContent() {
                     {error}
                   </Alert>
                 ) : account ? (
-                    <Stack gap="sm">
-                      <Group gap="xs" align="center">
-                        <ThemeIcon color={statusDetails.color} variant="light" radius="xl">
-                          {statusDetails.icon}
-                        </ThemeIcon>
-                        <Badge color={statusDetails.color} size="lg" radius="sm">
-                          {statusDetails.label}
-                        </Badge>
-                      </Group>
+                  <Stack gap="sm">
+                    <Group gap="xs" align="center">
+                      <ThemeIcon color={statusConfig(account.status).color} variant="light" radius="xl">
+                        {statusConfig(account.status).icon}
+                      </ThemeIcon>
+                      <Badge color={statusConfig(account.status).color} size="lg" radius="sm">
+                        {statusConfig(account.status).label}
+                      </Badge>
+                    </Group>
 
-                      <Text size="sm" c="dimmed">
-                        Son Kullanma Tarihi: {formatExpireDate(account.expireAt ?? '')}
-                      </Text>
+                    <Text size="sm" c="dimmed">
+                      Son Kullanma Tarihi: {formatExpireDate(account.expireAt)}
+                    </Text>
 
                     {accountStats && (
                       <Stack gap={4}>
@@ -338,18 +288,15 @@ function AppContent() {
                   <Button
                     variant="light"
                     color="blue"
-                    onClick={() => openExternalLink(account?.manageUrl)}
-                    disabled={!account?.manageUrl}
-                    title={!account?.manageUrl ? 'Yönlendirme bağlantısı mevcut değil.' : undefined}
+                    onClick={() => openExternalLink(account?.manageUrl ?? 'https://t.me/')}
+                    disabled={!account && !error}
                   >
                     Hesabımı Yönet
                   </Button>
                   <Button
                     variant="filled"
                     color="teal"
-                    onClick={() => openExternalLink(account?.subscriptionUrl)}
-                    disabled={!account?.subscriptionUrl}
-                    title={!account?.subscriptionUrl ? 'Satın alma bağlantısı henüz hazır değil.' : undefined}
+                    onClick={() => openExternalLink(account?.subscriptionUrl ?? 'https://t.me/')}
                   >
                     Abonelik Satın Al
                   </Button>
