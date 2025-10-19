@@ -77,6 +77,7 @@ function AppContent() {
         }
 
         const data: AccountResponse = await response.json();
+        console.log('Account data from API:', data); // Gelen veriyi logla
         if (!isMounted) return;
         setAccount(data);
       } catch (err) {
