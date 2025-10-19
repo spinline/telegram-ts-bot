@@ -151,17 +151,12 @@ function AppContent() {
       setError(null);
 
       try {
-        const headers = new Headers({
-          'Content-Type': 'application/json',
-        });
-
-        if (webApp.initData) {
-          headers.set('X-Telegram-Init-Data', webApp.initData);
-        }
-
         const response = await fetch(`${API_BASE_URL}/api/account`, {
           method: 'POST',
-          headers,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': webApp.initData,
+          },
           signal: controller.signal,
         });
 
@@ -305,7 +300,7 @@ function AppContent() {
             <Text size="sm" c="dimmed">
               VPN kullanıcı adın
             </Text>
-            <Code fw={600}>
+            <Code radius="sm" fw={600}>
               {account.username}
             </Code>
           </Stack>
