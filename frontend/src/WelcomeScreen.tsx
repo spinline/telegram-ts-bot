@@ -25,7 +25,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
   };
 
   return (
-    <Container size="sm" py="xl">
+    <Container size="md" py="xl">
       <Card shadow="sm" padding="lg" radius="md" withBorder>
         <Stack align="center" gap="xl">
           <Group justify="space-between" w="100%">
