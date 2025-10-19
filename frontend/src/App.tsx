@@ -212,6 +212,7 @@ function AppContent() {
       console.warn('Açılacak URL bulunamadı.');
       return;
     }
+    console.log('Harici link açılıyor:', url);
 
     // Telegram Web App fonksiyonları varsa kullan, yoksa standart window.open kullan
     if (window.Telegram && window.Telegram.WebApp) {
