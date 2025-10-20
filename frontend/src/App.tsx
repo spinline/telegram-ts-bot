@@ -382,7 +382,7 @@ function AccountPage() {
                   onClick={openHappFromChat}
                   disabled={!account && !error}
                 >
-                  Happ CryptoLink
+                  Happ CryptoLink (Sohbette Aç)
                 </Button>
                 <Button
                   variant="filled"
