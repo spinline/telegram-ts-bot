@@ -288,16 +288,16 @@ function AccountPage() {
                     </Stack>
                   )}
 
-                  {account.happ?.cryptoLink && (
-                    <Button
-                      variant="light"
-                      color="blue"
-                      onClick={() => openExternalLink(account.manageUrl ?? 'https://t.me/')}
-                      fullWidth
-                    >
-                      Hesabımı Yönet
-                    </Button>
-                  )}
+              {account.happ?.cryptoLink && (
+                <Button
+                  variant="light"
+                  color="blue"
+                  onClick={() => openExternalLink(account.happ?.cryptoLink)}
+                  fullWidth
+                >
+                  Happ CryptoLink'i Aç
+                </Button>
+              )}
                 </Stack>
               ) : (
                 <Alert color="yellow" icon={<IconAlertTriangle />} title="Bilgi">
@@ -309,10 +309,10 @@ function AccountPage() {
                 <Button
                   variant="light"
                   color="blue"
-                  onClick={() => openExternalLink(account?.manageUrl ?? 'https://t.me/')}
+                  onClick={() => openExternalLink(account?.happ?.cryptoLink ?? account?.manageUrl ?? 'https://t.me/')}
                   disabled={!account && !error}
                 >
-                  Hesabımı Yönet
+                  Happ CryptoLink
                 </Button>
                 <Button
                   variant="filled"
