@@ -318,7 +318,7 @@ function AccountPage() {
                 <Button
                   variant="light"
                   color="blue"
-                  onClick={() => openExternalLink(account.happ?.cryptoLink)}
+                  onClick={() => openExternalLink(account.happ?.cryptoLink, account.manageUrl)}
                   fullWidth
                 >
                   Happ CryptoLink'i Aç
@@ -335,7 +335,7 @@ function AccountPage() {
                 <Button
                   variant="light"
                   color="blue"
-                  onClick={() => openExternalLink(account?.happ?.cryptoLink ?? account?.manageUrl ?? 'https://t.me/')}
+                  onClick={() => openExternalLink(account?.happ?.cryptoLink ?? account?.manageUrl ?? 'https://t.me/', account?.manageUrl)}
                   disabled={!account && !error}
                 >
                   Happ CryptoLink
