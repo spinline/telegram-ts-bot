@@ -93,6 +93,9 @@ try {
 // MINI_APP_URL'i burada al
 const miniAppUrl = process.env.MINI_APP_URL || "";
 
+// Public base URL (for deeplink redirects). If not provided, derive from incoming request.
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || "";
+
 // Başlangıç komutu için klavye oluştur
 const startKeyboard = new InlineKeyboard()
   .text("🚀 Try for Free", "try_free")
@@ -111,6 +114,52 @@ Lütfen aşağıdaki seçeneklerden birini seçin:
   await ctx.reply(welcomeMessage, {
     reply_markup: startKeyboard,
   });
+});
+
+// Basit deeplink redirect sayfası (https -> happ://)
+app.get('/redirect', (req: Request, res: Response) => {
+  const to = req.query.to as string | undefined;
+  const fallback = (req.query.fallback as string | undefined) || 'https://t.me/';
+  if (!to) {
+    return res.status(400).send('Missing to parameter');
+  }
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Açılıyor…</title></head><body style="font-family:system-ui;padding:24px;background:#111;color:#eee"><h2>Uygulamada açılıyor…</h2><p>Eğer otomatik açılmazsa <a id="open">buraya dokunun</a>.</p><script>const to=decodeURIComponent(${JSON.stringify(encodeURIComponent(to))});const fb=decodeURIComponent(${JSON.stringify(encodeURIComponent(fallback))});function open(){window.location.href=to;}document.getElementById('open').setAttribute('href',to);open();setTimeout(()=>{if(document.hidden)return;window.location.href=fb;},1500);</script></body></html>`;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(html);
+});
+
+// Mini App'ten Happ deeplink'i Telegram sohbetine gönderen köprü endpoint
+app.post('/api/happ/open', verifyTelegramWebAppData, async (req: Request, res: Response) => {
+  try {
+    const telegramUser = (req as any).telegramUser;
+    const chatId = telegramUser?.id;
+    if (!chatId) {
+      return res.status(400).json({ error: 'Telegram user id not found' });
+    }
+
+    const user = await getUserByTelegramId(chatId);
+    const link: string | undefined = user?.happ?.cryptoLink;
+    if (!link) {
+      return res.status(404).json({ error: 'CryptoLink not found for user' });
+    }
+
+    // Redirect URL (https), constructing absolute base URL
+    const proto = (req.headers['x-forwarded-proto'] as string) || (PUBLIC_BASE_URL.startsWith('https') ? 'https' : 'http');
+    const hostFromHeader = req.headers['x-forwarded-host'] || req.headers.host;
+    const base = PUBLIC_BASE_URL || `${proto}://${hostFromHeader}`;
+    const iosStore = 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215';
+    const androidStore = 'https://play.google.com/store/apps/details?id=com.happproxy';
+    const fallback = iosStore; // tek fallback bırakıyoruz
+    const redirectUrl = `${base}/redirect?to=${encodeURIComponent(link)}&fallback=${encodeURIComponent(fallback)}`;
+
+    const kb = new InlineKeyboard().url("Happ’ta Aç", redirectUrl);
+    await bot.api.sendMessage(chatId, "Happ uygulamasında açmak için aşağıdaki butona dokunun:", { reply_markup: kb });
+
+    res.json({ ok: true });
+  } catch (error: any) {
+    console.error('Failed to send Happ deeplink:', error?.message || error);
+    res.status(500).json({ error: 'Failed to send deeplink' });
+  }
 });
 
 // Mini App'i açacak komut
