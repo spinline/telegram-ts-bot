@@ -12,6 +12,21 @@ import {
 } from '@mantine/core';
 import { IconDeviceLaptop, IconShoppingCart } from '@tabler/icons-react';
 
+// Telegram WebApp Haptic Feedback tipi
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp?: {
+        HapticFeedback?: {
+          impactOccurred?: (style?: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
+          notificationOccurred?: (type?: 'error' | 'success' | 'warning') => void;
+          selectionChanged?: () => void;
+        };
+      };
+    };
+  }
+}
+
 interface BuySubscriptionProps {
   onBack: () => void;
 }
@@ -57,6 +72,16 @@ function BuySubscription({ onBack }: BuySubscriptionProps) {
   const subscriptionOptions = getSubscriptionOptions(deviceCount);
   const selectedOption = subscriptionOptions[selectedDurationIndex];
 
+  // Haptic helpers
+  const haptic = window.Telegram?.WebApp?.HapticFeedback;
+  const hapticSelect = () => {
+    try { haptic?.selectionChanged?.(); } catch {}
+    try { if (!haptic && 'vibrate' in navigator) navigator.vibrate?.(10); } catch {}
+  };
+  const hapticImpact = () => {
+    try { haptic?.impactOccurred?.('soft'); } catch {}
+  };
+
   return (
     <Container size={560} px="md" py="xl" mx="auto">
       <Card shadow="sm" padding="lg" radius="md" withBorder w="100%" mx="auto">
@@ -75,7 +100,8 @@ function BuySubscription({ onBack }: BuySubscriptionProps) {
             </Group>
             <Slider
               value={deviceCount}
-              onChange={setDeviceCount}
+              onChange={(v) => { setDeviceCount(v); hapticSelect(); }}
+              onChangeEnd={() => { hapticImpact(); }}
               min={1}
               max={5}
               step={1}
