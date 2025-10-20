@@ -10,8 +10,8 @@ interface WelcomeScreenProps {
 
 function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSupport }: WelcomeScreenProps) {
   return (
-    <Container size="sm" py="xl" mx="auto">
-      <Card shadow="sm" padding="lg" radius="md" withBorder w="100%">
+    <Container size="sm" py="xl" mx="auto" style={{ display: 'flex', justifyContent: 'center' }}>
+      <Card shadow="sm" padding="lg" radius="md" withBorder w="100%" maw={560} mx="auto">
         <Stack align="center" gap="xl">
           <ThemeIcon variant="light" size={120} radius="xl" color="green">
             <IconShield style={{ width: '70%', height: '70%' }} stroke={1.5} />
