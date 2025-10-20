@@ -32,6 +32,7 @@ import {
 } from '@tabler/icons-react';
 import '@mantine/core/styles.css';
 import WelcomeScreen from './WelcomeScreen';
+import BuySubscription from './BuySubscription'; // BuySubscription bileşenini içe aktar
 
 // Telegram Web App script'inin eklediği global nesneyi tanımla
 declare global {
@@ -338,7 +339,7 @@ function App() {
   const { setColorScheme } = useMantineColorScheme();
   const webApp = window.Telegram.WebApp;
 
-  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account'>('welcome');
+  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription'>('welcome'); // buySubscription eklendi
 
   useEffect(() => {
     setColorScheme(webApp.colorScheme);
@@ -350,7 +351,7 @@ function App() {
   };
 
   const handleBuySubscription = () => {
-    console.log('Abonelik satın al');
+    setCurrentScreen('buySubscription'); // buySubscription ekranına geçiş
   };
 
   const handleInstallSetup = () => {
@@ -389,16 +390,20 @@ function App() {
         </AppShell.Header>
 
         <AppShell.Main>
-          {currentScreen === 'welcome' ? (
-            <WelcomeScreen
-              onViewAccount={handleViewAccount}
-              onBuySubscription={handleBuySubscription}
-              onInstallSetup={handleInstallSetup}
-              onSupport={handleSupport}
-            />
-          ) : (
-            <AccountPage />
-          )}
+          <Group justify="center" style={{ width: '100%', height: '100%' }}>
+            {currentScreen === 'welcome' ? (
+              <WelcomeScreen
+                onViewAccount={handleViewAccount}
+                onBuySubscription={handleBuySubscription}
+                onInstallSetup={handleInstallSetup}
+                onSupport={handleSupport}
+              />
+            ) : currentScreen === 'account' ? (
+              <AccountPage />
+            ) : (
+              <BuySubscription onBack={() => setCurrentScreen('welcome')} /> {/* Geri butonu eklendi */}
+            )}
+          </Group>
         </AppShell.Main>
       </AppShell>
     </MantineProvider>
