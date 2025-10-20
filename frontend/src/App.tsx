@@ -390,7 +390,7 @@ function App() {
         </AppShell.Header>
 
         <AppShell.Main>
-          <Group justify="center" style={{ width: '100%', height: '100%' }}>
+          <Group justify="center" align="center" style={{ width: '100%', minHeight: 'calc(100dvh - 60px)' }}>
             {currentScreen === 'welcome' && (
               <WelcomeScreen
                 onViewAccount={handleViewAccount}

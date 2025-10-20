@@ -11,7 +11,7 @@ interface WelcomeScreenProps {
 function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSupport }: WelcomeScreenProps) {
   return (
     <Container size="sm" py="xl" mx="auto">
-      <Card shadow="sm" padding="lg" radius="md" withBorder>
+      <Card shadow="sm" padding="lg" radius="md" withBorder w="100%">
         <Stack align="center" gap="xl">
           <ThemeIcon variant="light" size={120} radius="xl" color="green">
             <IconShield style={{ width: '70%', height: '70%' }} stroke={1.5} />
