@@ -240,8 +240,9 @@ function AccountPage() {
       }
       return;
     }
-
-    // iOS: Telegram WebView özel şemayı engelleyebilir; kullanıcıya kopyalama ve App Store fallback göster
+  
+  // iOS: Telegram WebView özel şemayı engelleyebilir; kullanıcıya kopyalama ve App Store fallback göster
+  if (isIOS) {
     try {
       await navigator.clipboard?.writeText(rawUrl);
     } catch {}
@@ -264,6 +265,11 @@ function AccountPage() {
         alert('Bağlantı kopyalandı. Safari’de açıp adres çubuğuna yapıştırın.');
       }
     } catch {}
+    return;
+  } else {
+    // masaüstü ya da bilinmeyen ortam: şansını dene
+    try { window.open(url, '_self'); } catch {}
+  }
   };
 
   // Telegram sohbetine deeplink butonu gönderen handler
