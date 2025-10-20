@@ -207,16 +207,42 @@ function AccountPage() {
     }
   };
 
-  const openExternalLink = (url: string | undefined) => {
+  const openExternalLink = (url: string | undefined, fallbackUrl?: string) => {
     if (!url) {
       console.warn('Açılacak URL bulunamadı.');
       return;
     }
 
-    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-      window.Telegram.WebApp.openLink(url);
-    } else {
-      window.open(url, '_blank', 'noopener');
+    const isHttp = /^https?:\/\//i.test(url);
+
+    if (isHttp) {
+      if (window.Telegram?.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+        window.Telegram.WebApp.openLink(url);
+      } else {
+        window.open(url, '_blank', 'noopener');
+      }
+      return;
+    }
+
+    // Custom scheme (e.g., happ://). Navigate in-place to trigger OS deeplink prompt.
+    try {
+      window.open(url, '_self');
+    } catch (e) {
+      window.location.href = url;
+    }
+
+    // Optional fallback to an https link (e.g., manageUrl or store) in case deeplink fails.
+    if (fallbackUrl) {
+      setTimeout(() => {
+        try {
+          if (document.hidden) return; // kullanıcı uygulamaya geçtiyse fallback gerekmez
+          if (window.Telegram?.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+            window.Telegram.WebApp.openLink(fallbackUrl);
+          } else {
+            window.open(fallbackUrl, '_blank', 'noopener');
+          }
+        } catch {}
+      }, 1500);
     }
   };
 
