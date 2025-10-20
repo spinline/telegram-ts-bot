@@ -207,15 +207,19 @@ function AccountPage() {
     }
   };
 
-  const openExternalLink = (url: string | undefined, fallbackUrl?: string) => {
-    if (!url) {
+  const openExternalLink = (rawUrl: string | undefined, fallbackUrl?: string) => {
+    if (!rawUrl) {
       console.warn('Açılacak URL bulunamadı.');
       return;
     }
 
+    const url = encodeURI(rawUrl); // özel karakterleri güvene al
     const isHttp = /^https?:\/\//i.test(url);
+    const isCustomScheme = /^[a-z][a-z0-9+.-]*:/i.test(url) && !isHttp;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
 
-    if (isHttp) {
+    if (!isCustomScheme) {
       if (window.Telegram?.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
         window.Telegram.WebApp.openLink(url);
       } else {
@@ -224,24 +228,38 @@ function AccountPage() {
       return;
     }
 
-    // Custom scheme (e.g., happ://). Navigate in-place to trigger OS deeplink prompt.
-    try {
-      window.open(url, '_self');
-    } catch (e) {
+    const start = Date.now();
+
+    if (isIOS) {
+      // iOS: doğrudan location.href en güvenilir
+      window.location.href = url;
+    } else if (isAndroid) {
+      // Android WebView/Chrome: gizli iframe ile tetikle
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    } else {
+      // Masaüstü
       window.location.href = url;
     }
 
-    // Optional fallback to an https link (e.g., manageUrl or store) in case deeplink fails.
     if (fallbackUrl) {
       setTimeout(() => {
-        try {
-          if (document.hidden) return; // kullanıcı uygulamaya geçtiyse fallback gerekmez
+        // Kullanıcı uygulamaya geçtiyse sayfa arka plana düşer, fallback yapma
+        if (document.hidden) return;
+        // Bazı Android webview'larda deeplink engellenebilir; kısa süre içinde engellenirse fallback
+        if (Date.now() - start < 1600) {
+          const fb = encodeURI(fallbackUrl);
           if (window.Telegram?.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-            window.Telegram.WebApp.openLink(fallbackUrl);
+            window.Telegram.WebApp.openLink(fb);
           } else {
-            window.open(fallbackUrl, '_blank', 'noopener');
+            window.open(fb, '_blank', 'noopener');
           }
-        } catch {}
+        }
       }, 1500);
     }
   };
