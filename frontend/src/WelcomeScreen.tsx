@@ -1,5 +1,5 @@
-import { Button, Group, Stack, Text, Title, useMantineColorScheme, ActionIcon, ThemeIcon, Card, Container } from '@mantine/core';
-import { IconSun, IconMoon, IconShield, IconShoppingCart, IconSettings, IconUser, IconHeadset } from '@tabler/icons-react';
+import { Button, Group, Stack, Text, Title, ThemeIcon, Card, Container } from '@mantine/core';
+import { IconShield, IconShoppingCart, IconSettings, IconUser, IconHeadset } from '@tabler/icons-react';
 
 interface WelcomeScreenProps {
   onViewAccount: () => void;
@@ -9,30 +9,10 @@ interface WelcomeScreenProps {
 }
 
 function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSupport }: WelcomeScreenProps) {
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-
-  const ColorSchemeToggle = () => {
-    return (
-      <ActionIcon
-        onClick={() => toggleColorScheme()}
-        variant="default"
-        size="lg"
-        aria-label="Toggle color scheme"
-      >
-        {colorScheme === 'dark' ? <IconSun stroke={1.5} /> : <IconMoon stroke={1.5} />}
-      </ActionIcon>
-    );
-  };
-
   return (
     <Container py="xl" mx="auto">
       <Card shadow="sm" padding="lg" radius="md" withBorder>
         <Stack align="center" gap="xl">
-          <Group justify="space-between" w="100%">
-            <Title order={3}>AuronVPN</Title>
-            <ColorSchemeToggle />
-          </Group>
-
           <ThemeIcon variant="light" size={120} radius="xl" color="green">
             <IconShield style={{ width: '70%', height: '70%' }} stroke={1.5} />
           </ThemeIcon>
