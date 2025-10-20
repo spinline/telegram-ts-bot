@@ -207,7 +207,7 @@ function AccountPage() {
     }
   };
 
-  const openExternalLink = (rawUrl: string | undefined, fallbackUrl?: string) => {
+  const openExternalLink = async (rawUrl: string | undefined, fallbackUrl?: string) => {
     if (!rawUrl) {
       console.warn('Açılacak URL bulunamadı.');
       return;
@@ -243,23 +243,51 @@ function AccountPage() {
 
     // iOS: Telegram WebView özel şemayı engelleyebilir; kullanıcıya kopyalama ve App Store fallback göster
     try {
-      await navigator.clipboard?.writeText(url);
+      await navigator.clipboard?.writeText(rawUrl);
     } catch {}
     try {
-      window.Telegram?.WebApp?.showPopup?.({
-        title: 'Happ bağlantısı',
-        message: 'iOS Telegram mini app kısıtlaması nedeniyle bağlantı kopyalandı. Safari’de açıp adres çubuğuna yapıştırın.',
-        buttons: [
-          { id: 'store', type: 'default', text: 'App Store' },
-          { id: 'ok', type: 'ok', text: 'Tamam' },
-        ],
-      }, (btnId: string) => {
-        if (btnId === 'store') {
-          const store = 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215';
-          window.Telegram?.WebApp?.openLink?.(store);
-        }
-      });
+      if (window.Telegram?.WebApp?.showPopup) {
+        window.Telegram.WebApp.showPopup({
+          title: 'Happ bağlantısı',
+          message: 'iOS Telegram mini app kısıtlaması nedeniyle bağlantı kopyalandı. Safari’de açıp adres çubuğuna yapıştırın.',
+          buttons: [
+            { id: 'store', type: 'default', text: 'App Store' },
+            { id: 'ok', type: 'ok', text: 'Tamam' },
+          ],
+        }, (btnId: string) => {
+          if (btnId === 'store') {
+            const store = 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215';
+            window.Telegram?.WebApp?.openLink?.(store);
+          }
+        });
+      } else {
+        alert('Bağlantı kopyalandı. Safari’de açıp adres çubuğuna yapıştırın.');
+      }
     } catch {}
+  };
+
+  // Telegram sohbetine deeplink butonu gönderen handler
+  const openHappFromChat = async () => {
+    try {
+      const resp = await fetch('/api/happ/open', {
+        method: 'POST',
+        headers: {
+          'x-telegram-init-data': webApp.initData ?? '',
+        },
+      });
+      if (!resp.ok) throw new Error('İstek başarısız');
+      if (webApp?.showPopup) {
+        webApp.showPopup({
+          title: 'Happ bağlantısı',
+          message: 'Sohbete bir buton gönderdim. Ona dokunarak Happ uygulamasında açabilirsiniz.',
+          buttons: [{ id: 'ok', type: 'ok', text: 'Tamam' }],
+        });
+      }
+    } catch (e) {
+      if (webApp?.showPopup) {
+        webApp.showPopup({ title: 'Hata', message: 'Bağlantı gönderilemedi.', buttons: [{ id: 'ok', type: 'ok', text: 'Kapat' }] });
+      }
+    }
   };
 
   return (
@@ -334,10 +362,10 @@ function AccountPage() {
                 <Button
                   variant="light"
                   color="blue"
-                  onClick={() => openExternalLink(account.happ?.cryptoLink, account.manageUrl)}
+                  onClick={openHappFromChat}
                   fullWidth
                 >
-                  Happ CryptoLink'i Aç
+                  Happ CryptoLink’i Sohbette Aç
                 </Button>
               )}
                 </Stack>
@@ -351,7 +379,7 @@ function AccountPage() {
                 <Button
                   variant="light"
                   color="blue"
-                  onClick={() => openExternalLink(account?.happ?.cryptoLink ?? account?.manageUrl ?? 'https://t.me/', account?.manageUrl)}
+                  onClick={openHappFromChat}
                   disabled={!account && !error}
                 >
                   Happ CryptoLink
