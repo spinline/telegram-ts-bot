@@ -18,10 +18,8 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
           </ThemeIcon>
 
           <Stack align="center" gap="xs">
-            <Title order={2}>Auron</Title>
-            <Text c="dimmed">offline</Text>
-            <Text c="dimmed">20 Ekim 2025 tarihine kadar</Text>
-            <Text c="dimmed">deneme süresi</Text>
+            <Title order={2}>Hoş Geldiniz!</Title>
+            <Text c="dimmed">Botunuz kullanıma hazır.</Text>
           </Stack>
 
           <Stack w="100%" gap="md">
