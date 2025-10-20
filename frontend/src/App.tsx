@@ -213,11 +213,12 @@ function AccountPage() {
       return;
     }
 
-    const url = encodeURI(rawUrl); // özel karakterleri güvene al
+    const url = encodeURI(rawUrl);
     const isHttp = /^https?:\/\//i.test(url);
     const isCustomScheme = /^[a-z][a-z0-9+.-]*:/i.test(url) && !isHttp;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
+    const ua = navigator.userAgent;
+    const isAndroid = /Android/.test(ua);
+    const isIOS = /iPad|iPhone|iPod/.test(ua);
 
     if (!isCustomScheme) {
       if (window.Telegram?.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -228,40 +229,37 @@ function AccountPage() {
       return;
     }
 
-    const start = Date.now();
-
-    if (isIOS) {
-      // iOS: doğrudan location.href en güvenilir
-      window.location.href = url;
-    } else if (isAndroid) {
-      // Android WebView/Chrome: gizli iframe ile tetikle
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = url;
-      document.body.appendChild(iframe);
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 1000);
-    } else {
-      // Masaüstü
-      window.location.href = url;
+    // Android: intent:// ile açmayı dene
+    if (isAndroid) {
+      const noScheme = url.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '');
+      const intent = `intent://${noScheme}#Intent;scheme=happ;package=com.happproxy;S.browser_fallback_url=${encodeURIComponent(fallbackUrl || 'https://play.google.com/store/apps/details?id=com.happproxy')};end`;
+      try {
+        window.location.href = intent;
+      } catch {
+        window.open(intent, '_self');
+      }
+      return;
     }
 
-    if (fallbackUrl) {
-      setTimeout(() => {
-        // Kullanıcı uygulamaya geçtiyse sayfa arka plana düşer, fallback yapma
-        if (document.hidden) return;
-        // Bazı Android webview'larda deeplink engellenebilir; kısa süre içinde engellenirse fallback
-        if (Date.now() - start < 1600) {
-          const fb = encodeURI(fallbackUrl);
-          if (window.Telegram?.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-            window.Telegram.WebApp.openLink(fb);
-          } else {
-            window.open(fb, '_blank', 'noopener');
-          }
+    // iOS: Telegram WebView özel şemayı engelleyebilir; kullanıcıya kopyalama ve App Store fallback göster
+    try {
+      await navigator.clipboard?.writeText(url);
+    } catch {}
+    try {
+      window.Telegram?.WebApp?.showPopup?.({
+        title: 'Happ bağlantısı',
+        message: 'iOS Telegram mini app kısıtlaması nedeniyle bağlantı kopyalandı. Safari’de açıp adres çubuğuna yapıştırın.',
+        buttons: [
+          { id: 'store', type: 'default', text: 'App Store' },
+          { id: 'ok', type: 'ok', text: 'Tamam' },
+        ],
+      }, (btnId: string) => {
+        if (btnId === 'store') {
+          const store = 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215';
+          window.Telegram?.WebApp?.openLink?.(store);
         }
-      }, 1500);
-    }
+      });
+    } catch {}
   };
 
   return (
