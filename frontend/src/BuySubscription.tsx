@@ -105,24 +105,30 @@ function BuySubscription({ onBack }: BuySubscriptionProps) {
                     cursor: 'pointer',
                     borderColor: selectedDurationIndex === index ? 'var(--mantine-color-green-6)' : undefined,
                     borderWidth: selectedDurationIndex === index ? 2 : 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    aspectRatio: '1 / 1', // Kare olmasını sağlar
+                    minWidth: '120px', // Minimum genişlik
                   }}
                   onClick={() => setSelectedDurationIndex(index)}
                 >
-                  <Stack align="center" gap="xs">
+                  <Stack align="center" gap={4}> {/* gap azaltıldı */}
                     {option.isPopular && (
                       <Badge color="red" variant="filled" size="sm" mb={4}>
                         POPÜLER
                       </Badge>
                     )}
-                    <Text size="lg" fw={700}>
+                    <Text size="md" fw={700}> {/* Yazı boyutu küçültüldü */}
                       {option.duration}
                     </Text>
                     <Text size="xl" fw={700} c="green">
-                      {option.price.toFixed(2)} TL
+                      {option.price.toFixed(0)} TL {/* Kuruşsuz fiyat */}
                     </Text>
                     {option.monthlyPrice && option.duration !== '1 Ay' && (
                       <Text size="sm" c="dimmed">
-                        {(option.monthlyPrice).toFixed(2)} TL / ay
+                        {(option.monthlyPrice).toFixed(0)} TL / ay {/* Kuruşsuz aylık fiyat */}
                       </Text>
                     )}
                   </Stack>
@@ -138,9 +144,9 @@ function BuySubscription({ onBack }: BuySubscriptionProps) {
             radius="md"
             fullWidth
             mt="xl"
-            onClick={() => console.log(`Ödeme Yap: ${selectedOption.price.toFixed(2)} TL`)}
+            onClick={() => console.log(`Ödeme Yap: ${selectedOption.price.toFixed(0)} TL`)}
           >
-            Ödeme Yap {selectedOption.price.toFixed(2)} TL
+            Ödeme Yap {selectedOption.price.toFixed(0)} TL
           </Button>
         </Stack>
       </Card>
