@@ -29,24 +29,27 @@ function BuySubscription({ onBack }: BuySubscriptionProps) {
 
   // Cihaz sayısına göre abonelik seçeneklerini dinamik olarak oluştur
   const getSubscriptionOptions = (count: number): SubscriptionOption[] => {
-    // Fiyatları ekran görüntüsüne göre ayarlayalım (örnek değerler)
-    const basePricePerMonth = 100; // Örnek aylık baz fiyat
+    // Ekran görüntüsündeki fiyatlara yakın değerler ve cihaz sayısına göre ayarlama
+    const pricesPerMonth = {
+      1: { '1': 310, '3': 790, '6': 1470, '12': 2700 }, // 1 cihaz için
+      2: { '1': 450, '3': 1100, '6': 2000, '12': 3600 }, // 2 cihaz için (örnek)
+      3: { '1': 550, '3': 1400, '6': 2600, '12': 4800 }, // 3 cihaz için (örnek)
+      4: { '1': 600, '3': 1600, '6': 3000, '12': 5500 }, // 4 cihaz için (örnek)
+      5: { '1': 650, '3': 1750, '6': 3300, '12': 6000 }, // 5 cihaz için (örnek)
+    };
 
-    const options = [
-      { duration: '1 Ay', priceMultiplier: 1, isPopular: false },
-      { duration: '3 Ay', priceMultiplier: 2.5, isPopular: false },
-      { duration: '6 Ay', priceMultiplier: 4.5, isPopular: true }, // POPÜLER
-      { duration: '1 Yıl', priceMultiplier: 8, isPopular: false },
-    ];
+    const currentDevicePrices = pricesPerMonth[count as keyof typeof pricesPerMonth];
 
-    return options.map(option => {
-      const price = basePricePerMonth * count * option.priceMultiplier;
-      const monthlyPrice = price / (parseInt(option.duration) || 12);
+    return [
+      { duration: '1 Ay', price: currentDevicePrices['1'], isPopular: false },
+      { duration: '3 Ay', price: currentDevicePrices['3'], isPopular: false },
+      { duration: '6 Ay', price: currentDevicePrices['6'], isPopular: true },
+      { duration: '1 Yıl', price: currentDevicePrices['12'], isPopular: false },
+    ].map(option => {
+      const durationInMonths = parseInt(option.duration.split(' ')[0]) || 12;
       return {
-        duration: option.duration,
-        price: price,
-        monthlyPrice: monthlyPrice,
-        isPopular: option.isPopular,
+        ...option,
+        monthlyPrice: option.price / durationInMonths,
       };
     });
   };
