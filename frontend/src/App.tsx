@@ -389,18 +389,16 @@ function App() {
         </AppShell.Header>
 
         <AppShell.Main>
-          <Group justify="center" style={{ width: '100%', height: '100%' }}> {/* İçeriği ortalamak için Group eklendi */}
-            {currentScreen === 'welcome' ? (
-              <WelcomeScreen
-                onViewAccount={handleViewAccount}
-                onBuySubscription={handleBuySubscription}
-                onInstallSetup={handleInstallSetup}
-                onSupport={handleSupport}
-              />
-            ) : (
-              <AccountPage />
-            )}
-          </Group>
+          {currentScreen === 'welcome' ? (
+            <WelcomeScreen
+              onViewAccount={handleViewAccount}
+              onBuySubscription={handleBuySubscription}
+              onInstallSetup={handleInstallSetup}
+              onSupport={handleSupport}
+            />
+          ) : (
+            <AccountPage />
+          )}
         </AppShell.Main>
       </AppShell>
     </MantineProvider>
