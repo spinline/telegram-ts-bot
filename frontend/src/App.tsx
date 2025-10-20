@@ -60,15 +60,13 @@ interface AccountResponse {
 function AccountPage() {
   const webApp = window.Telegram.WebApp;
   const user = webApp.initDataUnsafe?.user;
-  const { setColorScheme } = useMantineColorScheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [account, setAccount] = useState<AccountResponse | null>(null);
 
   useEffect(() => {
-    setColorScheme(webApp.colorScheme);
     webApp.ready();
-  }, [setColorScheme, webApp.colorScheme, webApp]);
+  }, [webApp.colorScheme, webApp]);
 
   useEffect(() => {
     let isMounted = true;
