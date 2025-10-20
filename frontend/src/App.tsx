@@ -272,27 +272,20 @@ function AccountPage() {
   }
   };
 
-  // Telegram sohbetine deeplink butonu gönderen handler
-  const openHappFromChat = async () => {
-    try {
-      const resp = await fetch('/api/happ/open', {
-        method: 'POST',
-        headers: {
-          'x-telegram-init-data': webApp.initData ?? '',
-        },
-      });
-      if (!resp.ok) throw new Error('İstek başarısız');
-      if (webApp?.showPopup) {
-        webApp.showPopup({
-          title: 'Happ bağlantısı',
-          message: 'Sohbete bir buton gönderdim. Ona dokunarak Happ uygulamasında açabilirsiniz.',
-          buttons: [{ id: 'ok', type: 'ok', text: 'Tamam' }],
-        });
-      }
-    } catch (e) {
-      if (webApp?.showPopup) {
-        webApp.showPopup({ title: 'Hata', message: 'Bağlantı gönderilemedi.', buttons: [{ id: 'ok', type: 'ok', text: 'Kapat' }] });
-      }
+  // Mini App içinden: özel şema (happ://) için HTTPS redirect sayfasını dış tarayıcıda aç
+  const openHappViaRedirect = (cryptoLink?: string, fallbackHttp?: string) => {
+    if (!cryptoLink) return;
+    const ua = navigator.userAgent;
+    const defaultFallback = /iPad|iPhone|iPod/.test(ua)
+      ? 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215'
+      : /Android/.test(ua)
+      ? 'https://play.google.com/store/apps/details?id=com.happproxy'
+      : (fallbackHttp || 'https://t.me/');
+    const redirect = `${window.location.origin}/redirect?to=${encodeURIComponent(cryptoLink)}&fallback=${encodeURIComponent(defaultFallback)}`;
+    if (window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(redirect, { try_browser: true });
+    } else {
+      window.open(redirect, '_blank', 'noopener');
     }
   };
 
