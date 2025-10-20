@@ -391,17 +391,19 @@ function App() {
 
         <AppShell.Main>
           <Group justify="center" style={{ width: '100%', height: '100%' }}>
-            {currentScreen === 'welcome' ? (
+            {currentScreen === 'welcome' && (
               <WelcomeScreen
                 onViewAccount={handleViewAccount}
                 onBuySubscription={handleBuySubscription}
                 onInstallSetup={handleInstallSetup}
                 onSupport={handleSupport}
               />
-            ) : currentScreen === 'account' ? (
+            )}
+            {currentScreen === 'account' && (
               <AccountPage />
-            ) : (
-              <BuySubscription onBack={() => setCurrentScreen('welcome')} /> {/* Geri butonu eklendi */}
+            )}
+            {currentScreen === 'buySubscription' && (
+              <BuySubscription onBack={() => setCurrentScreen('welcome')} />
             )}
           </Group>
         </AppShell.Main>
