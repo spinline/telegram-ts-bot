@@ -361,10 +361,10 @@ function AccountPage() {
                 <Button
                   variant="light"
                   color="blue"
-                  onClick={openHappFromChat}
+                  onClick={() => openHappViaRedirect(account.happ?.cryptoLink, account.manageUrl)}
                   fullWidth
                 >
-                  Happ CryptoLink’i Sohbette Aç
+                  Happ’ta Aç
                 </Button>
               )}
                 </Stack>
@@ -378,10 +378,10 @@ function AccountPage() {
                 <Button
                   variant="light"
                   color="blue"
-                  onClick={openHappFromChat}
+                  onClick={() => openHappViaRedirect(account?.happ?.cryptoLink ?? account?.manageUrl)}
                   disabled={!account && !error}
                 >
-                  Happ CryptoLink (Sohbette Aç)
+                  Happ’ta Aç
                 </Button>
                 <Button
                   variant="filled"
