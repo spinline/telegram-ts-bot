@@ -53,7 +53,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
                 radius="md"
                 onClick={onViewAccount}
               >
-                Profil
+                Hesabım
               </Button>
               <Button
                 leftSection={<IconHeadset size={20} />}

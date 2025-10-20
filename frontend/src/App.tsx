@@ -221,10 +221,10 @@ function AccountPage() {
   };
 
   return (
-    <Container size="sm" py="xl" mx="auto">
+    <Container size={560} px="md" py="xl" mx="auto">
       <Stack>
         {user ? (
-          <Card shadow="sm" padding="lg" radius="md" withBorder>
+          <Card shadow="sm" padding="lg" radius="md" withBorder w="100%" mx="auto">
             <Stack gap="md">
               <Title order={4}>Hoş Geldin, {user.first_name}!</Title>
               <Text size="sm" c="dimmed">

@@ -58,8 +58,8 @@ function BuySubscription({ onBack }: BuySubscriptionProps) {
   const selectedOption = subscriptionOptions[selectedDurationIndex];
 
   return (
-    <Container size="sm" py="xl" mx="auto">
-      <Card shadow="sm" padding="lg" radius="md" withBorder>
+    <Container size={560} px="md" py="xl" mx="auto">
+      <Card shadow="sm" padding="lg" radius="md" withBorder w="100%" mx="auto">
         <Stack gap="xl">
           <Stack gap="xs">
             <Title order={2}>Abonelik Satın Al</Title>
