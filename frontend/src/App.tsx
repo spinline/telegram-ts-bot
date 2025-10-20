@@ -272,23 +272,6 @@ function AccountPage() {
   }
   };
 
-  // Mini App içinden: özel şema (happ://) için HTTPS redirect sayfasını dış tarayıcıda aç
-  const openHappViaRedirect = (cryptoLink?: string, fallbackHttp?: string) => {
-    if (!cryptoLink) return;
-    const ua = navigator.userAgent;
-    const defaultFallback = /iPad|iPhone|iPod/.test(ua)
-      ? 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215'
-      : /Android/.test(ua)
-      ? 'https://play.google.com/store/apps/details?id=com.happproxy'
-      : (fallbackHttp || 'https://t.me/');
-    const redirect = `${window.location.origin}/redirect?to=${encodeURIComponent(cryptoLink)}&fallback=${encodeURIComponent(defaultFallback)}`;
-    if (window.Telegram?.WebApp?.openLink) {
-      window.Telegram.WebApp.openLink(redirect, { try_browser: true });
-    } else {
-      window.open(redirect, '_blank', 'noopener');
-    }
-  };
-
   return (
     <Container size={560} px="md" py="xl" mx="auto">
       <Stack>
@@ -357,14 +340,14 @@ function AccountPage() {
                     </Stack>
                   )}
 
-              {account.happ?.cryptoLink && (
+              {account.subscriptionUrl && (
                 <Button
                   variant="light"
                   color="blue"
-                  onClick={() => openHappViaRedirect(account.happ?.cryptoLink, account.manageUrl)}
+                  onClick={() => openExternalLink(account.subscriptionUrl)}
                   fullWidth
                 >
-                  Happ’ta Aç
+                  Abonelik Linkini Aç
                 </Button>
               )}
                 </Stack>
@@ -378,10 +361,10 @@ function AccountPage() {
                 <Button
                   variant="light"
                   color="blue"
-                  onClick={() => openHappViaRedirect(account?.happ?.cryptoLink ?? account?.manageUrl)}
+                  onClick={() => openExternalLink(account?.subscriptionUrl ?? account?.manageUrl ?? 'https://t.me/')}
                   disabled={!account && !error}
                 >
-                  Happ’ta Aç
+                  Abonelik Linkini Aç
                 </Button>
                 <Button
                   variant="filled"
