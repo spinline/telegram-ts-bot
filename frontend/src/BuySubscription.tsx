@@ -12,20 +12,6 @@ import {
 } from '@mantine/core';
 import { IconDeviceLaptop, IconShoppingCart } from '@tabler/icons-react';
 
-// Telegram WebApp Haptic Feedback tipi
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp?: {
-        HapticFeedback?: {
-          impactOccurred?: (style?: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
-          notificationOccurred?: (type?: 'error' | 'success' | 'warning') => void;
-          selectionChanged?: () => void;
-        };
-      };
-    };
-  }
-}
 
 interface BuySubscriptionProps {
   onBack: () => void;
