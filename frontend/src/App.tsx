@@ -54,6 +54,11 @@ interface AccountResponse {
   manageUrl?: string;
   subscriptionUrl?: string;
   onlineAt?: string | null;
+  lastConnectedNode?: {
+    connectedAt?: string | null;
+    nodeName?: string;
+    countryCode?: string;
+  } | null;
   happ?: {
     cryptoLink: string;
   };
@@ -429,12 +434,17 @@ function App() {
     };
 
     const measureOnce = async () => {
-      const first = await getAccount();
+      const acc = (await getAccount()) as Partial<AccountResponse> | null;
       if (cancelled) return;
-      const status = String(first?.status ?? '').toLowerCase();
-      // Basit kural: API onlineAt varsa ve hesap ACTIVE ise online
-      const hasOnlineAt = first?.onlineAt != null;
-      setOnlineStatus(status === 'active' && hasOnlineAt ? 'online' : 'offline');
+      const status = String(acc?.status ?? '').toLowerCase();
+      const onlineAtMs = acc?.onlineAt ? Date.parse(acc.onlineAt) : 0;
+      const connectedAtMs = acc?.lastConnectedNode?.connectedAt ? Date.parse(acc.lastConnectedNode.connectedAt) : 0;
+      const freshest = Math.max(onlineAtMs || 0, connectedAtMs || 0);
+      const now = Date.now();
+      const ONLINE_STALE_MS = 2 * 60 * 1000; // 2 dakika içinde bağlantı varsa online kabul et
+
+      const isFresh = Number.isFinite(freshest) && freshest > 0 && now - freshest <= ONLINE_STALE_MS;
+      setOnlineStatus(status === 'active' && isFresh ? 'online' : 'offline');
     };
 
     measureOnce();
