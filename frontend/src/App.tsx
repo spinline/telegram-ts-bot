@@ -299,13 +299,18 @@ function AccountPage() {
                 </Alert>
               ) : account ? (
                 <Stack gap="sm">
-                  <Group gap="xs" align="center">
+                  <Group gap="xs" align="center" wrap="wrap">
                     <ThemeIcon color={statusConfig(account.status).color} variant="light" radius="xl">
                       {statusConfig(account.status).icon}
                     </ThemeIcon>
                     <Badge color={statusConfig(account.status).color} size="lg" radius="sm">
                       {statusConfig(account.status).label}
                     </Badge>
+                    {account.tag && (
+                      <Badge color="violet" size="lg" radius="sm" variant="dot">
+                        {account.tag}
+                      </Badge>
+                    )}
                   </Group>
 
                   <Group gap="xs" align="center">
