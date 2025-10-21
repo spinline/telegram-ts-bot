@@ -180,6 +180,12 @@ function AccountPage() {
           label: 'Aktif',
           icon: <IconCircleCheck size={16} />,
         };
+      case 'disabled':
+        return {
+          color: 'red',
+          label: 'Devre Dışı',
+          icon: <IconBan size={16} />,
+        };
       case 'inactive':
         return {
           color: 'gray',
