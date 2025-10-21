@@ -33,6 +33,7 @@ import {
 import '@mantine/core/styles.css';
 import WelcomeScreen from './WelcomeScreen';
 import BuySubscription from './BuySubscription'; // BuySubscription bileşenini içe aktar
+import InstallSetup from './InstallSetup';
 
 // Telegram Web App script'inin eklediği global nesneyi tanımla
 declare global {
@@ -402,7 +403,7 @@ function App() {
   const { setColorScheme } = useMantineColorScheme();
   const webApp = window.Telegram.WebApp;
 
-  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription'>('welcome'); // buySubscription eklendi
+  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup'>('welcome');
 
   useEffect(() => {
     setColorScheme(webApp.colorScheme);
@@ -418,7 +419,7 @@ function App() {
   };
 
   const handleInstallSetup = () => {
-    console.log('Kurulum ve ayarlar');
+    setCurrentScreen('installSetup');
   };
 
   const handleSupport = () => {
@@ -467,6 +468,9 @@ function App() {
             )}
             {currentScreen === 'buySubscription' && (
               <BuySubscription onBack={() => setCurrentScreen('welcome')} />
+            )}
+            {currentScreen === 'installSetup' && (
+              <InstallSetup onBack={() => setCurrentScreen('welcome')} />
             )}
           </Group>
         </AppShell.Main>

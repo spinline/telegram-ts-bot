@@ -113,3 +113,31 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Static rings for InstallSetup shield */
+.shield-static {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  display: grid;
+  place-items: center;
+}
+
+.shield-static .shield-core {
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+}
+
+.shield-static .ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  border: 2px solid var(--ring-color, rgba(20, 184, 166, 0.45));
+}
+
+.shield-static .ring-1 { width: 130px; height: 130px; }
+.shield-static .ring-2 { width: 160px; height: 160px; }
+.shield-static .ring-3 { width: 190px; height: 190px; }
