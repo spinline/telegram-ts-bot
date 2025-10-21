@@ -22,7 +22,8 @@ export async function getUserByTelegramId(telegramId: number) {
   try {
     const response = await apiClient.get(`/api/users/by-telegram-id/${telegramId}`);
     // API, bir dizi döndürür. Dizi boş değilse, kullanıcı var demektir.
-    return response.data.response.length > 0 ? response.data.response[0] : null;
+    const data: any = response.data;
+    return data.response.length > 0 ? data.response[0] : null;
   } catch (error: any) {
     if (error.response && error.response.status === 404) {
       return null; // Kullanıcı bulunamadı, bu yeni kayıt için beklenen bir durum.
@@ -35,7 +36,8 @@ export async function getUserByTelegramId(telegramId: number) {
 export async function getUserByUsername(username: string) {
   try {
     const response = await apiClient.get(`/api/users/by-username/${username}`);
-    return response.data.response;
+    const data: any = response.data;
+    return data.response;
   } catch (error: any) {
     if (error.response && error.response.status === 404) {
       return null; // Kullanıcı bulunamadı
@@ -48,7 +50,8 @@ export async function getUserByUsername(username: string) {
 export async function getInternalSquads() {
   try {
     const response = await apiClient.get("/api/internal-squads");
-    return response.data.response.internalSquads;
+    const data: any = response.data;
+    return data.response.internalSquads;
   } catch (error) {
     console.error("Failed to get internal squads:", error);
     return [];
@@ -59,7 +62,8 @@ export async function createUser(userData: any) {
   try {
     const { password, ...rest } = userData; // Şifreyi kaldır
     const response = await apiClient.post("/api/users", rest);
-    return response.data.response;
+    const data: any = response.data;
+    return data.response;
   } catch (error: any) {
     console.error("Failed to create user:", error.response?.data || error.message);
     throw new Error(error.response?.data?.message || "Kullanıcı oluşturulamadı.");
