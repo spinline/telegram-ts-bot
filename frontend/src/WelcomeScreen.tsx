@@ -1,97 +1,24 @@
-import { Button, Group, Stack, Text, Title, ThemeIcon, Card, Container, Loader, Badge } from '@mantine/core';
+import { Button, Group, Stack, Text, Title, ThemeIcon, Card, Container, Badge } from '@mantine/core';
 import { IconShield, IconShoppingCart, IconSettings, IconUser, IconHeadset } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 
 interface WelcomeScreenProps {
   onViewAccount: () => void;
   onBuySubscription: () => void;
   onInstallSetup: () => void;
   onSupport: () => void;
+  onlineStatus?: 'online' | 'offline' | null;
 }
 
-function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSupport }: WelcomeScreenProps) {
+function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSupport, onlineStatus }: WelcomeScreenProps) {
   // Telegram WebApp ve kullanıcıyı al
   const webApp = (window as any)?.Telegram?.WebApp;
-  const user = webApp?.initDataUnsafe?.user;
-
-  // Hesap durumu için basit state
-  const [loading, setLoading] = useState<boolean>(true);
-  const [accountStatus, setAccountStatus] = useState<string | null>(null);
-  const [lastUsedBytes, setLastUsedBytes] = useState<number | null>(null);
-  const [isOnlineNow, setIsOnlineNow] = useState<boolean>(false);
 
   useEffect(() => {
-    try {
-      webApp?.ready?.();
-    } catch {}
+    try { webApp?.ready?.(); } catch {}
   }, [webApp]);
 
-  useEffect(() => {
-    let isMounted = true;
-    let intervalId: number | undefined;
-    const controller = new AbortController();
-
-    const fetchAccount = async () => {
-      if (!user) {
-        setLoading(false);
-        setAccountStatus(null);
-        setIsOnlineNow(false);
-        return;
-      }
-      try {
-        const res = await fetch('/api/account', {
-          headers: {
-            'x-telegram-init-data': webApp?.initData ?? '',
-          },
-          signal: controller.signal,
-        });
-        if (!isMounted) return;
-        if (res.ok) {
-          const data = await res.json();
-          const statusStr = String(data?.status ?? '').toLowerCase();
-          setAccountStatus(statusStr);
-
-          const used: number = Number(data?.usedTrafficBytes ?? 0);
-          if (Number.isFinite(used)) {
-            // Eğer daha önce bir değer varsa ve artış olduysa "aktif trafik" olarak kabul et
-            if (lastUsedBytes !== null && used > lastUsedBytes) {
-              setIsOnlineNow(true);
-            } else if (statusStr !== 'active') {
-              // Hesap aktif değilse bağlantı "çevrimdışı" kabul edilir
-              setIsOnlineNow(false);
-            }
-            setLastUsedBytes(used);
-          }
-        } else {
-          setIsOnlineNow(false);
-          setAccountStatus(null);
-        }
-      } catch {
-        if (!isMounted) return;
-        setIsOnlineNow(false);
-        setAccountStatus(null);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    // İlk yükleme
-    setLoading(true);
-    fetchAccount();
-    // Düzenli aralıklarla kontrol et (10s)
-    intervalId = window.setInterval(fetchAccount, 10000);
-
-    return () => {
-      isMounted = false;
-      if (intervalId) window.clearInterval(intervalId);
-      controller.abort();
-    };
-  }, [user, webApp?.initData, lastUsedBytes]);
-
-  const isOnline = useMemo(() => {
-    // Yalnızca hesap ACTIVE ise ve yakın zamanda trafik artışı olduysa online göster
-    return (accountStatus === 'active') && isOnlineNow;
-  }, [accountStatus, isOnlineNow]);
+  const isOnline = useMemo(() => onlineStatus === 'online', [onlineStatus]);
 
   return (
     <Container size={560} px="md" py="xl" mx="auto">
@@ -112,13 +39,8 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
             </ThemeIcon>
           </div>
 
-          {/* Online / Çevrimdışı Durumu */}
-          {loading ? (
-            <Group gap="xs" align="center">
-              <Loader size="sm" color="gray" />
-              <Text size="sm" c="dimmed">Durum alınıyor…</Text>
-            </Group>
-          ) : (
+          {/* Online / Çevrimdışı Durumu (tek seferlik; yükleniyor yazısı yok) */}
+          {onlineStatus && (
             <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light">
               {isOnline ? 'Online' : 'Çevrimdışı'}
             </Badge>

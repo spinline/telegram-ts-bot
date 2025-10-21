@@ -404,11 +404,54 @@ function App() {
   const webApp = window.Telegram.WebApp;
 
   const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup'>('welcome');
+  const [onlineStatus, setOnlineStatus] = useState<'online' | 'offline' | null>(null);
 
   useEffect(() => {
     setColorScheme(webApp.colorScheme);
     webApp.ready();
   }, [setColorScheme, webApp.colorScheme, webApp]);
+
+  // App açılışında tek seferlik çevrimiçi kontrolü
+  useEffect(() => {
+    let cancelled = false;
+
+    const getAccount = async () => {
+      try {
+        const res = await fetch('/api/account', {
+          headers: { 'x-telegram-init-data': webApp.initData ?? '' },
+        });
+        if (!res.ok) return null;
+        return await res.json();
+      } catch {
+        return null;
+      }
+    };
+
+    const measureOnce = async () => {
+      const first = await getAccount();
+      if (cancelled) return;
+      const status = String(first?.status ?? '').toLowerCase();
+      if (status !== 'active') {
+        setOnlineStatus('offline');
+        return;
+      }
+      const used1 = Number(first?.usedTrafficBytes ?? 0);
+      // 3 saniye arayla ikinci ölçüm al ve artış varsa online kabul et
+      await new Promise((r) => setTimeout(r, 3000));
+      const second = await getAccount();
+      if (cancelled) return;
+      const used2 = Number(second?.usedTrafficBytes ?? 0);
+      const threshold = 10 * 1024; // 10KB
+      if (Number.isFinite(used1) && Number.isFinite(used2) && used2 > used1 + threshold) {
+        setOnlineStatus('online');
+      } else {
+        setOnlineStatus('offline');
+      }
+    };
+
+    measureOnce();
+    return () => { cancelled = true; };
+  }, [webApp.initData]);
 
   const handleViewAccount = () => {
     setCurrentScreen('account');
@@ -461,6 +504,7 @@ function App() {
                 onBuySubscription={handleBuySubscription}
                 onInstallSetup={handleInstallSetup}
                 onSupport={handleSupport}
+                onlineStatus={onlineStatus}
               />
             )}
             {currentScreen === 'account' && (
