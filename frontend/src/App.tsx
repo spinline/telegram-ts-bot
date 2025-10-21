@@ -53,6 +53,7 @@ interface AccountResponse {
   tag?: string;
   manageUrl?: string;
   subscriptionUrl?: string;
+  onlineAt?: string | null;
   happ?: {
     cryptoLink: string;
   };
@@ -421,7 +422,7 @@ function App() {
           headers: { 'x-telegram-init-data': webApp.initData ?? '' },
         });
         if (!res.ok) return null;
-        return await res.json();
+        return (await res.json()) as Partial<AccountResponse> | null;
       } catch {
         return null;
       }
@@ -431,22 +432,9 @@ function App() {
       const first = await getAccount();
       if (cancelled) return;
       const status = String(first?.status ?? '').toLowerCase();
-      if (status !== 'active') {
-        setOnlineStatus('offline');
-        return;
-      }
-      const used1 = Number(first?.usedTrafficBytes ?? 0);
-      // 3 saniye arayla ikinci ölçüm al ve artış varsa online kabul et
-      await new Promise((r) => setTimeout(r, 3000));
-      const second = await getAccount();
-      if (cancelled) return;
-      const used2 = Number(second?.usedTrafficBytes ?? 0);
-      const threshold = 10 * 1024; // 10KB
-      if (Number.isFinite(used1) && Number.isFinite(used2) && used2 > used1 + threshold) {
-        setOnlineStatus('online');
-      } else {
-        setOnlineStatus('offline');
-      }
+      // Basit kural: API onlineAt varsa ve hesap ACTIVE ise online
+      const hasOnlineAt = first?.onlineAt != null;
+      setOnlineStatus(status === 'active' && hasOnlineAt ? 'online' : 'offline');
     };
 
     measureOnce();
