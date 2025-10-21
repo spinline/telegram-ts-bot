@@ -17,6 +17,8 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
   // Hesap durumu için basit state
   const [loading, setLoading] = useState<boolean>(true);
   const [accountStatus, setAccountStatus] = useState<string | null>(null);
+  const [lastUsedBytes, setLastUsedBytes] = useState<number | null>(null);
+  const [isOnlineNow, setIsOnlineNow] = useState<boolean>(false);
 
   useEffect(() => {
     try {
@@ -26,15 +28,16 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
 
   useEffect(() => {
     let isMounted = true;
+    let intervalId: number | undefined;
     const controller = new AbortController();
 
     const fetchAccount = async () => {
       if (!user) {
         setLoading(false);
         setAccountStatus(null);
+        setIsOnlineNow(false);
         return;
       }
-      setLoading(true);
       try {
         const res = await fetch('/api/account', {
           headers: {
@@ -45,29 +48,50 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
         if (!isMounted) return;
         if (res.ok) {
           const data = await res.json();
-          setAccountStatus(String(data?.status ?? ''));
+          const statusStr = String(data?.status ?? '').toLowerCase();
+          setAccountStatus(statusStr);
+
+          const used: number = Number(data?.usedTrafficBytes ?? 0);
+          if (Number.isFinite(used)) {
+            // Eğer daha önce bir değer varsa ve artış olduysa "aktif trafik" olarak kabul et
+            if (lastUsedBytes !== null && used > lastUsedBytes) {
+              setIsOnlineNow(true);
+            } else if (statusStr !== 'active') {
+              // Hesap aktif değilse bağlantı "çevrimdışı" kabul edilir
+              setIsOnlineNow(false);
+            }
+            setLastUsedBytes(used);
+          }
         } else {
+          setIsOnlineNow(false);
           setAccountStatus(null);
         }
       } catch {
         if (!isMounted) return;
+        setIsOnlineNow(false);
         setAccountStatus(null);
       } finally {
         if (isMounted) setLoading(false);
       }
     };
 
+    // İlk yükleme
+    setLoading(true);
     fetchAccount();
+    // Düzenli aralıklarla kontrol et (10s)
+    intervalId = window.setInterval(fetchAccount, 10000);
+
     return () => {
       isMounted = false;
+      if (intervalId) window.clearInterval(intervalId);
       controller.abort();
     };
-  }, [user, webApp?.initData]);
+  }, [user, webApp?.initData, lastUsedBytes]);
 
   const isOnline = useMemo(() => {
-    const normalized = (accountStatus || '').toLowerCase();
-    return normalized === 'active';
-  }, [accountStatus]);
+    // Yalnızca hesap ACTIVE ise ve yakın zamanda trafik artışı olduysa online göster
+    return (accountStatus === 'active') && isOnlineNow;
+  }, [accountStatus, isOnlineNow]);
 
   return (
     <Container size={560} px="md" py="xl" mx="auto">
