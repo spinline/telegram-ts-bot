@@ -74,13 +74,13 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
 
     return date.toLocaleDateString('tr-TR', {
       day: 'numeric',
-      month: 'numeric',
+      month: 'long',
       year: 'numeric',
     });
   };
 
   return (
-    <Container size={720} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
+    <Container size={800} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
       {/* Kalkan iç çerçevenin dışında */}
       <div
         className="shield-ripple"
@@ -118,14 +118,14 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
         }}
       >
         {/* Online / Çevrimdışı Durumu ve Bitiş Tarihi - iç çerçeve sol üstte */}
-        <div style={{ position: 'absolute', top: 15, left: 15, zIndex: 3, display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 'calc(100% - 30px)' }}>
+        <div style={{ position: 'absolute', top: 15, left: 15, right: 15, zIndex: 3, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           {onlineStatus && (
             <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light">
               {isOnline ? 'Online' : 'Çevrimdışı'}
             </Badge>
           )}
           {expireAt && formatExpireDate(expireAt) && (
-            <Text size="xs" style={{ color: '#fbbf24', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <Text size="sm" style={{ color: '#fbbf24', fontWeight: 500 }}>
               {formatExpireDate(expireAt)}'e kadar
             </Text>
           )}
