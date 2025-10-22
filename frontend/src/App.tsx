@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   MantineProvider,
   AppShell,
-  Card,
   Text,
   Button,
   Group,
@@ -61,7 +60,7 @@ interface AccountResponse {
 }
 
 // AccountPage bileşeni, hesap detaylarını gösterecek
-function AccountPage() {
+function AccountPage({ onBack }: { onBack: () => void }) {
   const webApp = window.Telegram.WebApp;
   const user = webApp.initDataUnsafe?.user;
   const [loading, setLoading] = useState(true);
@@ -282,12 +281,29 @@ function AccountPage() {
   };
 
   return (
-    <Container size={560} px="md" py="xl" mx="auto">
+    <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px' }}>
+      {/* İç çerçeve */}
+      <div
+        style={{
+          display: 'flex',
+          width: '100%',
+          backgroundColor: '#0006',
+          overflow: 'auto',
+          zIndex: 2,
+          position: 'relative',
+          padding: 30,
+          flexDirection: 'column',
+          borderRadius: '1rem',
+          maxHeight: '90%',
+          boxShadow: 'none',
+          border: 'none',
+        }}
+      >
       <Stack>
         {user ? (
-          <Card shadow="sm" padding="lg" radius="md" withBorder w="100%" mx="auto">
+          <div>
             <Stack gap="md">
-              <Title order={4}>Hoş Geldin, {user.first_name}!</Title>
+              <Title order={4} style={{ color: '#fff' }}>Hoş Geldin, {user.first_name}!</Title>
               <Text size="sm" c="dimmed">
                 Hesap bilgilerin aşağıda görüntüleniyor.
               </Text>
@@ -389,13 +405,17 @@ function AccountPage() {
                 </Button>
               </Group>
             </Stack>
-          </Card>
+          </div>
         ) : (
-          <Card shadow="sm" padding="lg" radius="md" withBorder>
-            <Text>Kullanıcı bilgileri yüklenemedi. Lütfen uygulamanın Telegram üzerinden açıldığından emin olun.</Text>
-          </Card>
+          <div style={{ padding: '1rem', backgroundColor: '#0009', borderRadius: '0.5rem' }}>
+            <Text style={{ color: '#fff' }}>Kullanıcı bilgileri yüklenemedi. Lütfen uygulamanın Telegram üzerinden açıldığından emin olun.</Text>
+          </div>
         )}
       </Stack>
+      </div>
+      <Group justify="center" mt="md">
+        <Button variant="light" onClick={onBack} style={{ color: '#fff' }}>Geri</Button>
+      </Group>
     </Container>
   );
 }
@@ -476,7 +496,7 @@ function App() {
               />
             )}
             {currentScreen === 'account' && (
-              <AccountPage />
+              <AccountPage onBack={() => setCurrentScreen('welcome')} />
             )}
             {currentScreen === 'buySubscription' && (
               <BuySubscription onBack={() => setCurrentScreen('welcome')} />
