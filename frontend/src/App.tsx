@@ -433,6 +433,7 @@ function App() {
     const saved = localStorage.getItem('currentScreen');
     return (saved as any) || 'welcome';
   });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [screenHistory, setScreenHistory] = useState<Array<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations'>>(['welcome']);
   const [onlineStatus, setOnlineStatus] = useState<'online' | 'offline' | null>(null);
   const [accountData, setAccountData] = useState<Partial<AccountResponse> | null>(null);
@@ -440,7 +441,9 @@ function App() {
   // currentScreen değiştiğinde localStorage'a kaydet
   useEffect(() => {
     localStorage.setItem('currentScreen', currentScreen);
-  }, [currentScreen]);
+    // Debug: history length
+    console.log('Screen history length:', screenHistory.length);
+  }, [currentScreen, screenHistory]);
 
   useEffect(() => {
     webApp.ready();
