@@ -21,7 +21,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
   const isOnline = useMemo(() => onlineStatus === 'online', [onlineStatus]);
 
   return (
-    <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px' }}>
       {/* Kalkan iç çerçevenin dışında */}
       <div
         className="shield-ripple"
