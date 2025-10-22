@@ -204,32 +204,36 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
               </Badge>
             </Button>
 
-            <Group grow>
+            <Group grow gap="sm">
               <Button
-                leftSection={<IconUser size={18} />}
+                leftSection={<IconUser size={20} />}
                 variant="light"
                 color="gray"
                 size="md"
                 radius="md"
                 onClick={handleViewAccount}
                 styles={{
-                  root: {
-                    fontSize: '14px',
+                  label: {
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   },
                 }}
               >
                 Hesabım
               </Button>
               <Button
-                leftSection={<IconHeadset size={18} />}
+                leftSection={<IconHeadset size={20} />}
                 variant="light"
                 color="gray"
                 size="md"
                 radius="md"
                 onClick={handleSupport}
                 styles={{
-                  root: {
-                    fontSize: '14px',
+                  label: {
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   },
                 }}
               >
