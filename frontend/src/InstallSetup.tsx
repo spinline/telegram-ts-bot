@@ -1,4 +1,4 @@
-import { Container, Stack, Text, ThemeIcon, Title, Button } from '@mantine/core';
+import { Container, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 import { IconShield, IconDeviceMobile, IconQrcode } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
@@ -105,28 +105,55 @@ export default function InstallSetup({}: InstallSetupProps) {
 
           {/* Kurulum seçenekleri */}
           <Stack w="100%" gap="md" mt="lg">
-            <Button
-              leftSection={<IconDeviceMobile size={20} />}
-              color="green"
-              size="lg"
-              radius="md"
-              fullWidth
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '14px',
+                borderRadius: '8px',
+                background: 'rgba(255, 255, 255, 0.07)',
+                transition: 'all .2s ease-in-out',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
+              }}
               onClick={() => console.log('Bu cihazda kurulum başlat')}
             >
-              Bu Cihazda Kurulumu Başlat
-            </Button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <IconDeviceMobile size={20} style={{ color: '#14b8a6' }} />
+                <Text size="md" fw={500} style={{ color: '#fff' }}>Bu cihazda kurulumu başlat</Text>
+              </div>
+            </div>
 
-            <Button
-              leftSection={<IconQrcode size={20} />}
-              variant="light"
-              color="blue"
-              size="lg"
-              radius="md"
-              fullWidth
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '14px',
+                borderRadius: '8px',
+                background: 'rgba(255, 255, 255, 0.07)',
+                transition: 'all .2s ease-in-out',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
+              }}
               onClick={() => console.log('Başka cihaza yükle')}
             >
-              Başka Bir Cihaza Yükle
-            </Button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <IconQrcode size={20} style={{ color: '#14b8a6' }} />
+                <Text size="md" fw={500} style={{ color: '#fff' }}>Başka bir cihaza yükle</Text>
+              </div>
+            </div>
           </Stack>
         </Stack>
       </div>
