@@ -571,7 +571,7 @@ function App() {
 
   return (
     <MantineProvider defaultColorScheme={preferredColorScheme}>
-      <AppShell padding={0}>
+      <AppShell padding="md">
         <AppShell.Main>
           <Group justify="center" align="center" style={{ width: '100%', minHeight: '100dvh' }}>
             {currentScreen === 'welcome' && (
