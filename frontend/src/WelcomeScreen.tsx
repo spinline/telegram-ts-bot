@@ -79,6 +79,14 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
     });
   };
 
+  // Abonelik süresi bitmiş mi kontrol et
+  const isExpired = useMemo(() => {
+    if (!expireAt) return false;
+    const expireDate = new Date(expireAt);
+    const now = new Date();
+    return expireDate < now;
+  }, [expireAt]);
+
   return (
     <Container size={1200} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
       {/* Kalkan iç çerçevenin dışında */}
@@ -118,17 +126,29 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
         }}
       >
         {/* Online / Çevrimdışı Durumu ve Bitiş Tarihi - iç çerçeve sol üstte */}
-        <div style={{ position: 'absolute', top: 15, left: 15, right: 15, zIndex: 3, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          {onlineStatus && (
-            <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light">
-              {isOnline ? 'Online' : 'Çevrimdışı'}
-            </Badge>
-          )}
-          {expireAt && formatExpireDate(expireAt) && (
-            <Text size="sm" style={{ color: '#fbbf24', fontWeight: 500 }}>
-              {formatExpireDate(expireAt)}'e kadar
+        <div style={{ position: 'absolute', top: 15, left: 15, right: 15, zIndex: 3 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <Text size="md" style={{ color: '#fff', fontWeight: 500 }}>
+              Aeron
             </Text>
-          )}
+            {expireAt && formatExpireDate(expireAt) && (
+              <Text size="sm" style={{ color: '#fff', fontWeight: 500 }}>
+                {formatExpireDate(expireAt)}'e kadar
+              </Text>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {onlineStatus && (
+              <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light">
+                {isOnline ? 'Online' : 'Çevrimdışı'}
+              </Badge>
+            )}
+            {isExpired && (
+              <Text size="sm" style={{ color: '#ef4444', fontWeight: 500 }}>
+                Aboneliğiniz sona erdi
+              </Text>
+            )}
+          </div>
         </div>
 
         <Stack align="center" gap="xl">
