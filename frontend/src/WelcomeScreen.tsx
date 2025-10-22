@@ -151,17 +151,17 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
           </div>
         </div>
 
-        <Stack align="center" gap="xl">
+        <Stack align="center" gap="lg">
           <Stack align="center" gap="xs">
             <Title order={2} style={{ color: '#fff' }}>Hoş Geldiniz!</Title>
             <Text c="dimmed">Botunuz kullanıma hazır.</Text>
           </Stack>
 
-          <Stack w="100%" gap="md">
+          <Stack w="100%" gap="sm">
             <Button
               leftSection={<IconShoppingCart size={20} />}
               color="green"
-              size="lg"
+              size="md"
               radius="md"
               fullWidth
               onClick={handleBuySubscription}
@@ -173,6 +173,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
               leftSection={<IconSettings size={20} />}
               variant="light"
               color="blue"
+              size="md"
               radius="md"
               fullWidth
               onClick={handleInstallSetup}
@@ -208,6 +209,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
                 leftSection={<IconUser size={20} />}
                 variant="light"
                 color="gray"
+                size="md"
                 radius="md"
                 onClick={handleViewAccount}
               >
@@ -217,6 +219,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
                 leftSection={<IconHeadset size={20} />}
                 variant="light"
                 color="gray"
+                size="md"
                 radius="md"
                 onClick={handleSupport}
               >
