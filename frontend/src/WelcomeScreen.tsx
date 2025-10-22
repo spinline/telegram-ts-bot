@@ -88,7 +88,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
   }, [expireAt]);
 
   return (
-    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px', width: 'calc(100% - 30px)', maxWidth: '100%', padding: '0 15px' }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px', width: '100%' }}>
       {/* Kalkan iç çerçevenin dışında */}
       <div
         className="shield-ripple"

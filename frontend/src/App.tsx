@@ -288,7 +288,7 @@ function AccountPage({}: { onBack?: () => void }) {
   };
 
   return (
-    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px', width: 'calc(100% - 30px)', maxWidth: '100%', padding: '0 15px' }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px', width: '100%' }}>
       {/* İç çerçeve */}
       <div
         style={{
