@@ -1,55 +1,40 @@
 import { useState } from 'react';
 import {
   Button,
-  Group,
   Stack,
   Text,
   Title,
-  Slider,
-  Badge,
 } from '@mantine/core';
-import { IconDeviceLaptop, IconShoppingCart } from '@tabler/icons-react';
-
 
 interface BuySubscriptionProps {
 }
 
 interface SubscriptionOption {
   duration: string;
+  durationRu: string;
   price: number;
   monthlyPrice?: number;
   isPopular?: boolean;
+  months: number;
 }
 
 function BuySubscription({}: BuySubscriptionProps) {
-  const [deviceCount, setDeviceCount] = useState(3); // Varsayılan olarak 3 cihaz seçili
-  const [selectedDurationIndex, setSelectedDurationIndex] = useState(0); // Seçilen abonelik süresi indeksi
+  const [deviceCount, setDeviceCount] = useState(1);
+  const [selectedDurationIndex, setSelectedDurationIndex] = useState(2); // 6 месяцев по умолчанию
 
-  // Cihaz sayısına göre abonelik seçeneklerini dinamik olarak oluştur
+  // Cihaz sayısına göre abonelik seçenekleri
   const getSubscriptionOptions = (count: number): SubscriptionOption[] => {
-    // Ekran görüntüsündeki fiyatlara yakın değerler ve cihaz sayısına göre ayarlama
-    const pricesPerMonth = {
-      1: { '1': 310, '3': 790, '6': 1470, '12': 2700 }, // 1 cihaz için
-      2: { '1': 450, '3': 1100, '6': 2000, '12': 3600 }, // 2 cihaz için (örnek)
-      3: { '1': 550, '3': 1400, '6': 2600, '12': 4800 }, // 3 cihaz için (örnek)
-      4: { '1': 600, '3': 1600, '6': 3000, '12': 5500 }, // 4 cihaz için (örnek)
-      5: { '1': 650, '3': 1750, '6': 3300, '12': 6000 }, // 5 cihaz için (örnek)
-    };
+    const baseOptions = [
+      { duration: '1 Ay', durationRu: '1 месяц', months: 1, price: 150 * count, isPopular: false },
+      { duration: '3 Ay', durationRu: '3 месяца', months: 3, price: 390 * count, isPopular: false },
+      { duration: '6 Ay', durationRu: '6 месяцев', months: 6, price: 720 * count, isPopular: true },
+      { duration: '1 Yıl', durationRu: '1 год', months: 12, price: 1320 * count, isPopular: false },
+    ];
 
-    const currentDevicePrices = pricesPerMonth[count as keyof typeof pricesPerMonth];
-
-    return [
-      { duration: '1 Ay', price: currentDevicePrices['1'], isPopular: false },
-      { duration: '3 Ay', price: currentDevicePrices['3'], isPopular: false },
-      { duration: '6 Ay', price: currentDevicePrices['6'], isPopular: true },
-      { duration: '1 Yıl', price: currentDevicePrices['12'], isPopular: false },
-    ].map(option => {
-      const durationInMonths = parseInt(option.duration.split(' ')[0]) || 12;
-      return {
-        ...option,
-        monthlyPrice: option.price / durationInMonths,
-      };
-    });
+    return baseOptions.map(option => ({
+      ...option,
+      monthlyPrice: option.price / option.months,
+    }));
   };
 
   const subscriptionOptions = getSubscriptionOptions(deviceCount);
@@ -59,7 +44,6 @@ function BuySubscription({}: BuySubscriptionProps) {
   const haptic = window.Telegram?.WebApp?.HapticFeedback;
   const hapticSelect = () => {
     try { haptic?.selectionChanged?.(); } catch {}
-    try { if (!haptic && 'vibrate' in navigator) navigator.vibrate?.(10); } catch {}
   };
   const hapticImpact = () => {
     try { haptic?.impactOccurred?.('light'); } catch {}
@@ -67,12 +51,17 @@ function BuySubscription({}: BuySubscriptionProps) {
 
   const handlePayment = () => {
     hapticImpact();
-    console.log(`Ödeme Yap: ${selectedOption.price.toFixed(0)} TL`);
+    console.log(`Ödeme Yap: ${selectedOption.price.toFixed(0)} ₽`);
   };
 
   const handleSubscriptionSelect = (index: number) => {
     hapticSelect();
     setSelectedDurationIndex(index);
+  };
+
+  const handleSliderChange = (value: number) => {
+    hapticSelect();
+    setDeviceCount(value);
   };
 
   return (
@@ -94,94 +83,134 @@ function BuySubscription({}: BuySubscriptionProps) {
           border: 'none',
         }}
       >
-        <Stack gap="xl">
+        <Stack gap="lg">
+          {/* Başlık */}
           <Stack gap="xs">
-            <Title order={2} style={{ color: '#fff' }}>Abonelik Satın Al</Title>
-            <Text c="dimmed">İlgilendiğiniz tarifeyi ve cihaz sayısını seçin</Text>
+            <Title order={2} style={{ color: '#fff', fontSize: '28px', fontWeight: 600 }}>
+              Покупка подписки
+            </Title>
+            <Text size="md" style={{ color: '#9ca3af' }}>
+              Выберите интересующий тариф и количество устройств
+            </Text>
           </Stack>
 
-          <Stack gap="xs">
-            <Group justify="space-between" align="center">
-              <Title order={5}>Cihaz Sayısı:</Title>
-              <Badge size="lg" variant="filled" color="blue">
-                {deviceCount}
-              </Badge>
-            </Group>
-            <Slider
-              value={deviceCount}
-              onChange={(v) => { setDeviceCount(v); hapticSelect(); }}
-              onChangeEnd={() => { hapticImpact(); }}
-              min={1}
-              max={5}
-              step={1}
-              label={(value) => `${value} Cihaz`}
-              thumbChildren={<IconDeviceLaptop size={16} />}
-              color="green"
-              marks={[
-                { value: 1, label: '1' },
-                { value: 2, label: '2' },
-                { value: 3, label: '3' },
-                { value: 4, label: '4' },
-                { value: 5, label: '5' },
-              ]}
-            />
-          </Stack>
+          {/* Cihaz sayısı slider */}
+          <div>
+            <Text size="lg" style={{ color: '#fff', marginBottom: '16px', fontWeight: 500 }}>
+              Количество устройств: {deviceCount}
+            </Text>
+            <div style={{ position: 'relative', paddingTop: '20px' }}>
+              <input
+                type="range"
+                min="1"
+                max="5"
+                value={deviceCount}
+                onChange={(e) => handleSliderChange(parseInt(e.target.value))}
+                style={{
+                  width: '100%',
+                  height: '6px',
+                  borderRadius: '3px',
+                  background: '#1f2937',
+                  outline: 'none',
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                }}
+                className="custom-slider"
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
+                {[1, 2, 3, 4, 5].map(num => (
+                  <div
+                    key={num}
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      backgroundColor: deviceCount >= num ? '#14b8a6' : '#374151',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
 
-          <Stack gap="md">
-            <Group grow>
-              {subscriptionOptions.map((option, index) => (
-                <div
-                  key={index}
-                  style={{
-                    cursor: 'pointer',
-                    backgroundColor: '#0009',
-                    borderColor: selectedDurationIndex === index ? '#10b981' : '#333',
-                    borderWidth: selectedDurationIndex === index ? 2 : 1,
-                    borderStyle: 'solid',
-                    borderRadius: '0.5rem',
-                    padding: '1rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    aspectRatio: '1 / 1',
-                    minWidth: '120px',
-                  }}
-                  onClick={() => handleSubscriptionSelect(index)}
-                >
-                  <Stack align="center" gap={4}> {/* gap azaltıldı */}
-                    {option.isPopular && (
-                      <Badge color="red" variant="filled" size="sm" mb={4}>
-                        POPÜLER
-                      </Badge>
-                    )}
-                    <Text size="md" fw={700}> {/* Yazı boyutu küçültüldü */}
-                      {option.duration}
+          {/* Abonelik kartları - Grid 2x2 */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '12px',
+            marginTop: '8px'
+          }}>
+            {subscriptionOptions.map((option, index) => (
+              <div
+                key={index}
+                onClick={() => handleSubscriptionSelect(index)}
+                style={{
+                  cursor: 'pointer',
+                  backgroundColor: selectedDurationIndex === index ? '#14b8a620' : '#00000040',
+                  border: selectedDurationIndex === index ? '2px solid #14b8a6' : '2px solid transparent',
+                  borderRadius: '16px',
+                  padding: '20px 16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '140px',
+                  position: 'relative',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {option.isPopular && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '12px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: '#ef4444',
+                    color: '#fff',
+                    padding: '4px 12px',
+                    borderRadius: '12px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                  }}>
+                    популярный
+                  </div>
+                )}
+                
+                <div style={{ marginTop: option.isPopular ? '28px' : '8px' }}>
+                  <Text size="md" style={{ color: '#9ca3af', marginBottom: '8px' }}>
+                    {option.durationRu}
+                  </Text>
+                  
+                  <Text size="32px" fw={700} style={{ color: '#fff', lineHeight: '1.2' }}>
+                    {option.price.toFixed(0)} ₽
+                  </Text>
+                  
+                  {option.months > 1 && (
+                    <Text size="sm" style={{ color: '#6b7280', marginTop: '4px' }}>
+                      {option.monthlyPrice?.toFixed(0)}₽ в месяц
                     </Text>
-                    <Text size="xl" fw={700} c="green">
-                      {option.price.toFixed(0)} TL {/* Kuruşsuz fiyat */}
-                    </Text>
-                    {option.monthlyPrice && option.duration !== '1 Ay' && (
-                      <Text size="sm" c="dimmed">
-                        {(option.monthlyPrice).toFixed(0)} TL / ay {/* Kuruşsuz aylık fiyat */}
-                      </Text>
-                    )}
-                  </Stack>
+                  )}
                 </div>
-              ))}
-            </Group>
-          </Stack>
+              </div>
+            ))}
+          </div>
 
+          {/* Ödeme butonu */}
           <Button
-            leftSection={<IconShoppingCart size={20} />}
-            color="green"
+            color="teal"
             size="lg"
             radius="md"
             fullWidth
-            mt="xl"
+            mt="md"
             onClick={handlePayment}
+            style={{
+              backgroundColor: '#14b8a6',
+              height: '56px',
+              fontSize: '17px',
+              fontWeight: 600,
+            }}
           >
-            Ödeme Yap {selectedOption.price.toFixed(0)} TL
+            Оплатить {selectedOption.price.toFixed(0)} ₽
           </Button>
         </Stack>
       </div>
