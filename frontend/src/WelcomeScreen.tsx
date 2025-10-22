@@ -29,13 +29,13 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
           position: 'absolute',
           top: -140,
           zIndex: 3,
-          ['--signal-color' as any]: isOnline ? 'rgba(20, 184, 166, 0.55)' : 'rgba(240, 62, 62, 0.55)',
+          ['--signal-color' as any]: 'rgba(20, 184, 166, 0.55)',
         }}
       >
         <div className="ripple ripple-1" />
         <div className="ripple ripple-2" />
         <div className="ripple ripple-3" />
-        <ThemeIcon variant="filled" size={120} radius="xl" color={isOnline ? 'teal' : 'red'} className="shield-core">
+        <ThemeIcon variant="filled" size={120} radius="xl" color="teal" className="shield-core">
           <IconShield style={{ width: '70%', height: '70%' }} stroke={1.6} />
         </ThemeIcon>
       </div>
