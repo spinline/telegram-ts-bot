@@ -27,6 +27,9 @@ a:hover {
 
 html, body, #root {
   height: 100%;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 body {
@@ -35,8 +38,8 @@ body {
   justify-content: center;
   height: 100%;
   width: 100%;
-  position: relative;
-  overflow: hidden;
+  position: fixed;
+  overflow-y: auto;
   padding: 15px;
   margin: 0;
 }
