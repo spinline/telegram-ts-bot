@@ -49,7 +49,8 @@ function getUserByTelegramId(telegramId) {
         try {
             const response = yield apiClient.get(`/api/users/by-telegram-id/${telegramId}`);
             // API, bir dizi döndürür. Dizi boş değilse, kullanıcı var demektir.
-            return response.data.response.length > 0 ? response.data.response[0] : null;
+            const data = response.data;
+            return data.response.length > 0 ? data.response[0] : null;
         }
         catch (error) {
             if (error.response && error.response.status === 404) {
@@ -65,7 +66,8 @@ function getUserByUsername(username) {
         var _a, _b, _c;
         try {
             const response = yield apiClient.get(`/api/users/by-username/${username}`);
-            return response.data.response;
+            const data = response.data;
+            return data.response;
         }
         catch (error) {
             if (error.response && error.response.status === 404) {
@@ -80,7 +82,8 @@ function getInternalSquads() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const response = yield apiClient.get("/api/internal-squads");
-            return response.data.response.internalSquads;
+            const data = response.data;
+            return data.response.internalSquads;
         }
         catch (error) {
             console.error("Failed to get internal squads:", error);
@@ -94,7 +97,8 @@ function createUser(userData) {
         try {
             const { password } = userData, rest = __rest(userData, ["password"]); // Şifreyi kaldır
             const response = yield apiClient.post("/api/users", rest);
-            return response.data.response;
+            const data = response.data;
+            return data.response;
         }
         catch (error) {
             console.error("Failed to create user:", ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
