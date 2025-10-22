@@ -22,7 +22,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
 
   return (
     <Container size={560} px="md" py="xl" mx="auto">
-      <Card shadow="sm" padding="lg" radius="md" withBorder w="100%" mx="auto">
+  <Card shadow="sm" padding="lg" radius="md" withBorder w="100%" mx="auto" style={{background: '#0006'}}>
         <Stack align="center" gap="xl">
           <div
             className="shield-ripple"
