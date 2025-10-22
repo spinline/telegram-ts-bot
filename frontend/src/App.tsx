@@ -428,22 +428,15 @@ function App() {
   const preferredColorScheme = useColorScheme();
   const webApp = window.Telegram.WebApp;
 
-  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations'>(() => {
-    // localStorage'dan kaydedilmiş ekranı al
-    const saved = localStorage.getItem('currentScreen');
-    return (saved as any) || 'welcome';
-  });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations'>('welcome');
   const [screenHistory, setScreenHistory] = useState<Array<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations'>>(['welcome']);
   const [onlineStatus, setOnlineStatus] = useState<'online' | 'offline' | null>(null);
   const [accountData, setAccountData] = useState<Partial<AccountResponse> | null>(null);
 
-  // currentScreen değiştiğinde localStorage'a kaydet
+  // Debug için screenHistory'yi konsola yazdır
   useEffect(() => {
-    localStorage.setItem('currentScreen', currentScreen);
-    // Debug: history length
-    console.log('Screen history length:', screenHistory.length);
-  }, [currentScreen, screenHistory]);
+    console.log('Screen history:', screenHistory);
+  }, [screenHistory]);
 
   useEffect(() => {
     webApp.ready();
