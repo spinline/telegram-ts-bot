@@ -25,7 +25,7 @@ export default function Congratulations({ onFinish }: CongratulationsProps) {
         className="shield-ripple"
         style={{
           position: 'absolute',
-          top: -140,
+          top: -170,
           zIndex: 3,
           ['--signal-color' as any]: 'rgba(20, 184, 166, 0.55)',
         }}
