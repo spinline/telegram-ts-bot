@@ -80,7 +80,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
   };
 
   return (
-    <Container size={800} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
+    <Container size={1000} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
       {/* Kalkan iç çerçevenin dışında */}
       <div
         className="shield-ripple"

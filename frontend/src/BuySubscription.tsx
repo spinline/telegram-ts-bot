@@ -77,7 +77,7 @@ function BuySubscription({}: BuySubscriptionProps) {
   };
 
   return (
-    <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px' }}>
+    <Container size={1000} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px' }}>
       {/* İç çerçeve */}
       <div
         style={{
