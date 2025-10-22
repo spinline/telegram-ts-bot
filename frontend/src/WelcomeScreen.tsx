@@ -20,6 +20,17 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
 
   const isOnline = useMemo(() => onlineStatus === 'online', [onlineStatus]);
 
+  // İşletim sistemi tespiti
+  const platform = useMemo(() => {
+    const ua = navigator.userAgent;
+    if (/iPad|iPhone|iPod/.test(ua)) {
+      return 'iOS';
+    } else if (/Android/.test(ua)) {
+      return 'Android';
+    }
+    return 'iOS'; // Varsayılan
+  }, []);
+
   // Haptic feedback fonksiyonu
   const triggerHaptic = () => {
     try {
@@ -119,8 +130,31 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
               radius="md"
               fullWidth
               onClick={handleInstallSetup}
+              styles={{
+                inner: {
+                  justifyContent: 'space-between',
+                },
+                label: {
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                },
+              }}
             >
-              Kurulum ve Ayarlar (iOS)
+              <span>Kurulum ve Ayarlar</span>
+              <Badge 
+                size="md" 
+                radius="sm" 
+                style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  color: '#14b8a6',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                }}
+              >
+                {platform}
+              </Badge>
             </Button>
 
             <Group grow>
