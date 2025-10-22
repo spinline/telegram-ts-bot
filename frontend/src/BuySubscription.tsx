@@ -77,7 +77,7 @@ function BuySubscription({}: BuySubscriptionProps) {
   };
 
   return (
-    <Container size="xl" px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px', maxWidth: '95%' }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px', width: 'calc(100% - 30px)', maxWidth: '100%', padding: '0 15px' }}>
       {/* İç çerçeve */}
       <div
         style={{
@@ -186,7 +186,7 @@ function BuySubscription({}: BuySubscriptionProps) {
           </Button>
         </Stack>
       </div>
-    </Container>
+    </div>
   );
 }
 

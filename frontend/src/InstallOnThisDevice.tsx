@@ -54,7 +54,7 @@ export default function InstallOnThisDevice({ onNext }: InstallOnThisDeviceProps
   };
 
   return (
-    <Container size="xl" px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px', maxWidth: '95%' }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px', width: 'calc(100% - 30px)', maxWidth: '100%', padding: '0 15px' }}>
       {/* Kalkan iç çerçevenin dışında */}
       <div
         className="shield-ripple"
@@ -154,6 +154,6 @@ export default function InstallOnThisDevice({ onNext }: InstallOnThisDeviceProps
           </Group>
         </Stack>
       </div>
-    </Container>
+    </div>
   );
 }
