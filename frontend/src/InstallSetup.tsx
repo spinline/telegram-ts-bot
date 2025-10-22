@@ -13,6 +13,12 @@ export default function InstallSetup({}: InstallSetupProps) {
       return 'iOS';
     } else if (/Android/.test(ua)) {
       return 'Android';
+    } else if (/Mac OS X/.test(ua)) {
+      return 'macOS';
+    } else if (/Windows/.test(ua)) {
+      return 'Windows';
+    } else if (/Linux/.test(ua)) {
+      return 'Linux';
     }
     return 'iOS'; // Varsayılan
   }, []);
