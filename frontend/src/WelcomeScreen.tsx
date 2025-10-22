@@ -1,4 +1,4 @@
-import { Button, Group, Stack, Text, Title, ThemeIcon, Card, Container, Badge } from '@mantine/core';
+import { Button, Group, Stack, Text, Title, ThemeIcon, Container, Badge } from '@mantine/core';
 import { IconShield, IconShoppingCart, IconSettings, IconUser, IconHeadset } from '@tabler/icons-react';
 import { useEffect, useMemo } from 'react';
 
