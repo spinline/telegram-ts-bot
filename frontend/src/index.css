@@ -1,3 +1,6 @@
+* {
+  box-sizing: border-box;
+}
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -27,10 +30,38 @@ html, body, #root {
 }
 
 body {
+  background-color: #010101;
+  display: flex;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  padding: 15px;
   margin: 0;
-  min-width: 320px;
-  min-height: 100dvh;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  background: var(--black, #1c1c1c);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+body:before {
+  content: "";
+  position: absolute;
+  width: 110%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: #115541;
   background: linear-gradient(45deg, #00150f 0%, #004f39 100%);
+  z-index: 0;
+}
 }
 
 h1 {
