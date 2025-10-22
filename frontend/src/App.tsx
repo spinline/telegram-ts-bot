@@ -31,6 +31,7 @@ import BuySubscription from './BuySubscription'; // BuySubscription bileşenini 
 import InstallSetup from './InstallSetup';
 import InstallOnThisDevice from './InstallOnThisDevice';
 import AddSubscription from './AddSubscription';
+import Congratulations from './Congratulations';
 
 // Telegram Web App script'inin eklediği global nesneyi tanımla
 declare global {
@@ -428,7 +429,7 @@ function App() {
   const preferredColorScheme = useColorScheme();
   const webApp = window.Telegram.WebApp;
 
-  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription'>(() => {
+  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations'>(() => {
     // localStorage'dan kaydedilmiş ekranı al
     const saved = localStorage.getItem('currentScreen');
     return (saved as any) || 'welcome';
@@ -553,7 +554,15 @@ function App() {
     setCurrentScreen('addSubscription');
   };
 
-  const handleAddSubscriptionFinish = () => {
+  const handleAddSubscriptionNext = () => {
+    try {
+      webApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch {}
+    // Tebrikler sayfasına geç
+    setCurrentScreen('congratulations');
+  };
+
+  const handleCongratulationsFinish = () => {
     try {
       webApp?.HapticFeedback?.impactOccurred?.('light');
     } catch {}
@@ -590,9 +599,12 @@ function App() {
             )}
             {currentScreen === 'addSubscription' && (
               <AddSubscription 
-                onFinish={handleAddSubscriptionFinish}
+                onNext={handleAddSubscriptionNext}
                 subscriptionUrl={accountData?.happ?.cryptoLink}
               />
+            )}
+            {currentScreen === 'congratulations' && (
+              <Congratulations onFinish={handleCongratulationsFinish} />
             )}
           </Group>
         </AppShell.Main>
