@@ -22,8 +22,22 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
 
   return (
     <Container size={560} px="md" py="xl" mx="auto">
-  <Card shadow="sm" padding="lg" radius="md" withBorder w="100%" mx="auto" style={{background: '#0006'}}>
-        <Stack align="center" gap="xl">
+  <div
+    style={{
+      display: 'flex',
+      width: '100%',
+      backgroundColor: '#0006',
+      overflow: 'auto',
+      zIndex: 1,
+      padding: 30,
+      flexDirection: 'column',
+      borderRadius: '1rem',
+      maxHeight: '90%',
+      boxShadow: 'none',
+      border: 'none',
+    }}
+  >
+    <Stack align="center" gap="xl">
           <div
             className="shield-ripple"
             style={{
@@ -96,7 +110,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
             </Group>
           </Stack>
         </Stack>
-      </Card>
+  </div>
     </Container>
   );
 }
