@@ -100,7 +100,7 @@ export default function AddSubscription({ onNext, subscriptionUrl }: AddSubscrip
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <IconPlus size={20} style={{ color: '#14b8a6' }} />
-                <Text size="md" fw={600} style={{ color: '#14b8a6' }}>Eklemek için</Text>
+                <Text size="md" fw={600} style={{ color: '#14b8a6' }}>Ekle</Text>
               </div>
             </div>
 
