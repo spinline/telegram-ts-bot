@@ -3,9 +3,10 @@ import { IconShield, IconDeviceMobile, IconQrcode } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
 interface InstallSetupProps {
+  onInstallOnThisDevice: () => void;
 }
 
-export default function InstallSetup({}: InstallSetupProps) {
+export default function InstallSetup({ onInstallOnThisDevice }: InstallSetupProps) {
   // İşletim sistemi tespiti
   const platform = useMemo(() => {
     const ua = navigator.userAgent;
@@ -22,6 +23,18 @@ export default function InstallSetup({}: InstallSetupProps) {
     }
     return 'iOS'; // Varsayılan
   }, []);
+
+  // Haptic feedback
+  const triggerHaptic = () => {
+    try {
+      (window as any)?.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch {}
+  };
+
+  const handleInstallOnThisDevice = () => {
+    triggerHaptic();
+    onInstallOnThisDevice();
+  };
 
   return (
     <Container size={1200} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
@@ -86,7 +99,7 @@ export default function InstallSetup({}: InstallSetupProps) {
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
               }}
-              onClick={() => console.log('Bu cihazda kurulum başlat')}
+              onClick={handleInstallOnThisDevice}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <IconDeviceMobile size={20} style={{ color: '#14b8a6' }} />

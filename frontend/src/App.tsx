@@ -29,6 +29,7 @@ import '@mantine/core/styles.css';
 import WelcomeScreen from './WelcomeScreen';
 import BuySubscription from './BuySubscription'; // BuySubscription bileşenini içe aktar
 import InstallSetup from './InstallSetup';
+import InstallOnThisDevice from './InstallOnThisDevice';
 
 // Telegram Web App script'inin eklediği global nesneyi tanımla
 declare global {
@@ -426,7 +427,7 @@ function App() {
   const preferredColorScheme = useColorScheme();
   const webApp = window.Telegram.WebApp;
 
-  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup'>('welcome');
+  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice'>('welcome');
   const [onlineStatus, setOnlineStatus] = useState<'online' | 'offline' | null>(null);
   const [accountData, setAccountData] = useState<Partial<AccountResponse> | null>(null);
 
@@ -527,6 +528,21 @@ function App() {
     console.log('Destek');
   };
 
+  const handleInstallOnThisDevice = () => {
+    try {
+      webApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch {}
+    setCurrentScreen('installOnThisDevice');
+  };
+
+  const handleInstallOnThisDeviceNext = () => {
+    try {
+      webApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch {}
+    // Sonraki adıma geç (şimdilik ana sayfaya dön)
+    setCurrentScreen('welcome');
+  };
+
   return (
     <MantineProvider defaultColorScheme={preferredColorScheme}>
       <AppShell padding="md">
@@ -549,7 +565,10 @@ function App() {
               <BuySubscription />
             )}
             {currentScreen === 'installSetup' && (
-              <InstallSetup />
+              <InstallSetup onInstallOnThisDevice={handleInstallOnThisDevice} />
+            )}
+            {currentScreen === 'installOnThisDevice' && (
+              <InstallOnThisDevice onNext={handleInstallOnThisDeviceNext} />
             )}
           </Group>
         </AppShell.Main>
