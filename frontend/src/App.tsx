@@ -428,6 +428,7 @@ function App() {
 
   const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup'>('welcome');
   const [onlineStatus, setOnlineStatus] = useState<'online' | 'offline' | null>(null);
+  const [accountData, setAccountData] = useState<Partial<AccountResponse> | null>(null);
 
   useEffect(() => {
     webApp.ready();
@@ -482,6 +483,7 @@ function App() {
     const measureOnce = async () => {
       const acc = (await getAccount()) as Partial<AccountResponse> | null;
       if (cancelled) return;
+      setAccountData(acc); // Hesap bilgilerini kaydet
       const status = String(acc?.status ?? '').toLowerCase();
       const onlineAtMs = acc?.onlineAt ? Date.parse(acc.onlineAt) : 0;
       const connectedAtMs = acc?.lastConnectedNode?.connectedAt ? Date.parse(acc.lastConnectedNode.connectedAt) : 0;
@@ -537,6 +539,7 @@ function App() {
                 onInstallSetup={handleInstallSetup}
                 onSupport={handleSupport}
                 onlineStatus={onlineStatus}
+                expireAt={accountData?.expireAt}
               />
             )}
             {currentScreen === 'account' && (

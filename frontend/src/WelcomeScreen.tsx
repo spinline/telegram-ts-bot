@@ -8,9 +8,10 @@ interface WelcomeScreenProps {
   onInstallSetup: () => void;
   onSupport: () => void;
   onlineStatus?: 'online' | 'offline' | null;
+  expireAt?: string;
 }
 
-function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSupport, onlineStatus }: WelcomeScreenProps) {
+function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSupport, onlineStatus, expireAt }: WelcomeScreenProps) {
   // Telegram WebApp ve kullanıcıyı al
   const webApp = (window as any)?.Telegram?.WebApp;
 
@@ -60,6 +61,24 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
     onSupport();
   };
 
+  // Tarih formatlama fonksiyonu
+  const formatExpireDate = (isoDate: string | undefined) => {
+    if (!isoDate) {
+      return null;
+    }
+
+    const date = new Date(isoDate);
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date.toLocaleDateString('tr-TR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
+
   return (
     <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
       {/* Kalkan iç çerçevenin dışında */}
@@ -98,12 +117,19 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
           border: 'none',
         }}
       >
-        {/* Online / Çevrimdışı Durumu - iç çerçeve sol üstte */}
-        {onlineStatus && (
-          <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light" style={{ position: 'absolute', top: 15, left: 15, zIndex: 3 }}>
-            {isOnline ? 'Online' : 'Çevrimdışı'}
-          </Badge>
-        )}
+        {/* Online / Çevrimdışı Durumu ve Bitiş Tarihi - iç çerçeve sol üstte */}
+        <div style={{ position: 'absolute', top: 15, left: 15, zIndex: 3, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {onlineStatus && (
+            <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light">
+              {isOnline ? 'Online' : 'Çevrimdışı'}
+            </Badge>
+          )}
+          {expireAt && formatExpireDate(expireAt) && (
+            <Text size="sm" style={{ color: '#fbbf24', fontWeight: 500 }}>
+              {formatExpireDate(expireAt)}'e kadar
+            </Text>
+          )}
+        </div>
 
         <Stack align="center" gap="xl">
           <Stack align="center" gap="xs">
