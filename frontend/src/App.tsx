@@ -10,8 +10,6 @@ import {
   Stack,
   Badge,
   Code,
-  useMantineColorScheme,
-  ActionIcon,
   Loader,
   Alert,
   ThemeIcon,
@@ -20,8 +18,6 @@ import {
 } from '@mantine/core';
 import { useColorScheme } from '@mantine/hooks';
 import {
-  IconSun,
-  IconMoon,
   IconCircleCheck,
   IconClock,
   IconBan,
@@ -406,16 +402,14 @@ function AccountPage() {
 
 function App() {
   const preferredColorScheme = useColorScheme();
-  const { setColorScheme } = useMantineColorScheme();
   const webApp = window.Telegram.WebApp;
 
   const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup'>('welcome');
   const [onlineStatus, setOnlineStatus] = useState<'online' | 'offline' | null>(null);
 
   useEffect(() => {
-    setColorScheme(webApp.colorScheme);
     webApp.ready();
-  }, [setColorScheme, webApp.colorScheme, webApp]);
+  }, [webApp]);
 
   // App açılışında tek seferlik çevrimiçi kontrolü
   useEffect(() => {
@@ -467,35 +461,11 @@ function App() {
     console.log('Destek');
   };
 
-  const ColorSchemeToggle = () => {
-    const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-    return (
-      <ActionIcon
-        onClick={() => toggleColorScheme()}
-        variant="default"
-        size="lg"
-        aria-label="Toggle color scheme"
-      >
-        {colorScheme === 'dark' ? <IconSun stroke={1.5} /> : <IconMoon stroke={1.5} />}
-      </ActionIcon>
-    );
-  };
-
   return (
     <MantineProvider defaultColorScheme={preferredColorScheme}>
-      <AppShell
-        header={{ height: 60 }}
-        padding="md"
-      >
-        <AppShell.Header>
-          <Group h="100%" px="md" justify="space-between">
-            <Title order={3}>AuronVPN</Title>
-            <ColorSchemeToggle />
-          </Group>
-        </AppShell.Header>
-
+      <AppShell padding="md">
         <AppShell.Main>
-          <Group justify="center" align="center" style={{ width: '100%', minHeight: 'calc(100dvh - 60px)' }}>
+          <Group justify="center" align="center" style={{ width: '100%', minHeight: '100dvh' }}>
             {currentScreen === 'welcome' && (
               <WelcomeScreen
                 onViewAccount={handleViewAccount}
