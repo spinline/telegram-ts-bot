@@ -98,7 +98,7 @@ function BuySubscription({}: BuySubscriptionProps) {
             <Text size="lg" style={{ color: '#fff', marginBottom: '16px', fontWeight: 500 }}>
               Cihaz Sayısı: {deviceCount}
             </Text>
-            <div style={{ position: 'relative', paddingTop: '20px' }}>
+            <div style={{ position: 'relative', paddingTop: '20px', paddingBottom: '20px' }}>
               <input
                 type="range"
                 min="1"
@@ -116,7 +116,7 @@ function BuySubscription({}: BuySubscriptionProps) {
                 }}
                 className="custom-slider"
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
+              <div style={{ position: 'absolute', top: '17px', left: 0, right: 0, display: 'flex', justifyContent: 'space-between', pointerEvents: 'none' }}>
                 {[1, 2, 3, 4, 5].map(num => (
                   <div
                     key={num}
@@ -125,6 +125,8 @@ function BuySubscription({}: BuySubscriptionProps) {
                       height: '10px',
                       borderRadius: '50%',
                       backgroundColor: deviceCount >= num ? '#14b8a6' : '#374151',
+                      marginLeft: num === 1 ? '0' : '-5px',
+                      marginRight: num === 5 ? '0' : '-5px',
                     }}
                   />
                 ))}
