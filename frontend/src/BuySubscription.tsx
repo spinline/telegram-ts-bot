@@ -64,20 +64,19 @@ function BuySubscription({}: BuySubscriptionProps) {
   };
 
   return (
-    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px', width: '100%' }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px', width: '100%', paddingBottom: '30px' }}>
       {/* İç çerçeve */}
       <div
         style={{
           display: 'flex',
           width: '100%',
           backgroundColor: '#0006',
-          overflow: 'auto',
+          overflow: 'visible',
           zIndex: 2,
           position: 'relative',
           padding: 30,
           flexDirection: 'column',
           borderRadius: '1rem',
-          maxHeight: '90%',
           boxShadow: 'none',
           border: 'none',
         }}
