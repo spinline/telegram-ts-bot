@@ -8,6 +8,13 @@ import { createUser, getUserByTelegramId } from "./api";
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
+import {
+  createVerificationSession,
+  verifyOTP,
+  isUserVerified,
+  isUserLockedOut,
+  getRemainingLockoutTime,
+} from "./verificationManager";
 
 // --- EXPRESS API SETUP ---
 const app = express();
@@ -78,6 +85,52 @@ app.get('/api/account', verifyTelegramWebAppData, async (req: Request, res: Resp
 // --- GRAMMY BOT SETUP ---
 const bot = new Bot<Context>(process.env.BOT_TOKEN || "");
 
+// Middleware to check verification status
+bot.use(async (ctx, next) => {
+  const userId = ctx.from?.id;
+  
+  // Skip verification check for /start and /verify commands
+  if (ctx.message && 'text' in ctx.message) {
+    const text = ctx.message.text;
+    if (text?.startsWith('/start') || text?.startsWith('/verify')) {
+      return next();
+    }
+  }
+  
+  // Skip verification check for verification-related callbacks
+  if (ctx.callbackQuery?.data === 'start_verification' || ctx.callbackQuery?.data === 'request_assistance') {
+    return next();
+  }
+  
+  // Check if user is verified
+  if (userId && !isUserVerified(userId)) {
+    // Check if user is locked out
+    if (isUserLockedOut(userId)) {
+      const minutesRemaining = getRemainingLockoutTime(userId);
+      await ctx.reply(
+        `⚠️ You are temporarily locked out due to too many failed verification attempts.\n\n` +
+        `Please try again in ${minutesRemaining} minute(s).`
+      );
+      return;
+    }
+    
+    // Redirect to verification
+    const verificationKeyboard = new InlineKeyboard()
+      .text("🔐 Start Verification", "start_verification")
+      .row()
+      .text("❓ Need Help?", "request_assistance");
+    
+    await ctx.reply(
+      "⚠️ You need to complete verification before using the bot.\n\n" +
+      "Please click the button below to start the verification process.",
+      { reply_markup: verificationKeyboard }
+    );
+    return;
+  }
+  
+  return next();
+});
+
 // OpenAPI YAML dosyasını yükle
 let openApiDocument: any;
 const openApiFilePath = "./openapi.yaml";
@@ -106,13 +159,56 @@ const startKeyboard = new InlineKeyboard()
 
 // /start komutuna yanıt ver
 bot.command("start", async (ctx) => {
-  const welcomeMessage = `
+  const userId = ctx.from?.id;
+  
+  if (!userId) {
+    await ctx.reply("Unable to identify your Telegram account. Please try again.");
+    return;
+  }
+  
+  // Check if user is already verified
+  if (isUserVerified(userId)) {
+    const welcomeMessage = `
 Hoş geldiniz! Bu bot ile VPN hizmetinize erişebilirsiniz.
 
 Lütfen aşağıdaki seçeneklerden birini seçin:
 `;
-  await ctx.reply(welcomeMessage, {
-    reply_markup: startKeyboard,
+    await ctx.reply(welcomeMessage, {
+      reply_markup: startKeyboard,
+    });
+    return;
+  }
+  
+  // User is not verified - show verification welcome message
+  const verificationWelcomeMessage = `
+🔐 **Welcome to VPN Bot - Verification Required**
+
+For your security and to ensure only authenticated users access our services, we require all users to complete a verification process.
+
+**Why Verification?**
+• Protect your account from unauthorized access
+• Ensure secure VPN service delivery
+• Maintain system integrity
+
+**How it works:**
+1. Click "Start Verification" below
+2. You'll receive a 6-digit verification code
+3. Enter the code when prompted
+4. Access granted! ✅
+
+The verification code expires in 5 minutes and you have up to 3 attempts.
+
+Ready to get started?
+`;
+
+  const verificationKeyboard = new InlineKeyboard()
+    .text("🔐 Start Verification", "start_verification")
+    .row()
+    .text("❓ Need Help?", "request_assistance");
+
+  await ctx.reply(verificationWelcomeMessage, {
+    parse_mode: "Markdown",
+    reply_markup: verificationKeyboard,
   });
 });
 
@@ -189,6 +285,182 @@ bot.on("message", async (ctx) => {
 });
 
 bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
+
+// Handle "Start Verification" button
+bot.callbackQuery("start_verification", async (ctx) => {
+  const userId = ctx.from?.id;
+  
+  if (!userId) {
+    await ctx.answerCallbackQuery("Unable to identify your account.");
+    return;
+  }
+  
+  try {
+    // Check if user is locked out
+    if (isUserLockedOut(userId)) {
+      const minutesRemaining = getRemainingLockoutTime(userId);
+      await ctx.answerCallbackQuery({
+        text: `You are locked out. Try again in ${minutesRemaining} minutes.`,
+        show_alert: true,
+      });
+      return;
+    }
+    
+    // Create verification session and generate OTP
+    const code = createVerificationSession(userId);
+    
+    await ctx.answerCallbackQuery("Verification code generated!");
+    
+    await ctx.reply(
+      `🔐 **Verification Code**\n\n` +
+      `Your verification code is: \`${code}\`\n\n` +
+      `⏱ This code will expire in 5 minutes.\n` +
+      `📝 You have 3 attempts to enter the correct code.\n\n` +
+      `Please use the /verify command followed by your code:\n` +
+      `Example: \`/verify ${code}\``,
+      { parse_mode: "Markdown" }
+    );
+  } catch (error: any) {
+    await ctx.answerCallbackQuery({
+      text: error.message || "Failed to generate verification code.",
+      show_alert: true,
+    });
+  }
+});
+
+// Handle "Need Help?" button
+bot.callbackQuery("request_assistance", async (ctx) => {
+  await ctx.answerCallbackQuery("Help information");
+  
+  const helpMessage = `
+🆘 **Verification Help**
+
+**Common Issues:**
+
+**Can't receive verification code?**
+• Make sure you clicked "Start Verification"
+• Check that the bot can send you messages
+• Try the /start command again
+
+**Code expired?**
+• Verification codes expire after 5 minutes
+• Click "Start Verification" again to get a new code
+
+**Too many failed attempts?**
+• After 3 incorrect attempts, you'll be locked out for 15 minutes
+• Wait for the lockout period to end
+• Then start verification again
+
+**Still need help?**
+• Contact support: @support_username
+• Email: support@example.com
+
+**Commands:**
+/start - Start over and begin verification
+/verify <code> - Enter your verification code
+/help - Show general help
+`;
+
+  await ctx.reply(helpMessage, { parse_mode: "Markdown" });
+});
+
+// Add /verify command to handle code submission
+bot.command("verify", async (ctx) => {
+  const userId = ctx.from?.id;
+  
+  if (!userId) {
+    await ctx.reply("Unable to identify your account. Please try again.");
+    return;
+  }
+  
+  // Check if already verified
+  if (isUserVerified(userId)) {
+    await ctx.reply("✅ You are already verified! Use /start to access the bot features.");
+    return;
+  }
+  
+  // Extract the code from the message
+  const text = ctx.message?.text || "";
+  const parts = text.split(/\s+/);
+  
+  if (parts.length < 2) {
+    await ctx.reply(
+      "❌ Please provide a verification code.\n\n" +
+      "Usage: `/verify <your-code>`\n" +
+      "Example: `/verify 123456`",
+      { parse_mode: "Markdown" }
+    );
+    return;
+  }
+  
+  const code = parts[1].trim();
+  
+  if (!/^\d{6}$/.test(code)) {
+    await ctx.reply("❌ Invalid code format. The verification code should be 6 digits.");
+    return;
+  }
+  
+  // Verify the code
+  const result = verifyOTP(userId, code);
+  
+  if (result.success) {
+    const successKeyboard = new InlineKeyboard()
+      .text("🚀 Get Started", "verified_start");
+    
+    await ctx.reply(
+      `✅ **${result.message}**\n\n` +
+      `Welcome to the VPN Bot! You can now access all features.\n\n` +
+      `Click below to get started or use /start anytime.`,
+      { 
+        parse_mode: "Markdown",
+        reply_markup: successKeyboard
+      }
+    );
+  } else {
+    // Check if user got locked out
+    if (isUserLockedOut(userId)) {
+      const minutesRemaining = getRemainingLockoutTime(userId);
+      const retryKeyboard = new InlineKeyboard()
+        .text("❓ Need Help?", "request_assistance");
+      
+      await ctx.reply(
+        `🔒 **Account Locked**\n\n` +
+        `${result.message}\n\n` +
+        `You can try again in ${minutesRemaining} minute(s).`,
+        { 
+          parse_mode: "Markdown",
+          reply_markup: retryKeyboard
+        }
+      );
+    } else {
+      const retryKeyboard = new InlineKeyboard()
+        .text("🔄 Request New Code", "start_verification")
+        .row()
+        .text("❓ Need Help?", "request_assistance");
+      
+      await ctx.reply(
+        `❌ ${result.message}\n\n` +
+        `Please try again or request a new code if yours has expired.`,
+        { reply_markup: retryKeyboard }
+      );
+    }
+  }
+});
+
+// Handle "Get Started" button after successful verification
+bot.callbackQuery("verified_start", async (ctx) => {
+  await ctx.answerCallbackQuery("Loading main menu...");
+  
+  const welcomeMessage = `
+Hoş geldiniz! Bu bot ile VPN hizmetinize erişebilirsiniz.
+
+Lütfen aşağıdaki seçeneklerden birini seçin:
+`;
+  
+  await ctx.reply(welcomeMessage, {
+    reply_markup: startKeyboard,
+  });
+});
 
 // "Try for Free" düğmesine basıldığında (orijinal callback)
 bot.callbackQuery("try_free", async (ctx) => {
