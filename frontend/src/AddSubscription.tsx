@@ -1,12 +1,12 @@
 import { Container, Stack, Text, ThemeIcon, Group, Title } from '@mantine/core';
-import { IconShield, IconPlus, IconCheck } from '@tabler/icons-react';
+import { IconShield, IconPlus, IconArrowRight } from '@tabler/icons-react';
 
 interface AddSubscriptionProps {
-  onFinish: () => void;
+  onNext: () => void;
   subscriptionUrl?: string;
 }
 
-export default function AddSubscription({ onFinish, subscriptionUrl }: AddSubscriptionProps) {
+export default function AddSubscription({ onNext, subscriptionUrl }: AddSubscriptionProps) {
   // Haptic feedback
   const triggerHaptic = () => {
     try {
@@ -16,15 +16,22 @@ export default function AddSubscription({ onFinish, subscriptionUrl }: AddSubscr
 
   const handleAddSubscription = () => {
     triggerHaptic();
+    // Sadece Happ crypto linki aç
     if (subscriptionUrl) {
-      // Happ crypto linki aç
       window.open(subscriptionUrl, '_blank');
     }
   };
 
-  const handleFinish = () => {
+  const handleNext = () => {
     triggerHaptic();
-    onFinish();
+    // Linki aç ve sonraki sayfaya geç
+    if (subscriptionUrl) {
+      window.open(subscriptionUrl, '_blank');
+    }
+    // Linki açtıktan sonra sonraki sayfaya geç
+    setTimeout(() => {
+      onNext();
+    }, 500);
   };
 
   return (
@@ -118,11 +125,11 @@ export default function AddSubscription({ onFinish, subscriptionUrl }: AddSubscr
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
               }}
-              onClick={handleFinish}
+              onClick={handleNext}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Text size="md" fw={500} style={{ color: '#fff' }}>Bitir</Text>
-                <IconCheck size={20} style={{ color: '#fff' }} />
+                <Text size="md" fw={500} style={{ color: '#fff' }}>Sonraki</Text>
+                <IconArrowRight size={20} style={{ color: '#fff' }} />
               </div>
             </div>
           </Group>
