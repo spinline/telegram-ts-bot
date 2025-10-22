@@ -204,7 +204,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
               </Badge>
             </Button>
 
-            <Group grow gap="sm">
+            <Group grow>
               <Button
                 leftSection={<IconUser size={20} />}
                 variant="light"
@@ -212,13 +212,6 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
                 size="md"
                 radius="md"
                 onClick={handleViewAccount}
-                styles={{
-                  label: {
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  },
-                }}
               >
                 Hesabım
               </Button>
@@ -229,13 +222,6 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
                 size="md"
                 radius="md"
                 onClick={handleSupport}
-                styles={{
-                  label: {
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  },
-                }}
               >
                 Destek
               </Button>
