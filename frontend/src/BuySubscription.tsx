@@ -13,7 +13,6 @@ import { IconDeviceLaptop, IconShoppingCart } from '@tabler/icons-react';
 
 
 interface BuySubscriptionProps {
-  onBack: () => void;
 }
 
 interface SubscriptionOption {
@@ -23,7 +22,7 @@ interface SubscriptionOption {
   isPopular?: boolean;
 }
 
-function BuySubscription({ onBack }: BuySubscriptionProps) {
+function BuySubscription({}: BuySubscriptionProps) {
   const [deviceCount, setDeviceCount] = useState(3); // Varsayılan olarak 3 cihaz seçili
   const [selectedDurationIndex, setSelectedDurationIndex] = useState(0); // Seçilen abonelik süresi indeksi
 
@@ -177,9 +176,6 @@ function BuySubscription({ onBack }: BuySubscriptionProps) {
           </Button>
         </Stack>
       </div>
-      <Group justify="center" mt="md">
-        <Button variant="light" onClick={onBack} style={{ color: '#fff' }}>Geri</Button>
-      </Group>
     </Container>
   );
 }

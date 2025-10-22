@@ -60,7 +60,7 @@ interface AccountResponse {
 }
 
 // AccountPage bileşeni, hesap detaylarını gösterecek
-function AccountPage({ onBack }: { onBack: () => void }) {
+function AccountPage({}: { onBack?: () => void }) {
   const webApp = window.Telegram.WebApp;
   const user = webApp.initDataUnsafe?.user;
   const [loading, setLoading] = useState(true);
@@ -413,9 +413,6 @@ function AccountPage({ onBack }: { onBack: () => void }) {
         )}
       </Stack>
       </div>
-      <Group justify="center" mt="md">
-        <Button variant="light" onClick={onBack} style={{ color: '#fff' }}>Geri</Button>
-      </Group>
     </Container>
   );
 }
@@ -496,13 +493,13 @@ function App() {
               />
             )}
             {currentScreen === 'account' && (
-              <AccountPage onBack={() => setCurrentScreen('welcome')} />
+              <AccountPage />
             )}
             {currentScreen === 'buySubscription' && (
-              <BuySubscription onBack={() => setCurrentScreen('welcome')} />
+              <BuySubscription />
             )}
             {currentScreen === 'installSetup' && (
-              <InstallSetup onBack={() => setCurrentScreen('welcome')} />
+              <InstallSetup />
             )}
           </Group>
         </AppShell.Main>

@@ -1,11 +1,10 @@
-import { Button, Container, Group, Stack, Text, ThemeIcon, Title } from '@mantine/core';
-import { IconArrowLeft, IconShield } from '@tabler/icons-react';
+import { Container, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { IconShield } from '@tabler/icons-react';
 
 interface InstallSetupProps {
-  onBack: () => void;
 }
 
-export default function InstallSetup({ onBack }: InstallSetupProps) {
+export default function InstallSetup({}: InstallSetupProps) {
   return (
     <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px' }}>
       {/* İç çerçeve */}
@@ -48,12 +47,6 @@ export default function InstallSetup({ onBack }: InstallSetupProps) {
             <Text fw={600} mt="sm" style={{ color: '#fff' }}>Android</Text>
             <Text c="dimmed" size="sm">1) Uygulamayı Play Store'dan indirin. 2) Hesabım sayfasından bağlantıyı açın. 3) Profili etkinleştirin.</Text>
           </Stack>
-
-          <Group justify="center" mt="md">
-            <Button leftSection={<IconArrowLeft size={18} />} variant="light" color="gray" onClick={onBack}>
-              Geri Dön
-            </Button>
-          </Group>
         </Stack>
       </div>
     </Container>
