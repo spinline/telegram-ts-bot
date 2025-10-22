@@ -427,9 +427,18 @@ function App() {
   const preferredColorScheme = useColorScheme();
   const webApp = window.Telegram.WebApp;
 
-  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice'>('welcome');
+  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice'>(() => {
+    // localStorage'dan kaydedilmiş ekranı al
+    const saved = localStorage.getItem('currentScreen');
+    return (saved as any) || 'welcome';
+  });
   const [onlineStatus, setOnlineStatus] = useState<'online' | 'offline' | null>(null);
   const [accountData, setAccountData] = useState<Partial<AccountResponse> | null>(null);
+
+  // currentScreen değiştiğinde localStorage'a kaydet
+  useEffect(() => {
+    localStorage.setItem('currentScreen', currentScreen);
+  }, [currentScreen]);
 
   useEffect(() => {
     webApp.ready();
