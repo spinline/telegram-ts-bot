@@ -355,21 +355,21 @@ function AccountPage({}: { onBack?: () => void }) {
                   {accountStats && (
                     <Stack gap={4}>
                       <Group gap="xs" align="center">
-                        <ThemeIcon color="grape" variant="light" radius="xl">
+                        <ThemeIcon color="teal" variant="light" radius="xl">
                           <IconGauge size={16} />
                         </ThemeIcon>
-                        <Text size="sm">Kota Kullanımı:</Text>
+                        <Text size="sm" style={{ color: '#14b8a6' }}>Kota Kullanımı:</Text>
                       </Group>
                       <Progress
                         value={accountStats.usagePercentage}
                         size="lg"
                         radius="xl"
-                        color="grape"
+                        color="teal"
                       />
                       <Text size="sm" c="dimmed" mt={4}>
                         {`${accountStats.usagePercentage.toFixed(0)}% kullanıldı`}
                       </Text>
-                      <Code block>
+                      <Code block style={{ backgroundColor: '#0009', color: '#14b8a6', border: '1px solid #14b8a6' }}>
                         {`${formatBytes(accountStats.used)} / ${formatBytes(accountStats.limit)} (${formatBytes(accountStats.remaining)} kaldı)`}
                       </Code>
                     </Stack>
