@@ -74,7 +74,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
 
     return date.toLocaleDateString('tr-TR', {
       day: 'numeric',
-      month: 'long',
+      month: 'numeric',
       year: 'numeric',
     });
   };
