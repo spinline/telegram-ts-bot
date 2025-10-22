@@ -11,7 +11,6 @@ interface BuySubscriptionProps {
 
 interface SubscriptionOption {
   duration: string;
-  durationRu: string;
   price: number;
   monthlyPrice?: number;
   isPopular?: boolean;
@@ -25,10 +24,10 @@ function BuySubscription({}: BuySubscriptionProps) {
   // Cihaz sayısına göre abonelik seçenekleri
   const getSubscriptionOptions = (count: number): SubscriptionOption[] => {
     const baseOptions = [
-      { duration: '1 Ay', durationRu: '1 месяц', months: 1, price: 150 * count, isPopular: false },
-      { duration: '3 Ay', durationRu: '3 месяца', months: 3, price: 390 * count, isPopular: false },
-      { duration: '6 Ay', durationRu: '6 месяцев', months: 6, price: 720 * count, isPopular: true },
-      { duration: '1 Yıl', durationRu: '1 год', months: 12, price: 1320 * count, isPopular: false },
+      { duration: '1 Ay', months: 1, price: 150 * count, isPopular: false },
+      { duration: '3 Ay', months: 3, price: 390 * count, isPopular: false },
+      { duration: '6 Ay', months: 6, price: 720 * count, isPopular: true },
+      { duration: '1 Yıl', months: 12, price: 1320 * count, isPopular: false },
     ];
 
     return baseOptions.map(option => ({
@@ -87,17 +86,17 @@ function BuySubscription({}: BuySubscriptionProps) {
           {/* Başlık */}
           <Stack gap="xs">
             <Title order={2} style={{ color: '#fff', fontSize: '28px', fontWeight: 600 }}>
-              Покупка подписки
+              Abonelik Satın Al
             </Title>
             <Text size="md" style={{ color: '#9ca3af' }}>
-              Выберите интересующий тариф и количество устройств
+              İlgilendiğiniz tarifeyi ve cihaz sayısını seçin
             </Text>
           </Stack>
 
           {/* Cihaz sayısı slider */}
           <div>
             <Text size="lg" style={{ color: '#fff', marginBottom: '16px', fontWeight: 500 }}>
-              Количество устройств: {deviceCount}
+              Cihaz Sayısı: {deviceCount}
             </Text>
             <div style={{ position: 'relative', paddingTop: '20px' }}>
               <input
@@ -172,22 +171,22 @@ function BuySubscription({}: BuySubscriptionProps) {
                     fontWeight: 700,
                     textTransform: 'uppercase',
                   }}>
-                    популярный
+                    popüler
                   </div>
                 )}
                 
                 <div style={{ marginTop: option.isPopular ? '28px' : '8px' }}>
-                  <Text size="md" style={{ color: '#9ca3af', marginBottom: '8px' }}>
-                    {option.durationRu}
+                  <Text size="sm" style={{ color: '#9ca3af', marginBottom: '8px' }}>
+                    {option.duration}
                   </Text>
                   
-                  <Text size="32px" fw={700} style={{ color: '#fff', lineHeight: '1.2' }}>
+                  <Text size="28px" fw={700} style={{ color: '#fff', lineHeight: '1.2' }}>
                     {option.price.toFixed(0)} ₽
                   </Text>
                   
                   {option.months > 1 && (
-                    <Text size="sm" style={{ color: '#6b7280', marginTop: '4px' }}>
-                      {option.monthlyPrice?.toFixed(0)}₽ в месяц
+                    <Text size="xs" style={{ color: '#6b7280', marginTop: '4px' }}>
+                      {option.monthlyPrice?.toFixed(0)}₽ / ay
                     </Text>
                   )}
                 </div>
@@ -210,7 +209,7 @@ function BuySubscription({}: BuySubscriptionProps) {
               fontWeight: 600,
             }}
           >
-            Оплатить {selectedOption.price.toFixed(0)} ₽
+            Ödeme Yap {selectedOption.price.toFixed(0)} ₽
           </Button>
         </Stack>
       </div>
