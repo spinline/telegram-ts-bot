@@ -426,7 +426,34 @@ function App() {
 
   useEffect(() => {
     webApp.ready();
-  }, [webApp]);
+    
+    // Üst barı yeşil yap
+    webApp.setHeaderColor('#004f39');
+    webApp.setBackgroundColor('#00150f');
+    
+    // BackButton kontrolü
+    const backButton = webApp.BackButton;
+    
+    if (currentScreen === 'welcome') {
+      // Ana sayfada BackButton'u gizle
+      backButton?.hide();
+    } else {
+      // Alt sayfalarda BackButton'u göster
+      backButton?.show();
+      
+      // BackButton tıklandığında ana sayfaya dön
+      const handleBackClick = () => {
+        setCurrentScreen('welcome');
+      };
+      
+      backButton?.onClick(handleBackClick);
+      
+      // Cleanup: event listener'ı kaldır
+      return () => {
+        backButton?.offClick(handleBackClick);
+      };
+    }
+  }, [webApp, currentScreen]);
 
   // App açılışında tek seferlik çevrimiçi kontrolü
   useEffect(() => {
