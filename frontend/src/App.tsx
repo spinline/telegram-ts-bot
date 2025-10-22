@@ -433,6 +433,7 @@ function App() {
     const saved = localStorage.getItem('currentScreen');
     return (saved as any) || 'welcome';
   });
+  const [screenHistory, setScreenHistory] = useState<Array<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations'>>(['welcome']);
   const [onlineStatus, setOnlineStatus] = useState<'online' | 'offline' | null>(null);
   const [accountData, setAccountData] = useState<Partial<AccountResponse> | null>(null);
 
@@ -458,12 +459,22 @@ function App() {
       // Alt sayfalarda BackButton'u göster
       backButton?.show();
       
-      // BackButton tıklandığında ana sayfaya dön
+      // BackButton tıklandığında bir önceki sayfaya dön
       const handleBackClick = () => {
         try {
           webApp?.HapticFeedback?.impactOccurred?.('light');
         } catch {}
-        setCurrentScreen('welcome');
+        
+        setScreenHistory(prev => {
+          if (prev.length > 1) {
+            const newHistory = [...prev];
+            newHistory.pop(); // Mevcut sayfayı çıkar
+            const previousScreen = newHistory[newHistory.length - 1];
+            setCurrentScreen(previousScreen);
+            return newHistory;
+          }
+          return prev;
+        });
       };
       
       backButton?.onClick(handleBackClick);
@@ -514,6 +525,7 @@ function App() {
     try {
       webApp?.HapticFeedback?.impactOccurred?.('light');
     } catch {}
+    setScreenHistory(prev => [...prev, 'account']);
     setCurrentScreen('account');
   };
 
@@ -521,6 +533,7 @@ function App() {
     try {
       webApp?.HapticFeedback?.impactOccurred?.('light');
     } catch {}
+    setScreenHistory(prev => [...prev, 'buySubscription']);
     setCurrentScreen('buySubscription'); // buySubscription ekranına geçiş
   };
 
@@ -528,6 +541,7 @@ function App() {
     try {
       webApp?.HapticFeedback?.impactOccurred?.('light');
     } catch {}
+    setScreenHistory(prev => [...prev, 'installSetup']);
     setCurrentScreen('installSetup');
   };
 
@@ -542,6 +556,7 @@ function App() {
     try {
       webApp?.HapticFeedback?.impactOccurred?.('light');
     } catch {}
+    setScreenHistory(prev => [...prev, 'installOnThisDevice']);
     setCurrentScreen('installOnThisDevice');
   };
 
@@ -550,6 +565,7 @@ function App() {
       webApp?.HapticFeedback?.impactOccurred?.('light');
     } catch {}
     // Abonelik sayfasına geç
+    setScreenHistory(prev => [...prev, 'addSubscription']);
     setCurrentScreen('addSubscription');
   };
 
@@ -558,6 +574,7 @@ function App() {
       webApp?.HapticFeedback?.impactOccurred?.('light');
     } catch {}
     // Tebrikler sayfasına geç
+    setScreenHistory(prev => [...prev, 'congratulations']);
     setCurrentScreen('congratulations');
   };
 
@@ -565,7 +582,8 @@ function App() {
     try {
       webApp?.HapticFeedback?.impactOccurred?.('light');
     } catch {}
-    // Ana sayfaya dön
+    // Ana sayfaya dön ve geçmişi sıfırla
+    setScreenHistory(['welcome']);
     setCurrentScreen('welcome');
   };
 
