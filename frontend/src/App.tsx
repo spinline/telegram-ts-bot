@@ -492,33 +492,46 @@ function App() {
     } else {
       // Alt sayfalarda BackButton'u göster
       backButton?.show();
-      
-      // BackButton tıklandığında bir önceki sayfaya dön
-      const handleBackClick = () => {
-        try {
-          webApp?.HapticFeedback?.impactOccurred?.('light');
-        } catch {}
-        
-        setScreenHistory(prev => {
-          if (prev.length > 1) {
-            const newHistory = [...prev];
-            newHistory.pop(); // Mevcut sayfayı çıkar
-            const previousScreen = newHistory[newHistory.length - 1];
-            setCurrentScreen(previousScreen);
-            return newHistory;
-          }
-          return prev;
-        });
-      };
-      
-      backButton?.onClick(handleBackClick);
-      
-      // Cleanup: event listener'ı kaldır
-      return () => {
-        backButton?.offClick(handleBackClick);
-      };
     }
   }, [webApp, currentScreen]);
+
+  // BackButton click handler'ını ayrı bir useEffect'te tanımla
+  useEffect(() => {
+    const backButton = webApp.BackButton;
+    
+    const handleBackClick = () => {
+      try {
+        webApp?.HapticFeedback?.impactOccurred?.('light');
+      } catch {}
+      
+      setScreenHistory(prev => {
+        if (prev.length > 1) {
+          const newHistory = [...prev];
+          newHistory.pop(); // Mevcut sayfayı çıkar
+          const previousScreen = newHistory[newHistory.length - 1];
+          
+          // currentScreen'i hemen güncelle
+          setCurrentScreen(previousScreen);
+          
+          // localStorage'ı güncelle
+          try {
+            localStorage.setItem('currentScreen', previousScreen);
+            localStorage.setItem('screenHistory', JSON.stringify(newHistory));
+          } catch {}
+          
+          return newHistory;
+        }
+        return prev;
+      });
+    };
+    
+    backButton?.onClick(handleBackClick);
+    
+    // Cleanup: event listener'ı kaldır
+    return () => {
+      backButton?.offClick(handleBackClick);
+    };
+  }, [webApp]);
 
   // App açılışında tek seferlik çevrimiçi kontrolü
   useEffect(() => {
