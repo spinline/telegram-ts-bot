@@ -1,4 +1,4 @@
-import { Container, Stack, Text, ThemeIcon, Group } from '@mantine/core';
+import { Container, Stack, Text, ThemeIcon, Group, Title } from '@mantine/core';
 import { IconShield, IconDownload, IconArrowRight } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
@@ -93,6 +93,7 @@ export default function InstallOnThisDevice({ onNext }: InstallOnThisDeviceProps
       >
         <Stack align="center" gap="lg">
           <Stack align="center" gap="xs">
+            <Title order={3} style={{ color: '#fff' }}>Uygulama</Title>
             <Text c="dimmed" ta="center" size="lg" mt="md">
               "Happ" uygulamasını yükleyin ve bu ekrana geri dönün
             </Text>
