@@ -5,7 +5,6 @@ import {
   Stack,
   Text,
   Title,
-  Card,
   Container,
   Slider,
   Badge,
@@ -69,11 +68,27 @@ function BuySubscription({ onBack }: BuySubscriptionProps) {
   };
 
   return (
-    <Container size={560} px="md" py="xl" mx="auto">
-      <Card shadow="sm" padding="lg" radius="md" withBorder w="100%" mx="auto">
+    <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px' }}>
+      {/* İç çerçeve */}
+      <div
+        style={{
+          display: 'flex',
+          width: '100%',
+          backgroundColor: '#0006',
+          overflow: 'auto',
+          zIndex: 2,
+          position: 'relative',
+          padding: 30,
+          flexDirection: 'column',
+          borderRadius: '1rem',
+          maxHeight: '90%',
+          boxShadow: 'none',
+          border: 'none',
+        }}
+      >
         <Stack gap="xl">
           <Stack gap="xs">
-            <Title order={2}>Abonelik Satın Al</Title>
+            <Title order={2} style={{ color: '#fff' }}>Abonelik Satın Al</Title>
             <Text c="dimmed">İlgilendiğiniz tarifeyi ve cihaz sayısını seçin</Text>
           </Stack>
 
@@ -107,22 +122,22 @@ function BuySubscription({ onBack }: BuySubscriptionProps) {
           <Stack gap="md">
             <Group grow>
               {subscriptionOptions.map((option, index) => (
-                <Card
+                <div
                   key={index}
-                  shadow="xs"
-                  padding="md"
-                  radius="md"
-                  withBorder
                   style={{
                     cursor: 'pointer',
-                    borderColor: selectedDurationIndex === index ? 'var(--mantine-color-green-6)' : undefined,
+                    backgroundColor: '#0009',
+                    borderColor: selectedDurationIndex === index ? '#10b981' : '#333',
                     borderWidth: selectedDurationIndex === index ? 2 : 1,
+                    borderStyle: 'solid',
+                    borderRadius: '0.5rem',
+                    padding: '1rem',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    aspectRatio: '1 / 1', // Kare olmasını sağlar
-                    minWidth: '120px', // Minimum genişlik
+                    aspectRatio: '1 / 1',
+                    minWidth: '120px',
                   }}
                   onClick={() => setSelectedDurationIndex(index)}
                 >
@@ -144,7 +159,7 @@ function BuySubscription({ onBack }: BuySubscriptionProps) {
                       </Text>
                     )}
                   </Stack>
-                </Card>
+                </div>
               ))}
             </Group>
           </Stack>
@@ -161,9 +176,9 @@ function BuySubscription({ onBack }: BuySubscriptionProps) {
             Ödeme Yap {selectedOption.price.toFixed(0)} TL
           </Button>
         </Stack>
-      </Card>
+      </div>
       <Group justify="center" mt="md">
-        <Button variant="light" onClick={onBack}>Geri</Button>
+        <Button variant="light" onClick={onBack} style={{ color: '#fff' }}>Geri</Button>
       </Group>
     </Container>
   );
