@@ -61,48 +61,6 @@ export default function InstallSetup({}: InstallSetupProps) {
             <Text c="dimmed" ta="center">VPN kurulumu sadece 3 adımda, sadece birkaç dakika sürmektedir.</Text>
           </Stack>
 
-          <Stack gap="md" w="100%" style={{ textAlign: 'left' }}>
-            {platform === 'iOS' ? (
-              <>
-                <div>
-                  <Text fw={600} size="md" style={{ color: '#14b8a6', marginBottom: 8 }}>1. Uygulamayı İndirin</Text>
-                  <Text c="dimmed" size="sm">App Store'dan "Happ Proxy" uygulamasını indirin ve yükleyin.</Text>
-                </div>
-                <div>
-                  <Text fw={600} size="md" style={{ color: '#14b8a6', marginBottom: 8 }}>2. Profil Linkini Alın</Text>
-                  <Text c="dimmed" size="sm">"Hesabım" sayfasından "Abonelik Linkini Aç" butonuna tıklayın. Link otomatik olarak kopyalanacaktır.</Text>
-                </div>
-                <div>
-                  <Text fw={600} size="md" style={{ color: '#14b8a6', marginBottom: 8 }}>3. Safari'de Açın</Text>
-                  <Text c="dimmed" size="sm">Safari tarayıcısını açın ve adres çubuğuna kopyalanan linki yapıştırın.</Text>
-                </div>
-                <div>
-                  <Text fw={600} size="md" style={{ color: '#14b8a6', marginBottom: 8 }}>4. Profili Onaylayın</Text>
-                  <Text c="dimmed" size="sm">Açılan sayfada "Happ'te Aç" butonuna tıklayın ve profili yükleyin.</Text>
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <Text fw={600} size="md" style={{ color: '#14b8a6', marginBottom: 8 }}>1. Uygulamayı İndirin</Text>
-                  <Text c="dimmed" size="sm">Play Store'dan "Happ Proxy" uygulamasını indirin ve yükleyin.</Text>
-                </div>
-                <div>
-                  <Text fw={600} size="md" style={{ color: '#14b8a6', marginBottom: 8 }}>2. Profil Linkini Alın</Text>
-                  <Text c="dimmed" size="sm">"Hesabım" sayfasından "Abonelik Linkini Aç" butonuna tıklayın.</Text>
-                </div>
-                <div>
-                  <Text fw={600} size="md" style={{ color: '#14b8a6', marginBottom: 8 }}>3. Profili Ekleyin</Text>
-                  <Text c="dimmed" size="sm">Açılan sayfada "Happ'te Aç" veya "Open in Happ" butonuna tıklayın.</Text>
-                </div>
-                <div>
-                  <Text fw={600} size="md" style={{ color: '#14b8a6', marginBottom: 8 }}>4. Bağlantıyı Başlatın</Text>
-                  <Text c="dimmed" size="sm">Uygulama içinde profili seçin ve bağlantıyı başlatın.</Text>
-                </div>
-              </>
-            )}
-          </Stack>
-
           {/* Kurulum seçenekleri */}
           <Stack w="100%" gap="md" mt="lg">
             <div
