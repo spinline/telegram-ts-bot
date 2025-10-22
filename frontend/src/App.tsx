@@ -428,10 +428,48 @@ function App() {
   const preferredColorScheme = useColorScheme();
   const webApp = window.Telegram.WebApp;
 
-  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations'>('welcome');
-  const [screenHistory, setScreenHistory] = useState<Array<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations'>>(['welcome']);
+  // localStorage'dan başlangıç state'ini al
+  const getInitialScreen = () => {
+    try {
+      const saved = localStorage.getItem('currentScreen');
+      if (saved && ['welcome', 'account', 'buySubscription', 'installSetup', 'installOnThisDevice', 'addSubscription', 'congratulations'].includes(saved)) {
+        return saved as 'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations';
+      }
+    } catch {}
+    return 'welcome';
+  };
+
+  const getInitialHistory = () => {
+    try {
+      const saved = localStorage.getItem('screenHistory');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return ['welcome'];
+  };
+
+  const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations'>(getInitialScreen());
+  const [screenHistory, setScreenHistory] = useState<Array<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations'>>(getInitialHistory());
   const [onlineStatus, setOnlineStatus] = useState<'online' | 'offline' | null>(null);
   const [accountData, setAccountData] = useState<Partial<AccountResponse> | null>(null);
+
+  // currentScreen değiştiğinde localStorage'a kaydet
+  useEffect(() => {
+    try {
+      localStorage.setItem('currentScreen', currentScreen);
+    } catch {}
+  }, [currentScreen]);
+
+  // screenHistory değiştiğinde localStorage'a kaydet
+  useEffect(() => {
+    try {
+      localStorage.setItem('screenHistory', JSON.stringify(screenHistory));
+    } catch {}
+  }, [screenHistory]);
 
   // Debug için screenHistory'yi konsola yazdır
   useEffect(() => {
