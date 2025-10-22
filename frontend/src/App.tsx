@@ -216,6 +216,11 @@ function AccountPage({}: { onBack?: () => void }) {
   };
 
   const openExternalLink = async (rawUrl: string | undefined, fallbackUrl?: string) => {
+    // Haptic feedback
+    try {
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch {}
+
     if (!rawUrl) {
       console.warn('Açılacak URL bulunamadı.');
       return;
@@ -443,6 +448,9 @@ function App() {
       
       // BackButton tıklandığında ana sayfaya dön
       const handleBackClick = () => {
+        try {
+          webApp?.HapticFeedback?.impactOccurred?.('light');
+        } catch {}
         setCurrentScreen('welcome');
       };
       
@@ -490,18 +498,30 @@ function App() {
   }, [webApp.initData]);
 
   const handleViewAccount = () => {
+    try {
+      webApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch {}
     setCurrentScreen('account');
   };
 
   const handleBuySubscription = () => {
+    try {
+      webApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch {}
     setCurrentScreen('buySubscription'); // buySubscription ekranına geçiş
   };
 
   const handleInstallSetup = () => {
+    try {
+      webApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch {}
     setCurrentScreen('installSetup');
   };
 
   const handleSupport = () => {
+    try {
+      webApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch {}
     console.log('Destek');
   };
 

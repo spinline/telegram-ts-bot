@@ -63,7 +63,17 @@ function BuySubscription({}: BuySubscriptionProps) {
     try { if (!haptic && 'vibrate' in navigator) navigator.vibrate?.(10); } catch {}
   };
   const hapticImpact = () => {
-    try { haptic?.impactOccurred?.('soft'); } catch {}
+    try { haptic?.impactOccurred?.('light'); } catch {}
+  };
+
+  const handlePayment = () => {
+    hapticImpact();
+    console.log(`Ödeme Yap: ${selectedOption.price.toFixed(0)} TL`);
+  };
+
+  const handleSubscriptionSelect = (index: number) => {
+    hapticSelect();
+    setSelectedDurationIndex(index);
   };
 
   return (
@@ -138,7 +148,7 @@ function BuySubscription({}: BuySubscriptionProps) {
                     aspectRatio: '1 / 1',
                     minWidth: '120px',
                   }}
-                  onClick={() => setSelectedDurationIndex(index)}
+                  onClick={() => handleSubscriptionSelect(index)}
                 >
                   <Stack align="center" gap={4}> {/* gap azaltıldı */}
                     {option.isPopular && (
@@ -170,7 +180,7 @@ function BuySubscription({}: BuySubscriptionProps) {
             radius="md"
             fullWidth
             mt="xl"
-            onClick={() => console.log(`Ödeme Yap: ${selectedOption.price.toFixed(0)} TL`)}
+            onClick={handlePayment}
           >
             Ödeme Yap {selectedOption.price.toFixed(0)} TL
           </Button>

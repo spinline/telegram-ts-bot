@@ -20,6 +20,35 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
 
   const isOnline = useMemo(() => onlineStatus === 'online', [onlineStatus]);
 
+  // Haptic feedback fonksiyonu
+  const triggerHaptic = () => {
+    try {
+      webApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch (e) {
+      console.log('Haptic feedback desteklenmiyor');
+    }
+  };
+
+  const handleViewAccount = () => {
+    triggerHaptic();
+    onViewAccount();
+  };
+
+  const handleBuySubscription = () => {
+    triggerHaptic();
+    onBuySubscription();
+  };
+
+  const handleInstallSetup = () => {
+    triggerHaptic();
+    onInstallSetup();
+  };
+
+  const handleSupport = () => {
+    triggerHaptic();
+    onSupport();
+  };
+
   return (
     <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
       {/* Kalkan iç çerçevenin dışında */}
@@ -78,7 +107,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
               size="lg"
               radius="md"
               fullWidth
-              onClick={onBuySubscription}
+              onClick={handleBuySubscription}
             >
               Abonelik Satın Al
             </Button>
@@ -89,7 +118,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
               color="blue"
               radius="md"
               fullWidth
-              onClick={onInstallSetup}
+              onClick={handleInstallSetup}
             >
               Kurulum ve Ayarlar (iOS)
             </Button>
@@ -100,7 +129,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
                 variant="light"
                 color="gray"
                 radius="md"
-                onClick={onViewAccount}
+                onClick={handleViewAccount}
               >
                 Hesabım
               </Button>
@@ -109,7 +138,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
                 variant="light"
                 color="gray"
                 radius="md"
-                onClick={onSupport}
+                onClick={handleSupport}
               >
                 Destek
               </Button>
