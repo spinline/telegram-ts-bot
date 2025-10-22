@@ -6,7 +6,25 @@ interface InstallSetupProps {
 
 export default function InstallSetup({}: InstallSetupProps) {
   return (
-    <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px' }}>
+    <Container size={720} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
+      {/* Kalkan iç çerçevenin dışında */}
+      <div
+        className="shield-ripple"
+        style={{
+          position: 'absolute',
+          top: -140,
+          zIndex: 3,
+          ['--signal-color' as any]: 'rgba(20, 184, 166, 0.55)',
+        }}
+      >
+        <div className="ripple ripple-1" />
+        <div className="ripple ripple-2" />
+        <div className="ripple ripple-3" />
+        <ThemeIcon variant="filled" size={120} radius="xl" color="teal" className="shield-core">
+          <IconShield style={{ width: '70%', height: '70%' }} stroke={1.6} />
+        </ThemeIcon>
+      </div>
+
       {/* İç çerçeve */}
       <div
         style={{
@@ -17,6 +35,7 @@ export default function InstallSetup({}: InstallSetupProps) {
           zIndex: 2,
           position: 'relative',
           padding: 30,
+          paddingTop: 100,
           flexDirection: 'column',
           borderRadius: '1rem',
           maxHeight: '90%',
@@ -25,17 +44,7 @@ export default function InstallSetup({}: InstallSetupProps) {
         }}
       >
         <Stack align="center" gap="lg">
-          {/* Static rings around the shield */}
-          <div className="shield-static" style={{ ['--ring-color' as any]: 'rgba(20, 184, 166, 0.45)' }}>
-            <div className="ring ring-1" />
-            <div className="ring ring-2" />
-            <div className="ring ring-3" />
-            <ThemeIcon variant="filled" size={120} radius="xl" color="teal" className="shield-core">
-              <IconShield style={{ width: '70%', height: '70%' }} stroke={1.6} />
-            </ThemeIcon>
-          </div>
-
-                    <Stack align="center" gap="xs">
+          <Stack align="center" gap="xs">
             <Title order={3} style={{ color: '#fff' }}>Kurulum ve Ayarlar</Title>
             <Text c="dimmed" ta="center">Cihazınızda hızlıca bağlantı kurmak için aşağıdaki adımları izleyin.</Text>
           </Stack>
