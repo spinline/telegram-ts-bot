@@ -37,7 +37,7 @@ export default function InstallSetup({ onInstallOnThisDevice }: InstallSetupProp
   };
 
   return (
-    <Container size={1200} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
+    <Container size={1600} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
       {/* Kalkan iç çerçevenin dışında */}
       <div
         className="shield-ripple"
