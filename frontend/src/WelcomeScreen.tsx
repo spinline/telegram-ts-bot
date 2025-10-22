@@ -21,13 +21,13 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
   const isOnline = useMemo(() => onlineStatus === 'online', [onlineStatus]);
 
   return (
-    <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px' }}>
+    <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '120px' }}>
       {/* Kalkan iç çerçevenin dışında */}
       <div
         className="shield-ripple"
         style={{
           position: 'absolute',
-          top: -80,
+          top: -140,
           zIndex: 3,
           ['--signal-color' as any]: isOnline ? 'rgba(20, 184, 166, 0.55)' : 'rgba(240, 62, 62, 0.55)',
         }}
@@ -42,7 +42,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
 
       {/* Online / Çevrimdışı Durumu */}
       {onlineStatus && (
-        <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light" style={{ position: 'absolute', top: 60, zIndex: 3 }}>
+        <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light" style={{ position: 'absolute', top: 0, zIndex: 3 }}>
           {isOnline ? 'Online' : 'Çevrimdışı'}
         </Badge>
       )}
