@@ -37,7 +37,7 @@ body {
   width: 100%;
   position: relative;
   overflow: hidden;
-  padding: 15px;
+  padding: 0;
   margin: 0;
 }
 
@@ -61,7 +61,6 @@ body:before {
   background: #115541;
   background: linear-gradient(45deg, #00150f 0%, #004f39 100%);
   z-index: 0;
-}
 }
 
 h1 {
