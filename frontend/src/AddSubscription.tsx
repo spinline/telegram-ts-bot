@@ -24,14 +24,10 @@ export default function AddSubscription({ onNext, subscriptionUrl }: AddSubscrip
 
   const handleNext = () => {
     triggerHaptic();
-    // Linki aç ve sonraki sayfaya geç
     if (subscriptionUrl) {
       window.open(subscriptionUrl, '_blank');
     }
-    // Linki açtıktan sonra sonraki sayfaya geç
-    setTimeout(() => {
-      onNext();
-    }, 500);
+    onNext();
   };
 
   return (
