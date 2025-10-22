@@ -62,66 +62,21 @@ interface AccountResponse {
 }
 
 // AccountPage bileşeni, hesap detaylarını gösterecek
-function AccountPage({}: { onBack?: () => void }) {
+function AccountPage({ 
+  loading, 
+  error, 
+  account 
+}: { 
+  loading: boolean;
+  error: string | null;
+  account: AccountResponse | null;
+}) {
   const webApp = window.Telegram.WebApp;
   const user = webApp.initDataUnsafe?.user;
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [account, setAccount] = useState<AccountResponse | null>(null);
 
   useEffect(() => {
     webApp.ready();
   }, [webApp.colorScheme, webApp]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const controller = new AbortController();
-
-    const loadAccount = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch('/api/account', {
-          headers: {
-            'x-telegram-init-data': webApp.initData ?? '',
-          },
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Hesap bilgileri alınamadı: ${response.status}`);
-        }
-
-        const data: AccountResponse = await response.json();
-        if (!isMounted) return;
-        setAccount(data);
-      } catch (err) {
-        if (!isMounted || (err instanceof DOMException && err.name === 'AbortError')) {
-          return;
-        }
-        const message = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.';
-        setError(message);
-        setAccount(null);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadAccount();
-
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
-  }, [user, webApp.initData, webApp]);
 
   const accountStats = useMemo(() => {
     if (!account) {
@@ -431,7 +386,9 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations'>('welcome');
   const [screenHistory, setScreenHistory] = useState<Array<'welcome' | 'account' | 'buySubscription' | 'installSetup' | 'installOnThisDevice' | 'addSubscription' | 'congratulations'>>(['welcome']);
   const [onlineStatus, setOnlineStatus] = useState<'online' | 'offline' | null>(null);
-  const [accountData, setAccountData] = useState<Partial<AccountResponse> | null>(null);
+  const [accountData, setAccountData] = useState<AccountResponse | null>(null);
+  const [accountLoading, setAccountLoading] = useState(true);
+  const [accountError, setAccountError] = useState<string | null>(null);
 
   // localStorage'ı temizle (eski verileri kaldır)
   useEffect(() => {
@@ -498,40 +455,61 @@ function App() {
     };
   }, [webApp]);
 
-  // App açılışında tek seferlik çevrimiçi kontrolü
+  // App açılışında hesap bilgilerini yükle
   useEffect(() => {
     let cancelled = false;
 
-    const getAccount = async () => {
+    const loadAccount = async () => {
+      const user = webApp.initDataUnsafe?.user;
+      
+      if (!user) {
+        setAccountLoading(false);
+        return;
+      }
+
+      setAccountLoading(true);
+      setAccountError(null);
+
       try {
         const res = await fetch('/api/account', {
           headers: { 'x-telegram-init-data': webApp.initData ?? '' },
         });
-        if (!res.ok) return null;
-        return (await res.json()) as Partial<AccountResponse> | null;
-      } catch {
-        return null;
+        
+        if (!res.ok) {
+          throw new Error(`Hesap bilgileri alınamadı: ${res.status}`);
+        }
+        
+        const data = await res.json() as AccountResponse;
+        
+        if (cancelled) return;
+        
+        setAccountData(data);
+        
+        // Online status kontrolü
+        const status = String(data?.status ?? '').toLowerCase();
+        const onlineAtMs = data?.onlineAt ? Date.parse(data.onlineAt) : 0;
+        const connectedAtMs = data?.lastConnectedNode?.connectedAt ? Date.parse(data.lastConnectedNode.connectedAt) : 0;
+        const freshest = Math.max(onlineAtMs || 0, connectedAtMs || 0);
+        const now = Date.now();
+        const ONLINE_STALE_MS = 2 * 60 * 1000; // 2 dakika içinde bağlantı varsa online kabul et
+
+        const isFresh = Number.isFinite(freshest) && freshest > 0 && now - freshest <= ONLINE_STALE_MS;
+        setOnlineStatus(status === 'active' && isFresh ? 'online' : 'offline');
+      } catch (err) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.';
+        setAccountError(message);
+        setAccountData(null);
+      } finally {
+        if (!cancelled) {
+          setAccountLoading(false);
+        }
       }
     };
 
-    const measureOnce = async () => {
-      const acc = (await getAccount()) as Partial<AccountResponse> | null;
-      if (cancelled) return;
-      setAccountData(acc); // Hesap bilgilerini kaydet
-      const status = String(acc?.status ?? '').toLowerCase();
-      const onlineAtMs = acc?.onlineAt ? Date.parse(acc.onlineAt) : 0;
-      const connectedAtMs = acc?.lastConnectedNode?.connectedAt ? Date.parse(acc.lastConnectedNode.connectedAt) : 0;
-      const freshest = Math.max(onlineAtMs || 0, connectedAtMs || 0);
-      const now = Date.now();
-      const ONLINE_STALE_MS = 2 * 60 * 1000; // 2 dakika içinde bağlantı varsa online kabul et
-
-      const isFresh = Number.isFinite(freshest) && freshest > 0 && now - freshest <= ONLINE_STALE_MS;
-      setOnlineStatus(status === 'active' && isFresh ? 'online' : 'offline');
-    };
-
-    measureOnce();
+    loadAccount();
     return () => { cancelled = true; };
-  }, [webApp.initData]);
+  }, [webApp.initData, webApp]);
 
   const handleViewAccount = () => {
     try {
@@ -615,7 +593,11 @@ function App() {
               />
             )}
             {currentScreen === 'account' && (
-              <AccountPage />
+              <AccountPage 
+                loading={accountLoading}
+                error={accountError}
+                account={accountData}
+              />
             )}
             {currentScreen === 'buySubscription' && (
               <BuySubscription />
