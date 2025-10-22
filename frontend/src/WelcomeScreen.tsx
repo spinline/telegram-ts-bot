@@ -118,14 +118,14 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
         }}
       >
         {/* Online / Çevrimdışı Durumu ve Bitiş Tarihi - iç çerçeve sol üstte */}
-        <div style={{ position: 'absolute', top: 15, left: 15, zIndex: 3, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ position: 'absolute', top: 15, left: 15, zIndex: 3, display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 'calc(100% - 30px)' }}>
           {onlineStatus && (
             <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light">
               {isOnline ? 'Online' : 'Çevrimdışı'}
             </Badge>
           )}
           {expireAt && formatExpireDate(expireAt) && (
-            <Text size="sm" style={{ color: '#fbbf24', fontWeight: 500 }}>
+            <Text size="xs" style={{ color: '#fbbf24', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {formatExpireDate(expireAt)}'e kadar
             </Text>
           )}
