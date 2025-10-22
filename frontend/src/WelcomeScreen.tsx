@@ -21,46 +21,51 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
   const isOnline = useMemo(() => onlineStatus === 'online', [onlineStatus]);
 
   return (
-    <Container size={560} px="md" py="xl" mx="auto">
-  <div
-    style={{
-      display: 'flex',
-      width: '100%',
-      backgroundColor: '#0006',
-      overflow: 'auto',
-      zIndex: 2,
-      position: 'relative',
-      padding: 30,
-      flexDirection: 'column',
-      borderRadius: '1rem',
-      maxHeight: '90%',
-      boxShadow: 'none',
-      border: 'none',
-    }}
-  >
-    <Stack align="center" gap="xl">
-          <div
-            className="shield-ripple"
-            style={{
-              // CSS custom property ile sinyal rengi (online/çevrimdışı)
-              ['--signal-color' as any]: isOnline ? 'rgba(20, 184, 166, 0.55)' : 'rgba(240, 62, 62, 0.55)',
-            }}
-          >
-            <div className="ripple ripple-1" />
-            <div className="ripple ripple-2" />
-            <div className="ripple ripple-3" />
-            <ThemeIcon variant="filled" size={120} radius="xl" color={isOnline ? 'teal' : 'red'} className="shield-core">
-              <IconShield style={{ width: '70%', height: '70%' }} stroke={1.6} />
-            </ThemeIcon>
-          </div>
+    <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* Kalkan iç çerçevenin dışında */}
+      <div
+        className="shield-ripple"
+        style={{
+          position: 'absolute',
+          top: -80,
+          zIndex: 3,
+          ['--signal-color' as any]: isOnline ? 'rgba(20, 184, 166, 0.55)' : 'rgba(240, 62, 62, 0.55)',
+        }}
+      >
+        <div className="ripple ripple-1" />
+        <div className="ripple ripple-2" />
+        <div className="ripple ripple-3" />
+        <ThemeIcon variant="filled" size={120} radius="xl" color={isOnline ? 'teal' : 'red'} className="shield-core">
+          <IconShield style={{ width: '70%', height: '70%' }} stroke={1.6} />
+        </ThemeIcon>
+      </div>
 
-          {/* Online / Çevrimdışı Durumu (tek seferlik; yükleniyor yazısı yok) */}
-          {onlineStatus && (
-            <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light">
-              {isOnline ? 'Online' : 'Çevrimdışı'}
-            </Badge>
-          )}
+      {/* Online / Çevrimdışı Durumu */}
+      {onlineStatus && (
+        <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light" style={{ position: 'absolute', top: 60, zIndex: 3 }}>
+          {isOnline ? 'Online' : 'Çevrimdışı'}
+        </Badge>
+      )}
 
+      {/* İç çerçeve */}
+      <div
+        style={{
+          display: 'flex',
+          width: '100%',
+          backgroundColor: '#0006',
+          overflow: 'auto',
+          zIndex: 2,
+          position: 'relative',
+          padding: 30,
+          paddingTop: 100,
+          flexDirection: 'column',
+          borderRadius: '1rem',
+          maxHeight: '90%',
+          boxShadow: 'none',
+          border: 'none',
+        }}
+      >
+        <Stack align="center" gap="xl">
           <Stack align="center" gap="xs">
             <Title order={2}>Hoş Geldiniz!</Title>
             <Text c="dimmed">Botunuz kullanıma hazır.</Text>
@@ -111,7 +116,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
             </Group>
           </Stack>
         </Stack>
-  </div>
+      </div>
     </Container>
   );
 }
