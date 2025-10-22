@@ -1,4 +1,4 @@
-import { Container, Stack, Text, ThemeIcon, Group, Title } from '@mantine/core';
+import { Stack, Text, ThemeIcon, Group, Title } from '@mantine/core';
 import { IconShield, IconDownload, IconArrowRight } from '@tabler/icons-react';
 import { useMemo } from 'react';
 

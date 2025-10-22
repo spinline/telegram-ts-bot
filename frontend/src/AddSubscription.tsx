@@ -1,4 +1,4 @@
-import { Container, Stack, Text, ThemeIcon, Group, Title } from '@mantine/core';
+import { Stack, Text, ThemeIcon, Group, Title } from '@mantine/core';
 import { IconShield, IconPlus, IconArrowRight } from '@tabler/icons-react';
 
 interface AddSubscriptionProps {

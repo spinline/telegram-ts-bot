@@ -1,4 +1,4 @@
-import { Container, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { Stack, Text, ThemeIcon, Title } from '@mantine/core';
 import { IconShield } from '@tabler/icons-react';
 
 interface CongratulationsProps {

@@ -5,7 +5,6 @@ import {
   Stack,
   Text,
   Title,
-  Container,
   Slider,
   Badge,
 } from '@mantine/core';
