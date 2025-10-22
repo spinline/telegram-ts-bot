@@ -31,10 +31,18 @@ const lockedOutUsers = new Map<number, Date>();
 export function generateOTP(): string {
   const digits = '0123456789';
   let otp = '';
-  const randomBytes = crypto.randomBytes(OTP_LENGTH);
   
+  // Generate random numbers without modulo bias
+  // We use rejection sampling to avoid bias
   for (let i = 0; i < OTP_LENGTH; i++) {
-    otp += digits[randomBytes[i] % digits.length];
+    let randomValue;
+    const maxAcceptableValue = 256 - (256 % digits.length);
+    
+    do {
+      randomValue = crypto.randomBytes(1)[0];
+    } while (randomValue >= maxAcceptableValue);
+    
+    otp += digits[randomValue % digits.length];
   }
   
   return otp;
