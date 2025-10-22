@@ -116,7 +116,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
           overflow: 'auto',
           zIndex: 2,
           position: 'relative',
-          padding: 15,
+          padding: 30,
           paddingTop: 100,
           flexDirection: 'column',
           borderRadius: '1rem',
