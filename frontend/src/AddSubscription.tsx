@@ -31,7 +31,7 @@ export default function AddSubscription({ onNext, subscriptionUrl }: AddSubscrip
   };
 
   return (
-    <Container size={1600} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
+    <Container size="xl" px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px', maxWidth: '95%' }}>
       {/* Kalkan iç çerçevenin dışında */}
       <div
         className="shield-ripple"

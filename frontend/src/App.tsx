@@ -289,7 +289,7 @@ function AccountPage({}: { onBack?: () => void }) {
   };
 
   return (
-    <Container size={1600} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px' }}>
+    <Container size="xl" px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px', maxWidth: '95%' }}>
       {/* İç çerçeve */}
       <div
         style={{
