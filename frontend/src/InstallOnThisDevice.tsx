@@ -1,4 +1,4 @@
-import { Container, Stack, Text, ThemeIcon, Title, Group } from '@mantine/core';
+import { Container, Stack, Text, ThemeIcon, Group } from '@mantine/core';
 import { IconShield, IconDownload, IconArrowRight } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
@@ -33,11 +33,18 @@ export default function InstallOnThisDevice({ onNext }: InstallOnThisDeviceProps
 
   const handleInstall = () => {
     triggerHaptic();
-    // App Store veya Play Store linkini aç
-    if (platform === 'iOS') {
-      window.open('https://apps.apple.com/us/app/happ-proxy-utility/id6504287215', '_blank');
-    } else if (platform === 'Android') {
-      window.open('https://play.google.com/store/apps/details?id=com.happproxy', '_blank');
+    // Platform'a göre ilgili store linkini aç
+    const links = {
+      iOS: 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215',
+      Android: 'https://play.google.com/store/apps/details?id=com.happproxy',
+      Windows: 'https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x86.exe',
+      macOS: 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215',
+      Linux: 'https://github.com/Happ-proxy/happ-desktop/releases/',
+    };
+    
+    const link = links[platform as keyof typeof links];
+    if (link) {
+      window.open(link, '_blank');
     }
   };
 
@@ -86,7 +93,6 @@ export default function InstallOnThisDevice({ onNext }: InstallOnThisDeviceProps
       >
         <Stack align="center" gap="lg">
           <Stack align="center" gap="xs">
-            <Title order={3} style={{ color: '#fff' }}>Adım 1: Uygulama Kurulumu</Title>
             <Text c="dimmed" ta="center" size="lg" mt="md">
               "Happ" uygulamasını yükleyin ve bu ekrana geri dönün
             </Text>
