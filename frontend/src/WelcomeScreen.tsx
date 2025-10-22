@@ -21,7 +21,7 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
   const isOnline = useMemo(() => onlineStatus === 'online', [onlineStatus]);
 
   return (
-    <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '120px' }}>
+    <Container size={560} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
       {/* Kalkan iç çerçevenin dışında */}
       <div
         className="shield-ripple"
@@ -39,13 +39,6 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
           <IconShield style={{ width: '70%', height: '70%' }} stroke={1.6} />
         </ThemeIcon>
       </div>
-
-      {/* Online / Çevrimdışı Durumu */}
-      {onlineStatus && (
-        <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light" style={{ position: 'absolute', top: 0, zIndex: 3 }}>
-          {isOnline ? 'Online' : 'Çevrimdışı'}
-        </Badge>
-      )}
 
       {/* İç çerçeve */}
       <div
@@ -65,9 +58,16 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
           border: 'none',
         }}
       >
+        {/* Online / Çevrimdışı Durumu - iç çerçeve sol üstte */}
+        {onlineStatus && (
+          <Badge size="lg" radius="sm" color={isOnline ? 'teal' : 'red'} variant="light" style={{ position: 'absolute', top: 15, left: 15, zIndex: 3 }}>
+            {isOnline ? 'Online' : 'Çevrimdışı'}
+          </Badge>
+        )}
+
         <Stack align="center" gap="xl">
           <Stack align="center" gap="xs">
-            <Title order={2}>Hoş Geldiniz!</Title>
+            <Title order={2} style={{ color: '#fff' }}>Hoş Geldiniz!</Title>
             <Text c="dimmed">Botunuz kullanıma hazır.</Text>
           </Stack>
 
