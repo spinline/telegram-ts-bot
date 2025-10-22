@@ -18,7 +18,7 @@ export default function InstallSetup({}: InstallSetupProps) {
   }, []);
 
   return (
-    <Container size="fluid" px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px', maxWidth: '95%' }}>
+    <Container size={1200} px="md" py="xl" mx="auto" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px' }}>
       {/* Kalkan iç çerçevenin dışında */}
       <div
         className="shield-ripple"
