@@ -300,14 +300,26 @@ function AccountPage({
                     )}
                   </Group>
 
-                  <Group gap="xs" align="center">
-                    <ThemeIcon color="gray" variant="light" radius="xl">
-                      <IconCalendar size={16} />
+                  <Group gap="xs" align="center" wrap="nowrap">
+                    <ThemeIcon color="gray" variant="light" radius="xl" size="sm">
+                      <IconCalendar size={14} />
                     </ThemeIcon>
-                    <Text size="sm" c="dimmed">
-                      Son Kullanma Tarihi: {formatExpireDate(account.expireAt)}
+                    <Text size="sm" c="dimmed" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      Bitiş: {formatExpireDate(account.expireAt)}
                     </Text>
                   </Group>
+
+                  {account.lastConnectedNode && (
+                    <Group gap="xs" align="center" wrap="nowrap">
+                      <ThemeIcon color="blue" variant="light" radius="xl" size="sm">
+                        <IconGauge size={14} />
+                      </ThemeIcon>
+                      <Text size="sm" c="dimmed" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        Node: {account.lastConnectedNode.nodeName || 'Bilinmiyor'}
+                        {account.lastConnectedNode.countryCode && ` (${account.lastConnectedNode.countryCode})`}
+                      </Text>
+                    </Group>
+                  )}
 
                   {accountStats && (
                     <Stack gap={4}>
