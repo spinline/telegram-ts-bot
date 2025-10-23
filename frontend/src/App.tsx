@@ -267,7 +267,7 @@ function AccountPage({
             <Stack gap="md">
               <Title order={4} style={{ color: '#fff' }}>Hoş Geldin, {user.first_name}!</Title>
               <Text size="sm" c="dimmed">
-                Hesap bilgilerin aşağıda görüntüleniyor.
+                Telegram ID: {user.id}
               </Text>
 
               {user.username && (
