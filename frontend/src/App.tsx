@@ -23,6 +23,7 @@ import {
   IconAlertTriangle,
   IconGauge,
   IconCalendar,
+  IconCopy,
 } from '@tabler/icons-react';
 import '@mantine/core/styles.css';
 import WelcomeScreen from './WelcomeScreen';
@@ -266,9 +267,26 @@ function AccountPage({
           <div>
             <Stack gap="md">
               <Title order={4} style={{ color: '#fff' }}>Hoş Geldin, {user.first_name}!</Title>
-              <Text size="sm" c="dimmed">
-                Telegram ID: {user.id}
-              </Text>
+              <Group gap="xs" align="center">
+                <Text size="sm" c="dimmed">
+                  ID: {user.id}
+                </Text>
+                <ThemeIcon 
+                  color="gray" 
+                  variant="subtle" 
+                  radius="xl" 
+                  size="sm"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(user.id.toString());
+                    try {
+                      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success');
+                    } catch {}
+                  }}
+                >
+                  <IconCopy size={14} />
+                </ThemeIcon>
+              </Group>
 
               {user.username && (
                 <Badge color="blue" variant="light" size="lg">
