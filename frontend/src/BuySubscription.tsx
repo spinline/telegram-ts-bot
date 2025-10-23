@@ -174,19 +174,19 @@ function BuySubscription({}: BuySubscriptionProps) {
                   }}>
                     popüler
                   </div>
-                )}
-                
+                )}                
+
                 <div style={{ marginTop: option.isPopular ? '28px' : '8px' }}>
-                  <Text size="sm" style={{ color: '#9ca3af', marginBottom: '8px' }}>
+                  <Text size="xs" style={{ color: '#9ca3af', marginBottom: '6px', fontSize: '12px' }}>
                     {option.duration}
                   </Text>
                   
-                  <Text size="28px" fw={700} style={{ color: '#fff', lineHeight: '1.2' }}>
+                  <Text size="22px" fw={700} style={{ color: '#fff', lineHeight: '1.2', fontSize: '22px' }}>
                     {option.price.toFixed(0)} ₽
                   </Text>
                   
                   {option.months > 1 && (
-                    <Text size="xs" style={{ color: '#6b7280', marginTop: '4px' }}>
+                    <Text size="xs" style={{ color: '#6b7280', marginTop: '4px', fontSize: '10px' }}>
                       {option.monthlyPrice?.toFixed(0)}₽ / ay
                     </Text>
                   )}
