@@ -288,11 +288,6 @@ function AccountPage({
                 </ThemeIcon>
               </Group>
 
-              {user.username && (
-                <Badge color="blue" variant="light" size="lg">
-                  Kullanıcı Adı: @{user.username}
-                </Badge>
-              )}
 
               {loading ? (
                 <Group justify="center" my="lg">
