@@ -92,33 +92,28 @@ function BuySubscription({}: BuySubscriptionProps) {
             </Text>
           </Stack>
 
-          {/* Cihaz sayısı seçici */}
+          {/* Cihaz sayısı slider */}
           <div>
             <Text size="lg" style={{ color: '#fff', marginBottom: '12px', fontWeight: 500 }}>
-              Cihaz Sayısı
+              Cihaz Sayısı: {deviceCount}
             </Text>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
-              {[1, 2, 3, 4, 5].map(num => (
-                <button
-                  key={num}
-                  onClick={() => handleSliderChange(num)}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    borderRadius: '12px',
-                    border: deviceCount === num ? '2px solid #14b8a6' : '2px solid transparent',
-                    backgroundColor: deviceCount === num ? '#14b8a620' : '#00000040',
-                    color: deviceCount === num ? '#14b8a6' : '#9ca3af',
-                    fontSize: '16px',
-                    fontWeight: deviceCount === num ? 600 : 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  {num}
-                </button>
-              ))}
-            </div>
+            <input
+              type="range"
+              min="1"
+              max="5"
+              value={deviceCount}
+              onChange={(e) => handleSliderChange(parseInt(e.target.value))}
+              style={{
+                width: '100%',
+                height: '6px',
+                borderRadius: '3px',
+                background: `linear-gradient(to right, #14b8a6 0%, #14b8a6 ${((deviceCount - 1) / 4) * 100}%, #374151 ${((deviceCount - 1) / 4) * 100}%, #374151 100%)`,
+                outline: 'none',
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                cursor: 'pointer',
+              }}
+            />
           </div>
 
           {/* Abonelik kartları - Grid 2x2 */}
