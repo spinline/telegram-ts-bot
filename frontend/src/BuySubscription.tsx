@@ -50,7 +50,7 @@ function BuySubscription({}: BuySubscriptionProps) {
 
   const handlePayment = () => {
     hapticImpact();
-    console.log(`Ödeme Yap: ${selectedOption.price.toFixed(0)} ₽`);
+    console.log(`Ödeme Yap: ${selectedOption.price.toFixed(0)} ₺`);
   };
 
   const handleSubscriptionSelect = (index: number) => {
@@ -165,12 +165,12 @@ function BuySubscription({}: BuySubscriptionProps) {
                   </Text>
                   
                   <Text size="22px" fw={700} style={{ color: '#fff', lineHeight: '1.2', fontSize: '22px' }}>
-                    {option.price.toFixed(0)} ₽
+                    {option.price.toFixed(0)} ₺
                   </Text>
                   
                   {option.months > 1 && (
                     <Text size="xs" style={{ color: '#6b7280', marginTop: '4px', fontSize: '10px' }}>
-                      {option.monthlyPrice?.toFixed(0)}₽ / ay
+                      {option.monthlyPrice?.toFixed(0)}₺ / ay
                     </Text>
                   )}
                 </div>
@@ -193,7 +193,7 @@ function BuySubscription({}: BuySubscriptionProps) {
               fontWeight: 600,
             }}
           >
-            Ödeme Yap {selectedOption.price.toFixed(0)} ₽
+            Ödeme Yap {selectedOption.price.toFixed(0)} ₺
           </Button>
         </Stack>
       </div>
