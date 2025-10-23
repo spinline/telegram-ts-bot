@@ -169,27 +169,30 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
               Abonelik Satın Al
             </Button>
 
-            <Button
-              leftSection={<IconSettings size={20} />}
-              variant="light"
-              color="blue"
-              size="md"
-              radius="md"
-              fullWidth
-              onClick={handleInstallSetup}
-              styles={{
-                inner: {
-                  justifyContent: 'space-between',
-                },
-                label: {
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  width: '100%',
-                },
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '14px 16px',
+                borderRadius: '8px',
+                background: 'rgba(255, 255, 255, 0.07)',
+                transition: 'all .2s ease-in-out',
+                cursor: 'pointer',
+                width: '100%',
               }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
+              }}
+              onClick={handleInstallSetup}
             >
-              <span>Kurulum ve Ayarlar</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <IconSettings size={20} style={{ color: '#fff' }} />
+                <Text size="md" fw={500} style={{ color: '#fff' }}>Kurulum ve Ayarlar</Text>
+              </div>
               <Badge 
                 size="md" 
                 radius="sm" 
@@ -202,29 +205,58 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
               >
                 {platform}
               </Badge>
-            </Button>
+            </div>
 
-            <Group grow>
-              <Button
-                leftSection={<IconUser size={20} />}
-                variant="light"
-                color="gray"
-                size="md"
-                radius="md"
+            <Group grow gap="sm">
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: '14px',
+                  borderRadius: '8px',
+                  background: 'rgba(255, 255, 255, 0.07)',
+                  transition: 'all .2s ease-in-out',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
+                }}
                 onClick={handleViewAccount}
               >
-                Hesabım
-              </Button>
-              <Button
-                leftSection={<IconHeadset size={20} />}
-                variant="light"
-                color="gray"
-                size="md"
-                radius="md"
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <IconUser size={20} style={{ color: '#fff' }} />
+                  <Text size="md" fw={500} style={{ color: '#fff' }}>Hesabım</Text>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: '14px',
+                  borderRadius: '8px',
+                  background: 'rgba(255, 255, 255, 0.07)',
+                  transition: 'all .2s ease-in-out',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
+                }}
                 onClick={handleSupport}
               >
-                Destek
-              </Button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <IconHeadset size={20} style={{ color: '#fff' }} />
+                  <Text size="md" fw={500} style={{ color: '#fff' }}>Destek</Text>
+                </div>
+              </div>
             </Group>
           </Stack>
         </Stack>
