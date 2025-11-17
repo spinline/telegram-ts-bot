@@ -61,11 +61,18 @@ export async function getInternalSquads() {
 export async function createUser(userData: any) {
   try {
     const { password, ...rest } = userData; // Şifreyi kaldır
+    console.log("Creating user with data:", JSON.stringify(rest, null, 2));
     const response = await apiClient.post("/api/users", rest);
     const data: any = response.data;
     return data.response;
   } catch (error: any) {
-    console.error("Failed to create user:", error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || "Kullanıcı oluşturulamadı.");
+    const { password, ...rest } = userData;
+    const status = error?.response?.status;
+    const data = error?.response?.data;
+    console.error("Failed to create user:", data || error.message);
+    console.error("Request data was:", JSON.stringify(rest, null, 2));
+    const message = data?.message || error.message || "Kullanıcı oluşturulamadı.";
+    const code = data?.errorCode || status;
+    throw new Error(code ? `${message} [${code}]` : message);
   }
 }

@@ -4,7 +4,7 @@ import axios from "axios";
 const YAML = require("yamljs");
 import path from "path";
 import fs from "fs";
-import { createUser, getUserByTelegramId } from "./api";
+import { createUser, getUserByTelegramId, getInternalSquads } from "./api";
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
@@ -95,6 +95,27 @@ const miniAppUrl = process.env.MINI_APP_URL || "";
 
 // Public base URL (for deeplink redirects). If not provided, derive from incoming request.
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || "";
+
+// Validate configuration against remote API at startup
+async function validateConfigAtStartup() {
+  const squadUuid = process.env.INTERNAL_SQUAD_UUID;
+  if (!squadUuid) {
+    console.warn("INTERNAL_SQUAD_UUID is not set. Trial creation may fail.");
+    return;
+  }
+  try {
+    const squads = await getInternalSquads();
+    const found = Array.isArray(squads) && squads.find((s: any) => s?.uuid === squadUuid);
+    if (!found) {
+      const available = Array.isArray(squads) ? squads.map((s: any) => s?.uuid).filter(Boolean).join(", ") : "<unavailable>";
+      console.error(`Configured INTERNAL_SQUAD_UUID not found on API: ${squadUuid}. Available squads: ${available}`);
+    } else {
+      console.log(`Validated internal squad: ${found.name || found.uuid}`);
+    }
+  } catch (e: any) {
+    console.error("Failed to validate INTERNAL_SQUAD_UUID:", e?.message || e);
+  }
+}
 
 // Başlangıç komutu için klavye oluştur
 const startKeyboard = new InlineKeyboard()
@@ -371,6 +392,7 @@ async function startApp() {
   });
 
   // Start the Telegram bot
+  await validateConfigAtStartup();
   bot.start();
   console.log("Bot started!");
 }
