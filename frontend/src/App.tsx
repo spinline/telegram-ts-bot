@@ -115,7 +115,9 @@ function App() {
       setAccountError(null);
 
       try {
-        const res = await fetch('/api/account', {
+        const rawOrigin = import.meta.env.VITE_BACKEND_ORIGIN || '';
+        const apiOrigin = rawOrigin.replace(/\/+$/,'');
+        const res = await fetch(`${apiOrigin}/api/account`, {
           headers: { 'x-telegram-init-data': webApp.initData ?? '' },
         });
         

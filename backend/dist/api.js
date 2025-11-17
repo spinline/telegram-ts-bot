@@ -49,7 +49,8 @@ function getUserByTelegramId(telegramId) {
         try {
             const response = yield apiClient.get(`/api/users/by-telegram-id/${telegramId}`);
             // API, bir dizi döndürür. Dizi boş değilse, kullanıcı var demektir.
-            return response.data.response.length > 0 ? response.data.response[0] : null;
+            const data = response.data;
+            return data.response.length > 0 ? data.response[0] : null;
         }
         catch (error) {
             if (error.response && error.response.status === 404) {
@@ -65,7 +66,8 @@ function getUserByUsername(username) {
         var _a, _b, _c;
         try {
             const response = yield apiClient.get(`/api/users/by-username/${username}`);
-            return response.data.response;
+            const data = response.data;
+            return data.response;
         }
         catch (error) {
             if (error.response && error.response.status === 404) {
@@ -80,7 +82,8 @@ function getInternalSquads() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const response = yield apiClient.get("/api/internal-squads");
-            return response.data.response.internalSquads;
+            const data = response.data;
+            return data.response.internalSquads;
         }
         catch (error) {
             console.error("Failed to get internal squads:", error);
@@ -90,15 +93,23 @@ function getInternalSquads() {
 }
 function createUser(userData) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+        var _a, _b;
         try {
             const { password } = userData, rest = __rest(userData, ["password"]); // Şifreyi kaldır
+            console.log("Creating user with data:", JSON.stringify(rest, null, 2));
             const response = yield apiClient.post("/api/users", rest);
-            return response.data.response;
+            const data = response.data;
+            return data.response;
         }
         catch (error) {
-            console.error("Failed to create user:", ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
-            throw new Error(((_c = (_b = error.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.message) || "Kullanıcı oluşturulamadı.");
+            const { password } = userData, rest = __rest(userData, ["password"]);
+            const status = (_a = error === null || error === void 0 ? void 0 : error.response) === null || _a === void 0 ? void 0 : _a.status;
+            const data = (_b = error === null || error === void 0 ? void 0 : error.response) === null || _b === void 0 ? void 0 : _b.data;
+            console.error("Failed to create user:", data || error.message);
+            console.error("Request data was:", JSON.stringify(rest, null, 2));
+            const message = (data === null || data === void 0 ? void 0 : data.message) || error.message || "Kullanıcı oluşturulamadı.";
+            const code = (data === null || data === void 0 ? void 0 : data.errorCode) || status;
+            throw new Error(code ? `${message} [${code}]` : message);
         }
     });
 }

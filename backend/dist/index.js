@@ -88,6 +88,30 @@ catch (error) {
 const miniAppUrl = process.env.MINI_APP_URL || "";
 // Public base URL (for deeplink redirects). If not provided, derive from incoming request.
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || "";
+// Validate configuration against remote API at startup
+function validateConfigAtStartup() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const squadUuid = process.env.INTERNAL_SQUAD_UUID;
+        if (!squadUuid) {
+            console.warn("INTERNAL_SQUAD_UUID is not set. Trial creation may fail.");
+            return;
+        }
+        try {
+            const squads = yield (0, api_1.getInternalSquads)();
+            const found = Array.isArray(squads) && squads.find((s) => (s === null || s === void 0 ? void 0 : s.uuid) === squadUuid);
+            if (!found) {
+                const available = Array.isArray(squads) ? squads.map((s) => s === null || s === void 0 ? void 0 : s.uuid).filter(Boolean).join(", ") : "<unavailable>";
+                console.error(`Configured INTERNAL_SQUAD_UUID not found on API: ${squadUuid}. Available squads: ${available}`);
+            }
+            else {
+                console.log(`Validated internal squad: ${found.name || found.uuid}`);
+            }
+        }
+        catch (e) {
+            console.error("Failed to validate INTERNAL_SQUAD_UUID:", (e === null || e === void 0 ? void 0 : e.message) || e);
+        }
+    });
+}
 // Başlangıç komutu için klavye oluştur
 const startKeyboard = new grammy_1.InlineKeyboard()
     .text("🚀 Try for Free", "try_free")
@@ -275,7 +299,7 @@ Uygulamanız yoksa aşağıdan indirebilirsiniz 👇
 // "Try for Free" mantığını yeniden kullanılabilir bir fonksiyona taşıyalım
 function handleTryFree(ctx) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c, _d, _e, _f, _g;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j;
         const telegramId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
         const username = (_b = ctx.from) === null || _b === void 0 ? void 0 : _b.username;
         if (!telegramId) {
@@ -297,19 +321,54 @@ function handleTryFree(ctx) {
                 return;
             }
             yield ((_f = ctx.answerCallbackQuery) === null || _f === void 0 ? void 0 : _f.call(ctx, "Deneme hesabınız oluşturuluyor..."));
-            const squadUuid = "c1fdfa38-68bb-4648-8bba-bc18435560a3";
+            // Kullanıcı adı çakışmalarını önlemek için benzersiz bir username üret
+            let finalUsername = username;
+            try {
+                const existingByUsername = yield (0, api_1.getUserByUsername)(username);
+                if (existingByUsername) {
+                    const base = username.slice(0, Math.max(0, 30));
+                    const suffix = `-${Math.floor(1000 + Math.random() * 9000)}`;
+                    finalUsername = `${base}${suffix}`;
+                }
+            }
+            catch (e) {
+                // username kontrolü başarısızsa sessizce devam et, API zaten doğrulayacaktır
+            }
+            const squadUuid = process.env.INTERNAL_SQUAD_UUID;
+            if (!squadUuid) {
+                throw new Error("INTERNAL_SQUAD_UUID environment variable is not set");
+            }
             // 3 gün sonrası için son kullanma tarihi oluştur
             const expireAt = new Date();
             expireAt.setDate(expireAt.getDate() + 3);
             const newUser = {
-                username,
+                username: finalUsername,
                 telegramId,
                 tag: "TRIAL", // Kullanıcıya TRIAL etiketini ekle
                 expireAt: expireAt.toISOString(),
                 trafficLimitBytes: 2 * 1024 * 1024 * 1024, // 2 GB
+                trafficLimitStrategy: "NO_RESET",
                 activeInternalSquads: [squadUuid],
             };
-            const createdUser = yield (0, api_1.createUser)(newUser);
+            // Username çakışmalarına karşı birkaç kez dene
+            let createdUser = null;
+            const baseName = finalUsername.slice(0, Math.max(0, 30));
+            for (let attempt = 0; attempt < 5; attempt++) {
+                try {
+                    createdUser = yield (0, api_1.createUser)(newUser);
+                    break;
+                }
+                catch (err) {
+                    const msg = String((err === null || err === void 0 ? void 0 : err.message) || "");
+                    const looksLikeUsernameConflict = msg.includes("A018") || msg.includes("409") || msg.toLowerCase().includes("username");
+                    if (!looksLikeUsernameConflict || attempt === 4) {
+                        throw err;
+                    }
+                    const suffix = `-${Math.floor(1000 + Math.random() * 9000)}`;
+                    finalUsername = `${baseName}${suffix}`;
+                    newUser.username = finalUsername;
+                }
+            }
             const myAccountKeyboard = new grammy_1.InlineKeyboard().text("👤 Hesabım", "my_account");
             yield ctx.reply(`🎉 Deneme hesabınız başarıyla oluşturuldu, @${username}!\n\nHesabınız <b>3 gün</b> geçerlidir ve <b>2 GB</b> trafik limitiniz bulunmaktadır.\n\nAşağıdaki butona tıklayarak hesap detaylarınızı görebilirsiniz.`, {
                 parse_mode: "HTML",
@@ -317,7 +376,22 @@ function handleTryFree(ctx) {
             });
         }
         catch (error) {
-            yield ((_g = ctx.answerCallbackQuery) === null || _g === void 0 ? void 0 : _g.call(ctx, "Hata!"));
+            const telegramIdForCatch = (_g = ctx.from) === null || _g === void 0 ? void 0 : _g.id;
+            const msg = String((error === null || error === void 0 ? void 0 : error.message) || "");
+            // A018 genellikle sunucuda mevcut hesap/benzersizlik ihlali durumunu ifade eder
+            if (msg.includes("A018") && telegramIdForCatch) {
+                try {
+                    const existing = yield (0, api_1.getUserByTelegramId)(telegramIdForCatch);
+                    if (existing) {
+                        const myAccountKeyboard = new grammy_1.InlineKeyboard().text("👤 Hesabım", "my_account");
+                        yield ((_h = ctx.answerCallbackQuery) === null || _h === void 0 ? void 0 : _h.call(ctx));
+                        yield ctx.reply("Bu Telegram hesabıyla zaten bir kullanıcı mevcut. Hesap detaylarını görüntülemek için aşağıdaki düğmeyi kullanın.", { reply_markup: myAccountKeyboard });
+                        return;
+                    }
+                }
+                catch (_k) { }
+            }
+            yield ((_j = ctx.answerCallbackQuery) === null || _j === void 0 ? void 0 : _j.call(ctx, "Hata!"));
             yield ctx.reply(`Kullanıcı oluşturulurken bir hata oluştu: ${error.message}`);
         }
     });
@@ -329,6 +403,7 @@ function startApp() {
             console.log(`API server listening on port ${port}`);
         });
         // Start the Telegram bot
+        yield validateConfigAtStartup();
         bot.start();
         console.log("Bot started!");
     });
