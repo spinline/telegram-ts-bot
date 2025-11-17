@@ -385,7 +385,24 @@ async function handleTryFree(ctx: Context) {
       activeInternalSquads: [squadUuid],
     };
 
-    const createdUser = await createUser(newUser);
+    // Username çakışmalarına karşı birkaç kez dene
+    let createdUser: any = null;
+    const baseName = finalUsername.slice(0, Math.max(0, 30));
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        createdUser = await createUser(newUser);
+        break;
+      } catch (err: any) {
+        const msg = String(err?.message || "");
+        const looksLikeUsernameConflict = msg.includes("A018") || msg.includes("409") || msg.toLowerCase().includes("username");
+        if (!looksLikeUsernameConflict || attempt === 4) {
+          throw err;
+        }
+        const suffix = `-${Math.floor(1000 + Math.random() * 9000)}`;
+        finalUsername = `${baseName}${suffix}`;
+        newUser.username = finalUsername;
+      }
+    }
 
     const myAccountKeyboard = new InlineKeyboard().text("👤 Hesabım", "my_account");
 
