@@ -16,6 +16,11 @@ const port = process.env.PORT || 3000;
 app.use(cors()); // Frontend'den gelen isteklere izin ver
 app.use(express.json());
 
+// Health check endpoint for deployments/load balancers
+app.get('/health', (_req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
+
 // Telegram'dan gelen veriyi doğrulamak için middleware
 const verifyTelegramWebAppData = (req: Request, res: Response, next: NextFunction) => {
   const initData = req.headers['x-telegram-init-data'] as string;
