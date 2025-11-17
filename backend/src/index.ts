@@ -381,6 +381,7 @@ async function handleTryFree(ctx: Context) {
       tag: "TRIAL", // Kullanıcıya TRIAL etiketini ekle
       expireAt: expireAt.toISOString(),
       trafficLimitBytes: 2 * 1024 * 1024 * 1024, // 2 GB
+      trafficLimitStrategy: "NO_RESET",
       activeInternalSquads: [squadUuid],
     };
 
