@@ -331,7 +331,11 @@ async function handleTryFree(ctx: Context) {
 
     await ctx.answerCallbackQuery?.("Deneme hesabınız oluşturuluyor...");
 
-    const squadUuid = "c1fdfa38-68bb-4648-8bba-bc18435560a3";
+    const squadUuid = process.env.INTERNAL_SQUAD_UUID;
+
+    if (!squadUuid) {
+      throw new Error("INTERNAL_SQUAD_UUID environment variable is not set");
+    }
 
     // 3 gün sonrası için son kullanma tarihi oluştur
     const expireAt = new Date();
