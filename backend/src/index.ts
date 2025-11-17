@@ -411,6 +411,20 @@ async function handleTryFree(ctx: Context) {
       reply_markup: myAccountKeyboard,
     });
   } catch (error: any) {
+    const telegramIdForCatch = ctx.from?.id;
+    const msg = String(error?.message || "");
+    // A018 genellikle sunucuda mevcut hesap/benzersizlik ihlali durumunu ifade eder
+    if (msg.includes("A018") && telegramIdForCatch) {
+      try {
+        const existing = await getUserByTelegramId(telegramIdForCatch);
+        if (existing) {
+          const myAccountKeyboard = new InlineKeyboard().text("👤 Hesabım", "my_account");
+          await ctx.answerCallbackQuery?.();
+          await ctx.reply("Bu Telegram hesabıyla zaten bir kullanıcı mevcut. Hesap detaylarını görüntülemek için aşağıdaki düğmeyi kullanın.", { reply_markup: myAccountKeyboard });
+          return;
+        }
+      } catch {}
+    }
     await ctx.answerCallbackQuery?.("Hata!");
     await ctx.reply(`Kullanıcı oluşturulurken bir hata oluştu: ${error.message}`);
   }
