@@ -4,7 +4,7 @@ import axios from "axios";
 const YAML = require("yamljs");
 import path from "path";
 import fs from "fs";
-import { createUser, getUserByTelegramId, getInternalSquads } from "./api";
+import { createUser, getUserByTelegramId, getInternalSquads, getUserByUsername } from "./api";
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
@@ -352,6 +352,19 @@ async function handleTryFree(ctx: Context) {
 
     await ctx.answerCallbackQuery?.("Deneme hesabınız oluşturuluyor...");
 
+    // Kullanıcı adı çakışmalarını önlemek için benzersiz bir username üret
+    let finalUsername = username;
+    try {
+      const existingByUsername = await getUserByUsername(username);
+      if (existingByUsername) {
+        const base = username.slice(0, Math.max(0, 30));
+        const suffix = `-${Math.floor(1000 + Math.random() * 9000)}`;
+        finalUsername = `${base}${suffix}`;
+      }
+    } catch (e) {
+      // username kontrolü başarısızsa sessizce devam et, API zaten doğrulayacaktır
+    }
+
     const squadUuid = process.env.INTERNAL_SQUAD_UUID;
 
     if (!squadUuid) {
@@ -363,7 +376,7 @@ async function handleTryFree(ctx: Context) {
     expireAt.setDate(expireAt.getDate() + 3);
 
     const newUser = {
-      username,
+      username: finalUsername,
       telegramId,
       tag: "TRIAL", // Kullanıcıya TRIAL etiketini ekle
       expireAt: expireAt.toISOString(),
