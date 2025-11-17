@@ -26,6 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUserByTelegramId = getUserByTelegramId;
 exports.getUserByUsername = getUserByUsername;
 exports.getInternalSquads = getInternalSquads;
+exports.getUserHwidDevices = getUserHwidDevices;
 exports.createUser = createUser;
 const axios_1 = __importDefault(require("axios"));
 require("dotenv/config");
@@ -88,6 +89,23 @@ function getInternalSquads() {
         catch (error) {
             console.error("Failed to get internal squads:", error);
             return [];
+        }
+    });
+}
+function getUserHwidDevices(userUuid) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
+        try {
+            const response = yield apiClient.get(`/api/hwid/devices/${userUuid}`);
+            const data = response.data;
+            return data.response;
+        }
+        catch (error) {
+            if (((_a = error === null || error === void 0 ? void 0 : error.response) === null || _a === void 0 ? void 0 : _a.status) === 404) {
+                return { total: 0, devices: [] };
+            }
+            console.error(`Failed to get HWID devices for user ${userUuid}:`, ((_b = error === null || error === void 0 ? void 0 : error.response) === null || _b === void 0 ? void 0 : _b.data) || error.message);
+            return { total: 0, devices: [] };
         }
     });
 }

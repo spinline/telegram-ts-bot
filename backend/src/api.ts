@@ -47,14 +47,28 @@ export async function getUserByUsername(username: string) {
   }
 }
 
-export async function getInternalSquads() {
+export async function getInternalSquads(): Promise<any[]> {
   try {
     const response = await apiClient.get("/api/internal-squads");
-    const data: any = response.data;
+    const data = response.data as any;
     return data.response.internalSquads;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to get internal squads:", error);
     return [];
+  }
+}
+
+export async function getUserHwidDevices(userUuid: string): Promise<any> {
+  try {
+    const response = await apiClient.get(`/api/hwid/devices/${userUuid}`);
+    const data = response.data as any;
+    return data.response;
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      return { total: 0, devices: [] };
+    }
+    console.error(`Failed to get HWID devices for user ${userUuid}:`, error?.response?.data || error.message);
+    return { total: 0, devices: [] };
   }
 }
 

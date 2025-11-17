@@ -25,6 +25,10 @@ const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
 app.use((0, cors_1.default)()); // Frontend'den gelen isteklere izin ver
 app.use(express_1.default.json());
+// Health check endpoint for deployments/load balancers
+app.get('/health', (_req, res) => {
+    res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
 // Telegram'dan gelen veriyi doğrulamak için middleware
 const verifyTelegramWebAppData = (req, res, next) => {
     const initData = req.headers['x-telegram-init-data'];
@@ -63,8 +67,12 @@ app.get('/api/account', verifyTelegramWebAppData, (req, res) => __awaiter(void 0
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-        console.log('User object sent to frontend:', user); // Frontend'e gönderilen user objesini logla
-        res.json(user);
+        // Fetch HWID devices for this user
+        const hwidData = yield (0, api_1.getUserHwidDevices)(user.uuid);
+        // Attach HWID data to user object
+        const userWithHwid = Object.assign(Object.assign({}, user), { hwid: hwidData });
+        console.log('User object sent to frontend:', userWithHwid); // Frontend'e gönderilen user objesini logla
+        res.json(userWithHwid);
     }
     catch (error) {
         console.error('API Error:', error);

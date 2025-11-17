@@ -4,7 +4,7 @@ import axios from "axios";
 const YAML = require("yamljs");
 import path from "path";
 import fs from "fs";
-import { createUser, getUserByTelegramId, getInternalSquads, getUserByUsername } from "./api";
+import { createUser, getUserByTelegramId, getInternalSquads, getUserByUsername, getUserHwidDevices } from "./api";
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
@@ -71,8 +71,17 @@ app.get('/api/account', verifyTelegramWebAppData, async (req: Request, res: Resp
       return res.status(404).json({ error: 'User not found' });
     }
 
-    console.log('User object sent to frontend:', user); // Frontend'e gönderilen user objesini logla
-    res.json(user);
+    // Fetch HWID devices for this user
+    const hwidData = await getUserHwidDevices(user.uuid);
+
+    // Attach HWID data to user object
+    const userWithHwid = {
+      ...user,
+      hwid: hwidData,
+    };
+
+    console.log('User object sent to frontend:', userWithHwid); // Frontend'e gönderilen user objesini logla
+    res.json(userWithHwid);
   } catch (error: any) {
     console.error('API Error:', error);
     res.status(500).json({ error: 'Internal server error' });

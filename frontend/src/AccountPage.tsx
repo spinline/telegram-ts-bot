@@ -23,6 +23,17 @@ import {
   IconCopy,
 } from '@tabler/icons-react';
 
+export interface HwidDevice {
+  hwid: string;
+  userUuid: string;
+  platform?: string | null;
+  osVersion?: string | null;
+  deviceModel?: string | null;
+  userAgent?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AccountResponse {
   status: 'ACTIVE' | 'DISABLED' | 'LIMITED' | 'EXPIRED' | string;
   trafficLimitBytes: number;
@@ -33,6 +44,7 @@ export interface AccountResponse {
   manageUrl?: string;
   subscriptionUrl?: string;
   onlineAt?: string | null;
+  hwidDeviceLimit?: number | null;
   lastConnectedNode?: {
     connectedAt?: string | null;
     nodeName?: string;
@@ -40,6 +52,10 @@ export interface AccountResponse {
   } | null;
   happ?: {
     cryptoLink: string;
+  };
+  hwid?: {
+    total: number;
+    devices: HwidDevice[];
   };
 }
 
@@ -189,6 +205,22 @@ export function AccountPage({
                           {account.lastConnectedNode.countryCode && ` (${account.lastConnectedNode.countryCode})`}
                         </Text>
                       </Group>
+                    )}
+
+                    {account.hwid && account.hwid.total > 0 && (
+                      <Stack gap={4}>
+                        <Group gap="xs" align="center">
+                          <ThemeIcon color="violet" variant="light" radius="xl" size="sm"><IconGauge size={14} /></ThemeIcon>
+                          <Text size="sm" style={{ color: '#8b5cf6' }}>HWID Cihazları: {account.hwid.total}{account.hwidDeviceLimit ? ` / ${account.hwidDeviceLimit}` : ''}</Text>
+                        </Group>
+                        {account.hwid.devices.map((device, idx) => (
+                          <Code key={idx} block style={{ backgroundColor: '#0009', color: '#8b5cf6', border: '1px solid #8b5cf6', fontSize: '0.75rem' }}>
+                            {device.platform || 'Bilinmiyor'}
+                            {device.osVersion && ` • ${device.osVersion}`}
+                            {device.deviceModel && ` • ${device.deviceModel}`}
+                          </Code>
+                        ))}
+                      </Stack>
                     )}
 
                     {accountStats && (
