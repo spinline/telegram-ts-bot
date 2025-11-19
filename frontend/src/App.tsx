@@ -157,45 +157,6 @@ function App() {
     return () => { cancelled = true; };
   }, [webApp.initData, webApp]);
 
-  const refreshAccountData = async () => {
-    const user = webApp.initDataUnsafe?.user;
-    if (!user) return;
-
-    setAccountLoading(true);
-    setAccountError(null);
-
-    try {
-      const rawOrigin = import.meta.env.VITE_BACKEND_ORIGIN || '';
-      const apiOrigin = rawOrigin.replace(/\/+$/,'');
-      const res = await fetch(`${apiOrigin}/api/account`, {
-        headers: { 'x-telegram-init-data': webApp.initData ?? '' },
-      });
-      
-      if (!res.ok) {
-        throw new Error(`Hesap bilgileri alınamadı: ${res.status}`);
-      }
-      
-      const data = await res.json() as AccountResponse;
-      setAccountData(data);
-      
-      const status = String(data?.status ?? '').toLowerCase();
-      const onlineAtMs = data?.onlineAt ? Date.parse(data.onlineAt) : 0;
-      const connectedAtMs = data?.lastConnectedNode?.connectedAt ? Date.parse(data.lastConnectedNode.connectedAt) : 0;
-      const freshest = Math.max(onlineAtMs || 0, connectedAtMs || 0);
-      const now = Date.now();
-      const ONLINE_STALE_MS = 2 * 60 * 1000;
-
-      const isFresh = Number.isFinite(freshest) && freshest > 0 && now - freshest <= ONLINE_STALE_MS;
-      setOnlineStatus(status === 'active' && isFresh ? 'online' : 'offline');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.';
-      setAccountError(message);
-      setAccountData(null);
-    } finally {
-      setAccountLoading(false);
-    }
-  };
-
   const handleViewAccount = () => {
     try {
       webApp?.HapticFeedback?.impactOccurred?.('light');
