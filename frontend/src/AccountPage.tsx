@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Text,
   Group,
@@ -11,6 +11,7 @@ import {
   ThemeIcon,
   Progress,
   Button,
+  ActionIcon,
 } from '@mantine/core';
 import {
   IconCircleCheck,
@@ -21,6 +22,7 @@ import {
   IconGauge,
   IconCalendar,
   IconCopy,
+  IconX,
 } from '@tabler/icons-react';
 
 export interface HwidDevice {
@@ -63,13 +65,16 @@ export function AccountPage({
   loading,
   error,
   account,
+  onRefresh,
 }: {
   loading: boolean;
   error: string | null;
   account: AccountResponse | null;
+  onRefresh?: () => void;
 }) {
   const webApp = (window as any).Telegram.WebApp;
   const user = webApp?.initDataUnsafe?.user;
+  const [deletingHwid, setDeletingHwid] = useState<string | null>(null);
 
   useEffect(() => {
     try { webApp?.ready?.(); } catch {}
@@ -165,6 +170,49 @@ export function AccountPage({
     try { window.open(url, '_self'); } catch {}
   };
 
+  const deleteHwidDevice = async (hwid: string) => {
+    try {
+      setDeletingHwid(hwid);
+      try { (window as any)?.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('medium'); } catch {}
+      
+      const initData = webApp?.initData;
+      if (!initData) {
+        throw new Error('Telegram verisi bulunamadı');
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/hwid/device`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-telegram-init-data': initData,
+        },
+        body: JSON.stringify({ hwid }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Cihaz silinemedi');
+      }
+
+      try { (window as any)?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success'); } catch {}
+      
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (error: any) {
+      console.error('Failed to delete HWID device:', error);
+      try { (window as any)?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('error'); } catch {}
+      const tg = (window as any).Telegram?.WebApp;
+      if (tg?.showAlert) {
+        tg.showAlert(error.message || 'Cihaz silinirken bir hata oluştu');
+      } else {
+        alert(error.message || 'Cihaz silinirken bir hata oluştu');
+      }
+    } finally {
+      setDeletingHwid(null);
+    }
+  };
+
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '60px', width: '100%' }}>
       <div style={{ display: 'flex', width: '100%', backgroundColor: '#0006', overflow: 'auto', zIndex: 2, position: 'relative', padding: 30, flexDirection: 'column', borderRadius: '1rem', maxHeight: '90%', boxShadow: 'none', border: 'none' }}>
@@ -214,11 +262,21 @@ export function AccountPage({
                           <Text size="sm" style={{ color: '#8b5cf6' }}>HWID Cihazları: {account.hwid.total}{account.hwidDeviceLimit ? ` / ${account.hwidDeviceLimit}` : ''}</Text>
                         </Group>
                         {account.hwid.devices.map((device, idx) => (
-                          <div key={idx} style={{ backgroundColor: '#0009', border: '1px solid #8b5cf6', borderRadius: '0.5rem', padding: '0.75rem' }}>
-                            <Text size="sm" style={{ color: '#a78bfa' }}>
+                          <Group key={idx} gap={8} wrap="nowrap" align="center" style={{ backgroundColor: '#0009', border: '1px solid #8b5cf6', borderRadius: '0.5rem', padding: '0.75rem', width: 'fit-content', maxWidth: '100%' }}>
+                            <Text size="sm" style={{ color: '#a78bfa', flex: 1, minWidth: 0 }}>
                               {device.deviceModel || device.platform || 'Bilinmeyen Cihaz'}
                             </Text>
-                          </div>
+                            <ActionIcon
+                              size="sm"
+                              color="red"
+                              variant="subtle"
+                              onClick={() => deleteHwidDevice(device.hwid)}
+                              loading={deletingHwid === device.hwid}
+                              disabled={!!deletingHwid}
+                            >
+                              <IconX size={16} />
+                            </ActionIcon>
+                          </Group>
                         ))}
                       </Stack>
                     )}

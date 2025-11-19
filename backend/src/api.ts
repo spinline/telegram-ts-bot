@@ -72,6 +72,20 @@ export async function getUserHwidDevices(userUuid: string): Promise<any> {
   }
 }
 
+export async function deleteUserHwidDevice(userUuid: string, hwid: string): Promise<any> {
+  try {
+    const response = await apiClient.post("/api/hwid/devices/delete", {
+      userUuid,
+      hwid,
+    });
+    const data = response.data as any;
+    return data.response;
+  } catch (error: any) {
+    console.error(`Failed to delete HWID device for user ${userUuid}:`, error?.response?.data || error.message);
+    throw new Error(error?.response?.data?.message || "Cihaz silinemedi.");
+  }
+}
+
 export async function createUser(userData: any) {
   try {
     const { password, ...rest } = userData; // Şifreyi kaldır

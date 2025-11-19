@@ -4,7 +4,7 @@ import axios from "axios";
 const YAML = require("yamljs");
 import path from "path";
 import fs from "fs";
-import { createUser, getUserByTelegramId, getInternalSquads, getUserByUsername, getUserHwidDevices } from "./api";
+import { createUser, getUserByTelegramId, getInternalSquads, getUserByUsername, getUserHwidDevices, deleteUserHwidDevice } from "./api";
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
@@ -194,6 +194,33 @@ app.post('/api/happ/open', verifyTelegramWebAppData, async (req: Request, res: R
   } catch (error: any) {
     console.error('Failed to send Happ deeplink:', error?.message || error);
     res.status(500).json({ error: 'Failed to send deeplink' });
+  }
+});
+
+// HWID cihazı silme endpoint
+app.delete('/api/hwid/device', verifyTelegramWebAppData, async (req: Request, res: Response) => {
+  try {
+    const telegramUser = (req as any).telegramUser;
+    const chatId = telegramUser?.id;
+    if (!chatId) {
+      return res.status(400).json({ error: 'Telegram user id not found' });
+    }
+
+    const { hwid } = req.body;
+    if (!hwid) {
+      return res.status(400).json({ error: 'HWID parameter is required' });
+    }
+
+    const user = await getUserByTelegramId(chatId);
+    if (!user || !user.uuid) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await deleteUserHwidDevice(user.uuid, hwid);
+    res.json({ ok: true, message: 'Cihaz başarıyla silindi' });
+  } catch (error: any) {
+    console.error('Failed to delete HWID device:', error?.message || error);
+    res.status(500).json({ error: error?.message || 'Cihaz silinemedi' });
   }
 });
 
