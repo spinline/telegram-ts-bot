@@ -75,6 +75,7 @@ export function AccountPage({
   const webApp = (window as any).Telegram.WebApp;
   const user = webApp?.initDataUnsafe?.user;
   const [deletingHwid, setDeletingHwid] = useState<string | null>(null);
+  const [deletedHwids, setDeletedHwids] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     try { webApp?.ready?.(); } catch {}
@@ -199,9 +200,9 @@ export function AccountPage({
 
       try { (window as any)?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success'); } catch {}
       
-      if (onRefresh) {
-        onRefresh();
-      }
+      // Optimistic UI update - cihazı listeden kaldır
+      setDeletedHwids(prev => new Set(prev).add(hwid));
+      
     } catch (error: any) {
       console.error('Failed to delete HWID device:', error);
       try { (window as any)?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('error'); } catch {}
@@ -262,9 +263,9 @@ export function AccountPage({
                       <Stack gap={4}>
                         <Group gap="xs" align="center">
                           <ThemeIcon color="violet" variant="light" radius="xl" size="sm"><IconGauge size={14} /></ThemeIcon>
-                          <Text size="sm" style={{ color: '#8b5cf6' }}>HWID Cihazları: {account.hwid.total}{account.hwidDeviceLimit ? ` / ${account.hwidDeviceLimit}` : ''}</Text>
+                          <Text size="sm" style={{ color: '#8b5cf6' }}>HWID Cihazları: {account.hwid.devices.filter(d => !deletedHwids.has(d.hwid)).length}{account.hwidDeviceLimit ? ` / ${account.hwidDeviceLimit}` : ''}</Text>
                         </Group>
-                        {account.hwid.devices.map((device, idx) => (
+                        {account.hwid.devices.filter(device => !deletedHwids.has(device.hwid)).map((device, idx) => (
                           <Group key={idx} gap={8} wrap="nowrap" align="center" style={{ backgroundColor: '#0009', border: '1px solid #8b5cf6', borderRadius: '0.5rem', padding: '0.75rem', width: 'fit-content', maxWidth: '100%' }}>
                             <Text size="sm" style={{ color: '#a78bfa', flex: 1, minWidth: 0 }}>
                               {device.platform || device.deviceModel || 'Bilinmeyen Cihaz'}
