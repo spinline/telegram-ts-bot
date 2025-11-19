@@ -180,7 +180,10 @@ export function AccountPage({
         throw new Error('Telegram verisi bulunamadı');
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/hwid/device`, {
+      const rawOrigin = import.meta.env.VITE_BACKEND_ORIGIN || '';
+      const apiOrigin = rawOrigin.replace(/\/+$/,'');
+
+      const response = await fetch(`${apiOrigin}/api/hwid/device`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
