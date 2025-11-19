@@ -208,19 +208,19 @@ export function AccountPage({
                     )}
 
                     {account.hwid && account.hwid.total > 0 && (
-                      <div style={{ backgroundColor: '#0009', border: '1px solid #8b5cf6', borderRadius: '0.5rem', padding: '0.75rem' }}>
-                        <Group gap="xs" align="center" mb="xs">
+                      <Stack gap={4}>
+                        <Group gap="xs" align="center">
                           <ThemeIcon color="violet" variant="light" radius="xl" size="sm"><IconGauge size={14} /></ThemeIcon>
                           <Text size="sm" style={{ color: '#8b5cf6' }}>HWID Cihazları: {account.hwid.total}{account.hwidDeviceLimit ? ` / ${account.hwidDeviceLimit}` : ''}</Text>
                         </Group>
-                        <Stack gap={6}>
-                          {account.hwid.devices.map((device, idx) => (
-                            <Text key={idx} size="sm" style={{ color: '#a78bfa', paddingLeft: '0.5rem' }}>
-                              • {device.deviceModel || device.platform || 'Bilinmeyen Cihaz'}
+                        {account.hwid.devices.map((device, idx) => (
+                          <div key={idx} style={{ backgroundColor: '#0009', border: '1px solid #8b5cf6', borderRadius: '0.5rem', padding: '0.75rem' }}>
+                            <Text size="sm" style={{ color: '#a78bfa' }}>
+                              {device.deviceModel || device.platform || 'Bilinmeyen Cihaz'}
                             </Text>
-                          ))}
-                        </Stack>
-                      </div>
+                          </div>
+                        ))}
+                      </Stack>
                     )}
 
                     {accountStats && (
