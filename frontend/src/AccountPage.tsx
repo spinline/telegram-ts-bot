@@ -267,7 +267,7 @@ export function AccountPage({
                         {account.hwid.devices.map((device, idx) => (
                           <Group key={idx} gap={8} wrap="nowrap" align="center" style={{ backgroundColor: '#0009', border: '1px solid #8b5cf6', borderRadius: '0.5rem', padding: '0.75rem', width: 'fit-content', maxWidth: '100%' }}>
                             <Text size="sm" style={{ color: '#a78bfa', flex: 1, minWidth: 0 }}>
-                              {device.deviceModel || device.platform || 'Bilinmeyen Cihaz'}
+                              {device.platform || device.deviceModel || 'Bilinmeyen Cihaz'}
                             </Text>
                             <ActionIcon
                               size="sm"
