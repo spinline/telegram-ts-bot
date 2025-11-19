@@ -282,7 +282,6 @@ function App() {
                 loading={accountLoading}
                 error={accountError}
                 account={accountData}
-                onRefresh={refreshAccountData}
               />
             )}
             {currentScreen === 'buySubscription' && (

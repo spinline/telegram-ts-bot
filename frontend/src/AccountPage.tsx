@@ -65,12 +65,10 @@ export function AccountPage({
   loading,
   error,
   account,
-  onRefresh,
 }: {
   loading: boolean;
   error: string | null;
   account: AccountResponse | null;
-  onRefresh?: () => void;
 }) {
   const webApp = (window as any).Telegram.WebApp;
   const user = webApp?.initDataUnsafe?.user;
