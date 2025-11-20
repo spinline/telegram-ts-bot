@@ -65,13 +65,11 @@ export function AccountPage({
   loading,
   error,
   account,
-  onNavigateHome,
   onBuySubscription,
 }: {
   loading: boolean;
   error: string | null;
   account: AccountResponse | null;
-  onNavigateHome?: () => void;
   onBuySubscription?: () => void;
 }) {
   const webApp = (window as any).Telegram.WebApp;

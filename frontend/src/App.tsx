@@ -259,7 +259,6 @@ function App() {
                 loading={accountLoading}
                 error={accountError}
                 account={accountData}
-                onNavigateHome={handleNavigateToHome}
                 onBuySubscription={handleNavigateToBuySubscription}
               />
             )}
