@@ -263,7 +263,7 @@ export function AccountPage({
                       <Stack gap={4}>
                         <Group gap="xs" align="center">
                           <ThemeIcon color="violet" variant="light" radius="xl" size="sm"><IconGauge size={14} /></ThemeIcon>
-                          <Text size="sm" style={{ color: '#8b5cf6' }}>HWID Cihazları: {account.hwid.devices.filter(d => !deletedHwids.has(d.hwid)).length}{account.hwidDeviceLimit ? ` / ${account.hwidDeviceLimit}` : ''}</Text>
+                          <Text size="sm" style={{ color: '#8b5cf6' }}>Cihazlar: {account.hwid.devices.filter(d => !deletedHwids.has(d.hwid)).length}{account.hwidDeviceLimit ? ` / ${account.hwidDeviceLimit}` : ''}</Text>
                         </Group>
                         {account.hwid.devices.filter(device => !deletedHwids.has(device.hwid)).map((device, idx) => (
                           <Group key={idx} gap={8} wrap="nowrap" align="center" style={{ backgroundColor: '#0009', border: '1px solid #8b5cf6', borderRadius: '0.5rem', padding: '0.75rem', width: 'fit-content', maxWidth: '100%' }}>
