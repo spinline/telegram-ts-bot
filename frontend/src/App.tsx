@@ -165,14 +165,6 @@ function App() {
     setCurrentScreen('account');
   };
 
-  const handleNavigateToHome = () => {
-    try {
-      webApp?.HapticFeedback?.impactOccurred?.('light');
-    } catch {}
-    setScreenHistory(['welcome']);
-    setCurrentScreen('welcome');
-  };
-
   const handleNavigateToBuySubscription = () => {
     try {
       webApp?.HapticFeedback?.impactOccurred?.('light');
