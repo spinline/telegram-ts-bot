@@ -1,5 +1,5 @@
 # Stage 1: Build the application
-FROM node:18 AS builder
+FROM node:22.12-alpine AS builder
 
 # Create app directory
 WORKDIR /app
@@ -15,7 +15,7 @@ RUN npm run build
 # ---    
 
 # Stage 2: Create the production image
-FROM node:18-alpine
+FROM node:22.12-alpine
 
 # Set working directory for the production image
 WORKDIR /app/frontend

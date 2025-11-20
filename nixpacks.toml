@@ -5,6 +5,7 @@ nixPkgs = ["nodejs_22"]
 
 [phases.install]
 cmds = [
+  "node --version",
   "cd backend && npm ci"
 ]
 
