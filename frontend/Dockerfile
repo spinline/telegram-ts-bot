@@ -1,5 +1,5 @@
 # ---------- Build stage ----------
-FROM node:22 AS build
+FROM node:22.12-alpine AS build
 WORKDIR /app
 
 # Install deps
