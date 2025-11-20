@@ -173,6 +173,14 @@ function App() {
     setCurrentScreen('welcome');
   };
 
+  const handleNavigateToBuySubscription = () => {
+    try {
+      webApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch {}
+    setScreenHistory(prev => [...prev, 'buySubscription']);
+    setCurrentScreen('buySubscription');
+  };
+
   const handleBuySubscription = () => {
     try {
       webApp?.HapticFeedback?.impactOccurred?.('light');
@@ -252,6 +260,7 @@ function App() {
                 error={accountError}
                 account={accountData}
                 onNavigateHome={handleNavigateToHome}
+                onBuySubscription={handleNavigateToBuySubscription}
               />
             )}
             {currentScreen === 'buySubscription' && (
