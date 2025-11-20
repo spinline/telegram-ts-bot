@@ -291,12 +291,6 @@ export function AccountPage({
                         <Code block style={{ backgroundColor: '#0009', color: '#14b8a6', border: '1px solid #14b8a6' }}>{`${formatBytes(accountStats.used)} / ${formatBytes(accountStats.limit)} (${formatBytes(accountStats.remaining)} kaldı)`}</Code>
                       </Stack>
                     )}
-
-                    {account.subscriptionUrl && (
-                      <Button variant="light" color="blue" onClick={() => openExternalLink(account.subscriptionUrl)} fullWidth>
-                        Abonelik Linkini Aç
-                      </Button>
-                    )}
                   </Stack>
                 ) : (
                   <Alert color="yellow" icon={<IconAlertTriangle />} title="Bilgi">Hesap bilgileri bulunamadı.</Alert>
