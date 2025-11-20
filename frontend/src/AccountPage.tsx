@@ -65,10 +65,12 @@ export function AccountPage({
   loading,
   error,
   account,
+  onNavigateHome,
 }: {
   loading: boolean;
   error: string | null;
   account: AccountResponse | null;
+  onNavigateHome?: () => void;
 }) {
   const webApp = (window as any).Telegram.WebApp;
   const user = webApp?.initDataUnsafe?.user;
@@ -298,7 +300,12 @@ export function AccountPage({
 
                 <Group grow mt="md">
                   <Button variant="light" color="blue" onClick={() => openExternalLink(account?.subscriptionUrl ?? account?.manageUrl ?? 'https://t.me/')} disabled={!account && !error}>Abonelik Linkini Aç</Button>
-                  <Button variant="filled" color="teal" onClick={() => openExternalLink(account?.subscriptionUrl ?? 'https://t.me/')}>Abonelik Satın Al</Button>
+                  <Button variant="filled" color="teal" onClick={() => {
+                    try { (window as any)?.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light'); } catch {}
+                    if (onNavigateHome) {
+                      onNavigateHome();
+                    }
+                  }}>Abonelik Satın Al</Button>
                 </Group>
               </Stack>
             </div>
