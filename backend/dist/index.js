@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -12,6 +45,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.bot = void 0;
 require("dotenv/config");
 const grammy_1 = require("grammy");
 const YAML = require("yamljs");
@@ -80,7 +114,7 @@ app.get('/api/account', verifyTelegramWebAppData, (req, res) => __awaiter(void 0
     }
 }));
 // --- GRAMMY BOT SETUP ---
-const bot = new grammy_1.Bot(process.env.BOT_TOKEN || "");
+exports.bot = new grammy_1.Bot(process.env.BOT_TOKEN || "");
 // OpenAPI YAML dosyasını yükle
 let openApiDocument;
 const openApiFilePath = "./openapi.yaml";
@@ -128,7 +162,7 @@ const startKeyboard = new grammy_1.InlineKeyboard()
     .text("👤 Hesabım", "my_account")
     .webApp("📱 Mini App", miniAppUrl); // Doğrudan webApp butonu kullan
 // /start komutuna yanıt ver
-bot.command("start", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+exports.bot.command("start", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     const welcomeMessage = `
 Hoş geldiniz! Bu bot ile VPN hizmetinize erişebilirsiniz.
 
@@ -172,7 +206,7 @@ app.post('/api/happ/open', verifyTelegramWebAppData, (req, res) => __awaiter(voi
         const fallback = iosStore; // tek fallback bırakıyoruz
         const redirectUrl = `${base}/redirect?to=${encodeURIComponent(link)}&fallback=${encodeURIComponent(fallback)}`;
         const kb = new grammy_1.InlineKeyboard().url("Happ’ta Aç", redirectUrl);
-        yield bot.api.sendMessage(chatId, "Happ uygulamasında açmak için aşağıdaki butona dokunun:", { reply_markup: kb });
+        yield exports.bot.api.sendMessage(chatId, "Happ uygulamasında açmak için aşağıdaki butona dokunun:", { reply_markup: kb });
         res.json({ ok: true });
     }
     catch (error) {
@@ -180,8 +214,32 @@ app.post('/api/happ/open', verifyTelegramWebAppData, (req, res) => __awaiter(voi
         res.status(500).json({ error: 'Failed to send deeplink' });
     }
 }));
+// HWID cihazı silme endpoint
+app.delete('/api/hwid/device', verifyTelegramWebAppData, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const telegramUser = req.telegramUser;
+        const chatId = telegramUser === null || telegramUser === void 0 ? void 0 : telegramUser.id;
+        if (!chatId) {
+            return res.status(400).json({ error: 'Telegram user id not found' });
+        }
+        const { hwid } = req.body;
+        if (!hwid) {
+            return res.status(400).json({ error: 'HWID parameter is required' });
+        }
+        const user = yield (0, api_1.getUserByTelegramId)(chatId);
+        if (!user || !user.uuid) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        yield (0, api_1.deleteUserHwidDevice)(user.uuid, hwid);
+        res.json({ ok: true, message: 'Cihaz başarıyla silindi' });
+    }
+    catch (error) {
+        console.error('Failed to delete HWID device:', (error === null || error === void 0 ? void 0 : error.message) || error);
+        res.status(500).json({ error: (error === null || error === void 0 ? void 0 : error.message) || 'Cihaz silinemedi' });
+    }
+}));
 // Mini App'i açacak komut
-bot.command("app", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+exports.bot.command("app", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     const miniAppUrl = process.env.MINI_APP_URL;
     if (!miniAppUrl) {
         return ctx.reply("Mini App URL'i ayarlanmamış. Lütfen yöneticinizle iletişime geçin.");
@@ -191,7 +249,7 @@ bot.command("app", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     });
 }));
 // Mini App'ten gelen verileri dinlemek için daha güvenli bir yöntem
-bot.on("message", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+exports.bot.on("message", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     // Mesajın bir "web_app_data" içerip içermediğini kontrol et
     if (ctx.message && "web_app_data" in ctx.message && ctx.message.web_app_data) {
         try {
@@ -205,20 +263,20 @@ bot.on("message", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
 }));
-bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
+exports.bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
 // "Try for Free" düğmesine basıldığında (orijinal callback)
-bot.callbackQuery("try_free", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+exports.bot.callbackQuery("try_free", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield handleTryFree(ctx);
 }));
 // "Satın Al" düğmesine basıldığında
-bot.callbackQuery("buy_subscription", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+exports.bot.callbackQuery("buy_subscription", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield ctx.answerCallbackQuery({
         text: "Çok yakında!",
         show_alert: true,
     });
 }));
 // "Hesabım" düğmesine basıldığında
-bot.callbackQuery("my_account", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+exports.bot.callbackQuery("my_account", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const telegramId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
     if (!telegramId) {
@@ -404,16 +462,75 @@ function handleTryFree(ctx) {
         }
     });
 }
+// Internal test endpoint: webhook'u manuel test etmek için (PROD: koruma gerektirir)
+app.post('/internal/test-webhook/:telegramId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const token = req.headers['x-internal-token'];
+    const expected = process.env.INTERNAL_NOTIFY_TOKEN;
+    if (!expected || token !== expected) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+    const telegramIdParam = req.params.telegramId;
+    const reason = (_a = req.body) === null || _a === void 0 ? void 0 : _a.reason;
+    try {
+        const user = yield (0, api_1.getUserByTelegramId)(Number(telegramIdParam));
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        // Webhook event simülasyonu
+        const mockEvent = {
+            event: 'user.limited',
+            timestamp: new Date().toISOString(),
+            data: { user }
+        };
+        const { handleWebhook } = yield Promise.resolve().then(() => __importStar(require('./webhook')));
+        const result = yield handleWebhook(exports.bot, mockEvent, reason);
+        res.json(result);
+    }
+    catch (e) {
+        console.error('Internal test error:', e);
+        res.status(500).json({ error: String((e === null || e === void 0 ? void 0 : e.message) || e) });
+    }
+}));
+// Webhook endpoint: RemnaWave panelinden gelen olayları dinle
+app.post('/endpoint', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const signature = req.headers['x-webhook-signature'];
+        const webhookSecret = process.env.WEBHOOK_SECRET;
+        // Webhook secret varsa imza doğrula
+        if (webhookSecret && signature) {
+            const { verifyWebhookSignature } = yield Promise.resolve().then(() => __importStar(require('./webhook')));
+            const payload = JSON.stringify(req.body);
+            const isValid = verifyWebhookSignature(payload, signature, webhookSecret);
+            if (!isValid) {
+                console.warn('Invalid webhook signature');
+                return res.status(401).json({ error: 'Invalid signature' });
+            }
+        }
+        const event = req.body;
+        console.log('Webhook event received:', event.event);
+        const { handleWebhook } = yield Promise.resolve().then(() => __importStar(require('./webhook')));
+        const result = yield handleWebhook(exports.bot, event);
+        res.json({ received: true, result });
+    }
+    catch (e) {
+        console.error('Webhook error:', (e === null || e === void 0 ? void 0 : e.message) || e);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}));
+// ...existing code...
 function startApp() {
     return __awaiter(this, void 0, void 0, function* () {
         // Start the Express server
         app.listen(port, () => {
             console.log(`API server listening on port ${port}`);
+            console.log(`Webhook endpoint: POST /endpoint`);
         });
         // Start the Telegram bot
         yield validateConfigAtStartup();
-        bot.start();
+        exports.bot.start();
         console.log("Bot started!");
+        console.log("Webhook mode: Real-time notifications enabled ⚡");
     });
 }
 startApp();

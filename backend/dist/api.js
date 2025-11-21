@@ -27,6 +27,7 @@ exports.getUserByTelegramId = getUserByTelegramId;
 exports.getUserByUsername = getUserByUsername;
 exports.getInternalSquads = getInternalSquads;
 exports.getUserHwidDevices = getUserHwidDevices;
+exports.deleteUserHwidDevice = deleteUserHwidDevice;
 exports.createUser = createUser;
 const axios_1 = __importDefault(require("axios"));
 require("dotenv/config");
@@ -106,6 +107,23 @@ function getUserHwidDevices(userUuid) {
             }
             console.error(`Failed to get HWID devices for user ${userUuid}:`, ((_b = error === null || error === void 0 ? void 0 : error.response) === null || _b === void 0 ? void 0 : _b.data) || error.message);
             return { total: 0, devices: [] };
+        }
+    });
+}
+function deleteUserHwidDevice(userUuid, hwid) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c;
+        try {
+            const response = yield apiClient.post("/api/hwid/devices/delete", {
+                userUuid,
+                hwid,
+            });
+            const data = response.data;
+            return data.response;
+        }
+        catch (error) {
+            console.error(`Failed to delete HWID device for user ${userUuid}:`, ((_a = error === null || error === void 0 ? void 0 : error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
+            throw new Error(((_c = (_b = error === null || error === void 0 ? void 0 : error.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.message) || "Cihaz silinemedi.");
         }
     });
 }

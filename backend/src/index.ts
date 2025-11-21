@@ -90,7 +90,7 @@ app.get('/api/account', verifyTelegramWebAppData, async (req: Request, res: Resp
 
 
 // --- GRAMMY BOT SETUP ---
-const bot = new Bot<Context>(process.env.BOT_TOKEN || "");
+export const bot = new Bot<Context>(process.env.BOT_TOKEN || "");
 
 // OpenAPI YAML dosyasını yükle
 let openApiDocument: any;
@@ -471,16 +471,84 @@ async function handleTryFree(ctx: Context) {
   }
 }
 
+// Internal test endpoint: webhook'u manuel test etmek için (PROD: koruma gerektirir)
+app.post('/internal/test-webhook/:telegramId', async (req: Request, res: Response) => {
+  const token = req.headers['x-internal-token'] as string | undefined;
+  const expected = process.env.INTERNAL_NOTIFY_TOKEN;
+  if (!expected || token !== expected) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  const telegramIdParam = req.params.telegramId;
+  const reason = req.body?.reason as string | undefined;
+
+  try {
+    const user = await getUserByTelegramId(Number(telegramIdParam));
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Webhook event simülasyonu
+    const mockEvent = {
+      event: 'user.limited',
+      timestamp: new Date().toISOString(),
+      data: { user }
+    };
+
+    const { handleWebhook } = await import('./webhook');
+    const result = await handleWebhook(bot, mockEvent, reason);
+    res.json(result);
+  } catch (e: any) {
+    console.error('Internal test error:', e);
+    res.status(500).json({ error: String(e?.message || e) });
+  }
+});
+
+// Webhook endpoint: RemnaWave panelinden gelen olayları dinle
+app.post('/endpoint', async (req: Request, res: Response) => {
+  try {
+    const signature = req.headers['x-webhook-signature'] as string | undefined;
+    const webhookSecret = process.env.WEBHOOK_SECRET;
+
+    // Webhook secret varsa imza doğrula
+    if (webhookSecret && signature) {
+      const { verifyWebhookSignature } = await import('./webhook');
+      const payload = JSON.stringify(req.body);
+      const isValid = verifyWebhookSignature(payload, signature, webhookSecret);
+
+      if (!isValid) {
+        console.warn('Invalid webhook signature');
+        return res.status(401).json({ error: 'Invalid signature' });
+      }
+    }
+
+    const event = req.body;
+    console.log('Webhook event received:', event.event);
+
+    const { handleWebhook } = await import('./webhook');
+    const result = await handleWebhook(bot, event);
+
+    res.json({ received: true, result });
+  } catch (e: any) {
+    console.error('Webhook error:', e?.message || e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ...existing code...
+
 async function startApp() {
   // Start the Express server
   app.listen(port, () => {
     console.log(`API server listening on port ${port}`);
+    console.log(`Webhook endpoint: POST /endpoint`);
   });
 
   // Start the Telegram bot
   await validateConfigAtStartup();
   bot.start();
   console.log("Bot started!");
+  console.log("Webhook mode: Real-time notifications enabled ⚡");
 }
 
 startApp();
