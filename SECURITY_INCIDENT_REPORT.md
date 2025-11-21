@@ -32,6 +32,9 @@
 - [x] ✅ Yeni güvenli secret'lar oluşturuldu
 - [x] ✅ `.env.production.example` template dosyası oluşturuldu
 - [x] ✅ `SECURITY.md` güvenlik rehberi eklendi
+- [x] ✅ `.idea/` klasörü git'ten kaldırıldı (IDE ayarları)
+- [x] ✅ `.github/` klasörü git'ten kaldırıldı (kişisel ayarlar)
+- [x] ✅ `.gitignore` kapsamlı hale getirildi
 - [x] ✅ Değişiklikler commit edildi ve push yapıldı
 
 ### 2. Yeni Secret'lar
