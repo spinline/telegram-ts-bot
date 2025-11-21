@@ -559,14 +559,30 @@ async function startApp() {
   // Start the Express server
   app.listen(port, () => {
     console.log(`API server listening on port ${port}`);
-    console.log(`Webhook endpoint: POST /webhook/remnawave`);
+    console.log(`Webhook endpoint: POST /endpoint`);
   });
 
-  // Start the Telegram bot
+  // Validate configuration
   await validateConfigAtStartup();
-  bot.start();
-  console.log("Bot started!");
-  console.log("Webhook mode: Real-time notifications enabled ⚡");
+
+  // IMPORTANT: Don't use bot.start() in production when using webhooks!
+  // bot.start() uses long polling (getUpdates) which conflicts with webhook mode
+  // We only handle incoming updates through our /endpoint webhook
+
+  console.log("✅ Bot initialized (webhook mode - no polling)");
+  console.log("✅ Webhook endpoint ready: POST /endpoint");
+  console.log("⚡ Real-time notifications enabled via RemnaWave webhooks");
+
+  // Handle graceful shutdown
+  process.on('SIGINT', () => {
+    console.log('Shutting down gracefully...');
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', () => {
+    console.log('Shutting down gracefully...');
+    process.exit(0);
+  });
 }
 
 startApp();
