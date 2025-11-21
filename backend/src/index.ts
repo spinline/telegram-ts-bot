@@ -309,17 +309,34 @@ bot.command("admin", async (ctx) => {
     console.log('🔍 /admin komutu çalıştırıldı');
     console.log('   Telegram ID:', telegramId);
     console.log('   Username:', ctx.from?.username);
-    console.log('   ADMIN_TELEGRAM_IDS env:', process.env.ADMIN_TELEGRAM_IDS);
+    console.log('   First name:', ctx.from?.first_name);
 
-    // Admin kontrolü - environment variable veya hardcoded admin list
-    const adminIds = process.env.ADMIN_TELEGRAM_IDS?.split(',').map(id => parseInt(id.trim())) || [];
+    const envValue = process.env.ADMIN_TELEGRAM_IDS;
+    console.log('   ADMIN_TELEGRAM_IDS env RAW:', envValue);
+    console.log('   ADMIN_TELEGRAM_IDS type:', typeof envValue);
 
-    console.log('   Parsed admin IDs:', adminIds);
-    console.log('   Is admin?', adminIds.includes(telegramId || 0));
+    // Basit kontrol - direkt string olarak karşılaştır
+    const adminIdsString = envValue || '';
+    const adminIdsArray = adminIdsString.split(',').map(id => id.trim());
+    const telegramIdString = String(telegramId);
 
-    if (!adminIds.includes(telegramId || 0)) {
+    console.log('   Admin IDs (string array):', adminIdsArray);
+    console.log('   User Telegram ID (string):', telegramIdString);
+    console.log('   Array includes check:', adminIdsArray.includes(telegramIdString));
+
+    // Hem string hem number kontrolü
+    const isAdminString = adminIdsArray.includes(telegramIdString);
+    const isAdminNumber = adminIdsArray.map(id => parseInt(id)).includes(telegramId || 0);
+
+    console.log('   Is admin (string check)?', isAdminString);
+    console.log('   Is admin (number check)?', isAdminNumber);
+
+    const isAdmin = isAdminString || isAdminNumber;
+
+    if (!isAdmin) {
       console.log('   ❌ Yetki yok - mesaj gönderiliyor');
-      return ctx.reply("⛔ Bu komutu kullanma yetkiniz yok.");
+      await ctx.reply("⛔ Bu komutu kullanma yetkiniz yok.");
+      return;
     }
 
     console.log('   ✅ Admin yetkisi var - panel açılıyor');
@@ -340,9 +357,13 @@ bot.command("admin", async (ctx) => {
 
     console.log('   ✅ Admin paneli mesajı gönderildi');
   } catch (error: any) {
-    console.error('❌ /admin komutunda hata:', error.message);
+    console.error('❌ /admin komutunda HATA:', error.message);
     console.error('   Stack:', error.stack);
-    await ctx.reply(`Hata oluştu: ${error.message}`);
+    try {
+      await ctx.reply(`❌ Hata oluştu: ${error.message}`);
+    } catch (e) {
+      console.error('   Hata mesajı da gönderilemedi:', e);
+    }
   }
 });
 
