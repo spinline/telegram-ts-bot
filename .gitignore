@@ -4,3 +4,5 @@ frontend/dist
 backend/dist
 .DS_Store
 backend/.env.production
+.idea/
+.github/
