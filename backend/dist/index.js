@@ -314,22 +314,38 @@ exports.bot.on("message", (ctx) => __awaiter(void 0, void 0, void 0, function* (
 exports.bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
 // Admin Panel Komutları
 exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
-    const telegramId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
-    // Admin kontrolü - environment variable veya hardcoded admin list
-    const adminIds = ((_b = process.env.ADMIN_TELEGRAM_IDS) === null || _b === void 0 ? void 0 : _b.split(',').map(id => parseInt(id.trim()))) || [];
-    if (!adminIds.includes(telegramId || 0)) {
-        return ctx.reply("⛔ Bu komutu kullanma yetkiniz yok.");
+    var _a, _b, _c;
+    try {
+        const telegramId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
+        console.log('🔍 /admin komutu çalıştırıldı');
+        console.log('   Telegram ID:', telegramId);
+        console.log('   Username:', (_b = ctx.from) === null || _b === void 0 ? void 0 : _b.username);
+        console.log('   ADMIN_TELEGRAM_IDS env:', process.env.ADMIN_TELEGRAM_IDS);
+        // Admin kontrolü - environment variable veya hardcoded admin list
+        const adminIds = ((_c = process.env.ADMIN_TELEGRAM_IDS) === null || _c === void 0 ? void 0 : _c.split(',').map(id => parseInt(id.trim()))) || [];
+        console.log('   Parsed admin IDs:', adminIds);
+        console.log('   Is admin?', adminIds.includes(telegramId || 0));
+        if (!adminIds.includes(telegramId || 0)) {
+            console.log('   ❌ Yetki yok - mesaj gönderiliyor');
+            return ctx.reply("⛔ Bu komutu kullanma yetkiniz yok.");
+        }
+        console.log('   ✅ Admin yetkisi var - panel açılıyor');
+        const keyboard = new grammy_1.InlineKeyboard()
+            .text("👥 Kullanıcı Listesi", "admin_users")
+            .text("🔍 Kullanıcı Ara", "admin_search").row()
+            .text("📢 Toplu Bildirim", "admin_broadcast")
+            .text("📊 İstatistikler", "admin_stats").row()
+            .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+            .text("📝 Sistem Logları", "admin_logs").row()
+            .text("💾 Sistem Durumu", "admin_status");
+        yield ctx.reply("👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:", { reply_markup: keyboard, parse_mode: "Markdown" });
+        console.log('   ✅ Admin paneli mesajı gönderildi');
     }
-    const keyboard = new grammy_1.InlineKeyboard()
-        .text("👥 Kullanıcı Listesi", "admin_users")
-        .text("🔍 Kullanıcı Ara", "admin_search").row()
-        .text("📢 Toplu Bildirim", "admin_broadcast")
-        .text("📊 İstatistikler", "admin_stats").row()
-        .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
-        .text("📝 Sistem Logları", "admin_logs").row()
-        .text("💾 Sistem Durumu", "admin_status");
-    yield ctx.reply("👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:", { reply_markup: keyboard, parse_mode: "Markdown" });
+    catch (error) {
+        console.error('❌ /admin komutunda hata:', error.message);
+        console.error('   Stack:', error.stack);
+        yield ctx.reply(`Hata oluştu: ${error.message}`);
+    }
 }));
 // Admin Panel - Kullanıcı Listesi
 exports.bot.callbackQuery("admin_users", (ctx) => __awaiter(void 0, void 0, void 0, function* () {

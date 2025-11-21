@@ -303,28 +303,47 @@ bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
 
 // Admin Panel Komutları
 bot.command("admin", async (ctx) => {
-  const telegramId = ctx.from?.id;
+  try {
+    const telegramId = ctx.from?.id;
 
-  // Admin kontrolü - environment variable veya hardcoded admin list
-  const adminIds = process.env.ADMIN_TELEGRAM_IDS?.split(',').map(id => parseInt(id.trim())) || [];
+    console.log('🔍 /admin komutu çalıştırıldı');
+    console.log('   Telegram ID:', telegramId);
+    console.log('   Username:', ctx.from?.username);
+    console.log('   ADMIN_TELEGRAM_IDS env:', process.env.ADMIN_TELEGRAM_IDS);
 
-  if (!adminIds.includes(telegramId || 0)) {
-    return ctx.reply("⛔ Bu komutu kullanma yetkiniz yok.");
+    // Admin kontrolü - environment variable veya hardcoded admin list
+    const adminIds = process.env.ADMIN_TELEGRAM_IDS?.split(',').map(id => parseInt(id.trim())) || [];
+
+    console.log('   Parsed admin IDs:', adminIds);
+    console.log('   Is admin?', adminIds.includes(telegramId || 0));
+
+    if (!adminIds.includes(telegramId || 0)) {
+      console.log('   ❌ Yetki yok - mesaj gönderiliyor');
+      return ctx.reply("⛔ Bu komutu kullanma yetkiniz yok.");
+    }
+
+    console.log('   ✅ Admin yetkisi var - panel açılıyor');
+
+    const keyboard = new InlineKeyboard()
+      .text("👥 Kullanıcı Listesi", "admin_users")
+      .text("🔍 Kullanıcı Ara", "admin_search").row()
+      .text("📢 Toplu Bildirim", "admin_broadcast")
+      .text("📊 İstatistikler", "admin_stats").row()
+      .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+      .text("📝 Sistem Logları", "admin_logs").row()
+      .text("💾 Sistem Durumu", "admin_status");
+
+    await ctx.reply(
+      "👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:",
+      { reply_markup: keyboard, parse_mode: "Markdown" }
+    );
+
+    console.log('   ✅ Admin paneli mesajı gönderildi');
+  } catch (error: any) {
+    console.error('❌ /admin komutunda hata:', error.message);
+    console.error('   Stack:', error.stack);
+    await ctx.reply(`Hata oluştu: ${error.message}`);
   }
-
-  const keyboard = new InlineKeyboard()
-    .text("👥 Kullanıcı Listesi", "admin_users")
-    .text("🔍 Kullanıcı Ara", "admin_search").row()
-    .text("📢 Toplu Bildirim", "admin_broadcast")
-    .text("📊 İstatistikler", "admin_stats").row()
-    .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
-    .text("📝 Sistem Logları", "admin_logs").row()
-    .text("💾 Sistem Durumu", "admin_status");
-
-  await ctx.reply(
-    "👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:",
-    { reply_markup: keyboard, parse_mode: "Markdown" }
-  );
 });
 
 // Admin Panel - Kullanıcı Listesi
