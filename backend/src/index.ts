@@ -13,6 +13,10 @@ import crypto from 'crypto';
 const app = express();
 const port = process.env.PORT || 3000;
 
+// API Configuration
+const API_BASE_URL = process.env.API_BASE_URL || "";
+const API_TOKEN = process.env.API_TOKEN || "";
+
 app.use(cors()); // Frontend'den gelen isteklere izin ver
 app.use(express.json());
 
@@ -251,6 +255,170 @@ bot.on("message", async (ctx) => {
 });
 
 bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
+
+// Admin Panel Komutları
+bot.command("admin", async (ctx) => {
+  const telegramId = ctx.from?.id;
+
+  // Admin kontrolü - environment variable veya hardcoded admin list
+  const adminIds = process.env.ADMIN_TELEGRAM_IDS?.split(',').map(id => parseInt(id.trim())) || [];
+
+  if (!adminIds.includes(telegramId || 0)) {
+    return ctx.reply("⛔ Bu komutu kullanma yetkiniz yok.");
+  }
+
+  const keyboard = new InlineKeyboard()
+    .text("👥 Kullanıcı Listesi", "admin_users")
+    .text("🔍 Kullanıcı Ara", "admin_search").row()
+    .text("📢 Toplu Bildirim", "admin_broadcast")
+    .text("📊 İstatistikler", "admin_stats").row()
+    .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+    .text("📝 Sistem Logları", "admin_logs").row()
+    .text("💾 Sistem Durumu", "admin_status");
+
+  await ctx.reply(
+    "👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:",
+    { reply_markup: keyboard, parse_mode: "Markdown" }
+  );
+});
+
+// Admin Panel - Kullanıcı Listesi
+bot.callbackQuery("admin_users", async (ctx) => {
+  await ctx.answerCallbackQuery();
+
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/users`, {
+      headers: { Authorization: `Bearer ${API_TOKEN}` },
+      params: { page: 1, take: 10 }
+    });
+
+    const users = response.data.data || [];
+    let message = "👥 *Kullanıcı Listesi* (İlk 10)\n\n";
+
+    users.forEach((user: any, index: number) => {
+      const status = user.status === 'ACTIVE' ? '🟢' :
+                     user.status === 'LIMITED' ? '🟡' :
+                     user.status === 'EXPIRED' ? '🔴' : '⚫';
+      message += `${index + 1}. ${status} ${user.username}\n`;
+      message += `   📊 ${(user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2)} GB / ${(user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0)} GB\n`;
+    });
+
+    await ctx.editMessageText(message, { parse_mode: "Markdown" });
+  } catch (e: any) {
+    await ctx.editMessageText(`❌ Hata: ${e?.message || 'Bilinmeyen hata'}`);
+  }
+});
+
+// Admin Panel - Kullanıcı Arama
+bot.callbackQuery("admin_search", async (ctx) => {
+  await ctx.answerCallbackQuery();
+  await ctx.editMessageText(
+    "🔍 *Kullanıcı Arama*\n\nKullanıcı adı yazın:",
+    { parse_mode: "Markdown" }
+  );
+  // TODO: Message handler ekle
+});
+
+// Admin Panel - Toplu Bildirim
+bot.callbackQuery("admin_broadcast", async (ctx) => {
+  await ctx.answerCallbackQuery();
+  await ctx.editMessageText(
+    "📢 *Toplu Bildirim*\n\nGöndermek istediğiniz mesajı yazın:",
+    { parse_mode: "Markdown" }
+  );
+  // TODO: Message handler ve broadcast fonksiyonu ekle
+});
+
+// Admin Panel - İstatistikler
+bot.callbackQuery("admin_stats", async (ctx) => {
+  await ctx.answerCallbackQuery();
+
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/users`, {
+      headers: { Authorization: `Bearer ${API_TOKEN}` }
+    });
+
+    const users = response.data.data || [];
+    const total = users.length;
+    const active = users.filter((u: any) => u.status === 'ACTIVE').length;
+    const limited = users.filter((u: any) => u.status === 'LIMITED').length;
+    const expired = users.filter((u: any) => u.status === 'EXPIRED').length;
+
+    const totalTraffic = users.reduce((sum: number, u: any) => sum + (u.usedTrafficBytes || 0), 0);
+    const avgTraffic = total > 0 ? totalTraffic / total : 0;
+
+    const message = `📊 *Sistem İstatistikleri*\n\n` +
+      `👥 Toplam Kullanıcı: ${total}\n` +
+      `🟢 Aktif: ${active}\n` +
+      `🟡 Limitli: ${limited}\n` +
+      `🔴 Süresi Dolmuş: ${expired}\n\n` +
+      `📈 Toplam Trafik: ${(totalTraffic / 1024 / 1024 / 1024).toFixed(2)} GB\n` +
+      `📊 Ortalama Trafik: ${(avgTraffic / 1024 / 1024 / 1024).toFixed(2)} GB/kullanıcı`;
+
+    await ctx.editMessageText(message, { parse_mode: "Markdown" });
+  } catch (e: any) {
+    await ctx.editMessageText(`❌ Hata: ${e?.message || 'Bilinmeyen hata'}`);
+  }
+});
+
+// Admin Panel - Kullanıcı İşlemleri
+bot.callbackQuery("admin_user_ops", async (ctx) => {
+  await ctx.answerCallbackQuery();
+
+  const keyboard = new InlineKeyboard()
+    .text("✅ Kullanıcı Aktifleştir", "admin_activate")
+    .text("⛔ Kullanıcı Pasifleştir", "admin_deactivate").row()
+    .text("⏰ Süre Uzat", "admin_extend")
+    .text("📊 Trafik Ekle", "admin_add_traffic").row()
+    .text("🔙 Geri", "admin_back");
+
+  await ctx.editMessageText(
+    "⚙️ *Kullanıcı İşlemleri*\n\nİşlem seçin:",
+    { reply_markup: keyboard, parse_mode: "Markdown" }
+  );
+});
+
+// Admin Panel - Sistem Durumu
+bot.callbackQuery("admin_status", async (ctx) => {
+  await ctx.answerCallbackQuery();
+
+  const uptime = process.uptime();
+  const days = Math.floor(uptime / 86400);
+  const hours = Math.floor((uptime % 86400) / 3600);
+  const minutes = Math.floor((uptime % 3600) / 60);
+
+  const memUsage = process.memoryUsage();
+  const memUsedMB = (memUsage.heapUsed / 1024 / 1024).toFixed(2);
+  const memTotalMB = (memUsage.heapTotal / 1024 / 1024).toFixed(2);
+
+  const message = `💾 *Sistem Durumu*\n\n` +
+    `⏱️ Uptime: ${days}g ${hours}s ${minutes}d\n` +
+    `💾 Bellek: ${memUsedMB} MB / ${memTotalMB} MB\n` +
+    `🤖 Bot: Çalışıyor ✅\n` +
+    `🔗 Webhook: Aktif ✅\n` +
+    `📡 RemnaWave API: Bağlı ✅`;
+
+  await ctx.editMessageText(message, { parse_mode: "Markdown" });
+});
+
+// Admin Panel - Geri butonu
+bot.callbackQuery("admin_back", async (ctx) => {
+  await ctx.answerCallbackQuery();
+
+  const keyboard = new InlineKeyboard()
+    .text("👥 Kullanıcı Listesi", "admin_users")
+    .text("🔍 Kullanıcı Ara", "admin_search").row()
+    .text("📢 Toplu Bildirim", "admin_broadcast")
+    .text("📊 İstatistikler", "admin_stats").row()
+    .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+    .text("📝 Sistem Logları", "admin_logs").row()
+    .text("💾 Sistem Durumu", "admin_status");
+
+  await ctx.editMessageText(
+    "👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:",
+    { reply_markup: keyboard, parse_mode: "Markdown" }
+  );
+});
 
 // "Try for Free" düğmesine basıldığında (orijinal callback)
 bot.callbackQuery("try_free", async (ctx) => {

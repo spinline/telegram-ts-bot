@@ -659,12 +659,17 @@ Detaylı çözüm: [BOT_409_FIX.md](backend/BOT_409_FIX.md)
   - [ ] Otomatik fatura sistemi
   - [ ] Ödeme geçmişi
 
-- [ ] **👨‍💼 Admin Panel (/admin)**
-  - [ ] Kullanıcı listesi ve arama
-  - [ ] Toplu bildirim gönderme
-  - [ ] İstatistikler ve raporlar
-  - [ ] Kullanıcı işlemleri (aktif/pasif, uzatma)
-  - [ ] Sistem durumu ve loglar
+- [ ] **👨‍💼 Admin Panel - Gelişmiş Özellikler**
+  - [x] Temel kullanıcı yönetimi ✅
+  - [x] İstatistikler ve raporlar ✅
+  - [x] Toplu bildirim gönderme ✅
+  - [x] Sistem durumu görüntüleme ✅
+  - [ ] Gelişmiş filtreleme ve sıralama
+  - [ ] Mesaj şablonları
+  - [ ] Zamanlı bildirim gönderimi
+  - [ ] Grafik ve görsel raporlar
+  - [ ] Export (Excel/CSV)
+  - [ ] Sistem log görüntüleyici
 
 - [ ] **🌍 Çoklu Dil Desteği**
   - [ ] i18n entegrasyonu
