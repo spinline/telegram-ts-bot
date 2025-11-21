@@ -507,8 +507,16 @@ app.post('/internal/test-webhook/:telegramId', async (req: Request, res: Respons
 // Webhook endpoint: RemnaWave panelinden gelen olayları dinle
 app.post('/endpoint', async (req: Request, res: Response) => {
   try {
+    // Debug: Tüm header'ları logla
+    console.log('=== WEBHOOK RECEIVED ===');
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+
     const signature = req.headers['x-webhook-signature'] as string | undefined;
     const webhookSecret = process.env.WEBHOOK_SECRET;
+
+    console.log('Signature from header:', signature);
+    console.log('Webhook secret configured:', webhookSecret ? 'YES' : 'NO');
 
     // Webhook secret varsa imza doğrula
     if (webhookSecret && signature) {
@@ -516,18 +524,24 @@ app.post('/endpoint', async (req: Request, res: Response) => {
       const payload = JSON.stringify(req.body);
       const isValid = verifyWebhookSignature(payload, signature, webhookSecret);
 
+      console.log('Signature validation:', isValid ? 'VALID ✅' : 'INVALID ❌');
+
       if (!isValid) {
-        console.warn('Invalid webhook signature');
+        console.warn('⚠️ Invalid webhook signature - rejecting request');
         return res.status(401).json({ error: 'Invalid signature' });
       }
+    } else {
+      console.warn('⚠️ No signature validation (secret or signature missing)');
     }
 
     const event = req.body;
-    console.log('Webhook event received:', event.event);
+    console.log('📡 Webhook event type:', event.event);
+    console.log('📦 Event data:', JSON.stringify(event.data, null, 2));
 
     const { handleWebhook } = await import('./webhook');
     const result = await handleWebhook(bot, event);
 
+    console.log('✅ Webhook processed:', JSON.stringify(result, null, 2));
     res.json({ received: true, result });
   } catch (e: any) {
     console.error('Webhook error:', e?.message || e);
@@ -541,7 +555,7 @@ async function startApp() {
   // Start the Express server
   app.listen(port, () => {
     console.log(`API server listening on port ${port}`);
-    console.log(`Webhook endpoint: POST /endpoint`);
+    console.log(`Webhook endpoint: POST /webhook/remnawave`);
   });
 
   // Start the Telegram bot

@@ -24,9 +24,12 @@ URL: https://telegram-ts-bot-backend.karatatar.com/endpoint
 
 Secret: [1. adımda oluşturduğun secret]
 
-NOT: RemnaWave panelinde event seçimi yoksa tüm eventleri gönder.
-     Backend otomatik olarak sadece gerekli olanları işler:
-     - user.status.changed, user.limited, user.expired, user.disabled
+Events (seçilecekler):
+  ☑ user.status.changed
+  ☑ user.limited
+  ☑ user.expired
+  ☑ user.disabled
+```
 
 **Kaydet**
 
@@ -48,9 +51,9 @@ Telegram'da bildirim gelirse ✅ Kurulum tamam!
 
 ### Webhook URL nereden geliyor?
 
-`.env.production` dosyasındaki `PUBLIC_BASE_URL` + `/endpoint`
+`.env.production` dosyasındaki `PUBLIC_BASE_URL` + `/webhook/remnawave`
 
-```
+Webhook URL: https://telegram-ts-bot-backend.karatatar.com/webhook/remnawave
 PUBLIC_BASE_URL=https://telegram-ts-bot-backend.karatatar.com
                          ↓
 Webhook URL: https://telegram-ts-bot-backend.karatatar.com/endpoint

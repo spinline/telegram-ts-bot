@@ -30,14 +30,12 @@ https://telegram-ts-bot-backend.karatatar.com/endpoint
 **NOT:** Bu secret `.env.production` dosyasındaki `WEBHOOK_SECRET` ile aynı olmalı!
 
 #### 📡 Events (Olaylar):
-**RemnaWave panelinde event seçimi yoksa:**
-- Tüm webhook eventlerini gönderin
-- Backend otomatik olarak sadece gerekli eventleri işler:
-  - ✅ `user.status.changed`
-  - ✅ `user.limited`
-  - ✅ `user.expired`
-  - ✅ `user.disabled`
-- Diğer eventler (user.created, user.updated, vb.) otomatik olarak atlanır
+Şu olayları seçin:
+
+- ☑️ `user.status.changed` - Kullanıcı durumu değiştiğinde
+- ☑️ `user.limited` - Trafik limiti aşıldığında
+- ☑️ `user.expired` - Abonelik süresi dolduğunda
+- ☑️ `user.disabled` - Kullanıcı devre dışı bırakıldığında
 
 ### 4. Kaydet
 
@@ -104,12 +102,12 @@ Error: Invalid signature
 **1. URL'i kontrol edin:**
 ```bash
 # Doğru:
+https://telegram-ts-bot-backend.karatatar.com/webhook/remnawave
+
+# Yanlış:
 https://telegram-ts-bot-backend.karatatar.com/endpoint
 
 # Yanlış:
-https://telegram-ts-bot-backend.karatatar.com/webhook/remnawave
-https://telegram-ts-bot-backend.karatatar.com/webhook
-```
 
 **2. Backend çalışıyor mu?**
 ```bash
@@ -136,7 +134,7 @@ RemnaWave'in backend sunucunuza erişebildiğinden emin olun.
 ---
 
 ## 📝 Kontrol Listesi
-
+- [ ] URL: `https://telegram-ts-bot-backend.karatatar.com/webhook/remnawave`
 Webhook kurulumu tamamlandı mı?
 
 - [ ] RemnaWave panelinde webhook oluşturuldu
@@ -144,12 +142,11 @@ Webhook kurulumu tamamlandı mı?
 - [ ] Secret: `.env.production` ile aynı
 - [ ] Backend sunucu çalışıyor
 - [ ] `/health` endpoint'i 200 OK dönüyor
+- [ ] Events: 4 event seçildi (status.changed, limited, expired, disabled)
 - [ ] Test webhook başarılı
 - [ ] RemnaWave panel → Webhook Logs → İstekler gözüküyor
 
 **NOT:** Event seçimi gerekmiyor, backend otomatik filtreleyecek!
-
-Hepsi ✅ ise kurulum tamam! 🎉
 
 ---
 

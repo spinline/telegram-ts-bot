@@ -234,15 +234,9 @@ curl https://your-domain.com/health
 1. Kullanıcının `telegramId` alanının dolu olduğundan emin olun
 2. Kullanıcı botu engellemiş olabilir
 3. Kullanıcıya daha önce bildirim gönderilmiş olabilir (tek seferlik)
-### Event türünün desteklenen listede olduğunu kontrol edin
+4. Event türünün desteklenen listede olduğunu kontrol edin
 
-Backend sadece şu eventleri işler:
-- `user.status.changed`
-- `user.limited`
-- `user.expired`
-- `user.disabled`
-
-Diğer eventler (user.created, user.updated, vb.) otomatik atlanır ve bildirim gönderilmez.
+### Webhook Çok Geliyor
 
 ### Kullanıcı durumunu kontrol edin
 
@@ -250,16 +244,15 @@ Bildirim sadece kullanıcı kısıtlı durumdaysa gönderilir:
 - `status === 'LIMITED'`
 - `status === 'EXPIRED'`
 - `status === 'DISABLED'`
-
+RemnaWave panelinde sadece gerekli event'leri seçin:
+- ✅ `user.status.changed`
+- ✅ `user.limited`
+- ✅ `user.expired`
+- ✅ `user.disabled`
+- ❌ `user.created` (gereksiz)
+- ❌ `user.updated` (gereksiz)
 Eğer `status === 'ACTIVE'` ise bildirim gönderilmez.
-
-## Loglar
-
-### Gerçek Zamanlı Bildirimler
-
-| Özellik | Değer |
-|---------|-------|
-| Gecikme | <1 saniye |
+## Performans
 | CPU Kullanımı | Minimal |
 | API İstekleri | 0 (sadece webhook) |
 | Gerçek Zamanlı | ✅ Evet |

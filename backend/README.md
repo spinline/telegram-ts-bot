@@ -43,9 +43,9 @@ BOT_TOKEN=your_telegram_bot_token
 
 ### 3. RemnaWave Panelinde Webhook Ekleyin
 
-- **URL:** `https://telegram-ts-bot-backend.karatatar.com/endpoint`
+- **URL:** `https://your-domain.com/webhook/remnawave`
 - **Secret:** Yukarıdaki secret
-- **Events:** Tüm eventler (backend otomatik filtreleyecek)
+- **Events:** user.status.changed, user.limited, user.expired, user.disabled
 
 ### 4. Deploy
 
