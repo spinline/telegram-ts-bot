@@ -1,4 +1,4 @@
-# 🤖 Telegram VPN Bot - Otomatik Bildirim Sistemi
+# 🤖 Telegram VPN Bot - RemnaWave İçin Komple Telegram Çözümü
 
 <div align="center">
 
@@ -7,7 +7,9 @@
 ![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
 ![RemnaWave](https://img.shields.io/badge/RemnaWave-Integration-green?style=for-the-badge)
 
-**VPN kullanıcılarınız için akıllı, gerçek zamanlı Telegram bildirim sistemi**
+**RemnaWave VPN paneli için tam özellikli Telegram bot uygulaması**
+
+*Mini App • Hesap Yönetimi • Otomatik Bildirimler • Abonelik Satın Alma*
 
 [Özellikler](#-özellikler) • [Kurulum](#-kurulum) • [Kullanım](#-kullanım) • [Dokümantasyon](#-dokümantasyon)
 
@@ -17,39 +19,71 @@
 
 ## 📖 Nedir?
 
-**Telegram VPN Bot**, [RemnaWave](https://github.com/remnawave/backend) VPN panel sistemi ile entegre çalışan otomatik bildirim botu. Kullanıcılarınızın hesap durumlarını (trafik aşımı, abonelik bitişi, vb.) gerçek zamanlı olarak Telegram üzerinden bildiren akıllı bir asistandır.
+**Telegram VPN Bot**, [RemnaWave](https://github.com/remnawave/backend) VPN panel sistemi için geliştirilmiş **tam özellikli Telegram uygulamasıdır**. Kullanıcılarınız Telegram üzerinden:
+
+- 📱 **Mini App ile hesap yönetimi** yapabilir
+- 🔔 **Gerçek zamanlı bildirimler** alabilir  
+- 💳 **Yeni abonelik satın alabilir** (yakında)
+- 📊 **Trafik ve süre takibi** yapabilir
+- 🔗 **VPN bağlantı linklerini** alabilir
+- 🖥️ **Cihaz yönetimi** gerçekleştirebilir
 
 ### 🎯 Problem ve Çözüm
 
 **Problem:**
-- Kullanıcılar trafik kotalarının dolduğunu fark etmiyor
-- Abonelik süreleri sessizce bitiyor
-- Manuel kontrol zahmetli ve zaman alıcı
-- Müşteri memnuniyetsizliği ve destek yükü artıyor
+- Kullanıcılar panel'e girmek için web'e ihtiyaç duyuyor
+- Trafik kotalarının dolduğunu geç fark ediyor
+- Abonelik yenileme süreci zahmetli
+- Mobil cihazlardan hesap kontrolü zor
+- Müşteri desteği yoğunluğu fazla
 
 **Çözüm:**
+- 📱 **Telegram Mini App** - Web panel yerine Telegram içinde tam özellikli uygulama
 - ⚡ **Gerçek zamanlı bildirimler** - Webhook ile <2 saniye gecikme
-- 🔔 **Otomatik uyarılar** - Trafik/süre aşımında anında bildirim
-- 💬 **Telegram entegrasyonu** - Kullanıcılar zaten kullandığı platform
-- 🎨 **Kullanıcı dostu arayüz** - Mini app ile hesap detayları
+- 💳 **Kolay satın alma** - Telegram'dan direkt abonelik yenileme (yakında)
+- 🔗 **Tek tıkla bağlantı** - Happ deeplink ile anında VPN kurulumu
+- 🤖 **Self-servis** - Kullanıcılar kendi işlemlerini halleder
 
 ---
 
 ## ✨ Özellikler
 
-### 🚀 Gerçek Zamanlı Bildirimler
-
-- **Trafik Aşımı:** Kullanıcı kotasını aştığında otomatik bildirim
-- **Abonelik Bitişi:** Süre dolduğunda anında uyarı
-- **Hesap Devre Dışı:** Admin tarafından kapatıldığında bilgilendirme
-- **Webhook Entegrasyonu:** RemnaWave'den gerçek zamanlı event'ler
-
 ### 📱 Telegram Mini App
 
+Kullanıcılarınız için Telegram içinde çalışan tam özellikli web uygulaması:
+
 - **Hesap Detayları:** Kalan trafik, süre, durum bilgisi
-- **Happ CryptoLink:** VPN bağlantı linki
-- **Cihaz Yönetimi:** HWID cihaz listesi ve kaldırma
-- **QR Kod:** Hızlı bağlantı için QR kod desteği
+- **VPN Bağlantı Linki:** Happ CryptoLink ile tek tıkla kurulum
+- **QR Kod Desteği:** Mobil cihazlardan kolay bağlantı
+- **Cihaz Yönetimi:** HWID cihaz listesi görüntüleme ve kaldırma
+- **Abonelik Bilgileri:** Plan detayları, bitiş tarihi, kullanım istatistikleri
+- **Deneme Hesabı:** Tek tıkla ücretsiz deneme oluşturma
+
+### 💳 Abonelik Satın Alma (Yakında)
+
+- **Telegram İçinde Ödeme:** Telegram Stars veya kripto ile ödeme
+- **Plan Seçimi:** Farklı paketler ve süre seçenekleri
+- **Otomatik Aktivasyon:** Ödeme sonrası anında aktif
+- **Fatura/Makbuz:** Otomatik fatura gönderimi
+
+### 🔔 Otomatik Bildirim Sistemi
+
+- **Trafik Aşımı:** Kullanıcı kotasını aştığında otomatik bildirim
+- **Abonelik Bitişi:** Süre dolmadan önce hatırlatma
+- **Hesap Devre Dışı:** Admin aksiyonlarında bilgilendirme
+- **Webhook Entegrasyonu:** RemnaWave'den gerçek zamanlı event'ler
+- **Akıllı Filtreleme:** Spam önleme, tek seferlik bildirim
+
+### 🤖 Bot Komutları
+
+- **/start** - Hoş geldin mesajı ve hızlı aksiyonlar
+- **/help** - Yardım ve kullanım kılavuzu
+- **/app** - Mini App'i aç
+- **Inline Butonlar:**
+  - 🚀 Ücretsiz Dene
+  - 💳 Satın Al (yakında)
+  - 👤 Hesabım
+  - 📱 Mini App Aç
 
 ### 🔒 Güvenlik
 
@@ -263,56 +297,116 @@ docker-compose restart
 Kullanıcı Telegram'da botu bulur ve `/start` gönderir:
 
 ```
-🤖 Bot: Hoş geldiniz! Bu bot ile VPN hizmetinize erişebilirsiniz.
+🤖 Hoş geldiniz! RemnaWave VPN hizmetine Telegram üzerinden erişebilirsiniz.
 
-[🚀 Try for Free] [💳 Satın Al]
+[🚀 Ücretsiz Dene] [💳 Satın Al]
 [👤 Hesabım] [📱 Mini App]
 ```
 
-#### 2. Deneme Hesabı Oluşturma
+#### 2. Ücretsiz Deneme Hesabı
 
-Kullanıcı "Try for Free" butonuna tıklar:
-
-```
-🎉 Deneme hesabınız başarıyla oluşturuldu, @username!
-
-Hesabınız 3 gün geçerlidir ve 2 GB trafik limitiniz bulunmaktadır.
-
-[👤 Hesabım]
-```
-
-#### 3. Hesap Detayları
-
-"Hesabım" butonuna tıkladığında:
+Kullanıcı "Ücretsiz Dene" butonuna tıklar:
 
 ```
-🚀 VPN Hesap Detaylarınız 🚀
+🎉 Deneme hesabınız başarıyla oluşturuldu!
 
 📝 Kullanıcı Adı: john_doe
-*️⃣ Abonelik Türü: TRIAL
-📅 Bitiş Tarihi: 22 Kasım 2025
-📊 Kota: 1.5 GB / 2 GB
+⏰ Süre: 3 gün
+📊 Trafik: 2 GB
 
-Durum: 🟢 Aktif
-
-Happ CryptoLink:
-happ://import/eyJhbGci...
-
-[🍏 iOS] [🤖 Android]
+VPN bağlantınızı kurmak için:
+[📱 Mini App'i Aç]
 ```
 
-#### 4. Otomatik Bildirim
+#### 3. Mini App - Hesap Yönetimi
 
-Trafik aşımında otomatik bildirim gelir:
+Kullanıcı "Mini App" butonuna tıkladığında Telegram içinde web uygulaması açılır:
 
+**Ana Ekran:**
+```
+╔══════════════════════════════╗
+║    🚀 VPN Hesabım            ║
+╠══════════════════════════════╣
+║ Kullanıcı: john_doe          ║
+║ Plan: TRIAL                  ║
+║ Durum: 🟢 Aktif              ║
+║                              ║
+║ 📊 Trafik: 1.5 GB / 2 GB     ║
+║ ███████████░░░░░ %75         ║
+║                              ║
+║ ⏰ Kalan: 2 gün 14 saat      ║
+║ 📅 Bitiş: 24 Kas 2025        ║
+╠══════════════════════════════╣
+║ [🔗 VPN Bağlantısı Al]       ║
+║ [📱 QR Kod Göster]           ║
+║ [🖥️ Cihazlarım (2/5)]        ║
+║ [💳 Abonelik Yenile]         ║
+╚══════════════════════════════╝
+```
+
+**VPN Bağlantısı:**
+- Happ CryptoLink
+- iOS/Android deeplink
+- QR kod (kameradan okutma)
+- Manuel konfigürasyon
+
+**Cihaz Yönetimi:**
+```
+🖥️ Cihazlarım (2/5)
+
+📱 iPhone 14 Pro
+└─ Son bağlantı: 5 dk önce
+   [🗑️ Kaldır]
+
+💻 MacBook Pro
+└─ Son bağlantı: 2 saat önce
+   [🗑️ Kaldır]
+```
+
+#### 4. Abonelik Satın Alma (Yakında)
+
+```
+💳 Abonelik Paketleri
+
+┌─────────────────────┐
+│ 📦 Başlangıç        │
+│ • 30 gün            │
+│ • 50 GB trafik      │
+│ • 3 cihaz           │
+│ 💵 $4.99            │
+│ [Satın Al]          │
+└─────────────────────┘
+
+┌─────────────────────┐
+│ 🚀 Pro              │
+│ • 90 gün            │
+│ • 200 GB trafik     │
+│ • 10 cihaz          │
+│ 💵 $12.99           │
+│ [Satın Al] ⭐ Popüler│
+└─────────────────────┘
+```
+
+#### 5. Otomatik Bildirimler
+
+**Trafik Aşımı:**
 ```
 ⚠️ Hesabınız kısıtlandı!
 
-Trafik kotanız doldu.
+Trafik kotanız doldu (2 GB / 2 GB).
 
-Hesap detaylarınızı görmek için aşağıdaki butona tıklayın.
+Hizmetinize devam etmek için:
+[💳 Abonelik Yenile] [👤 Hesabım]
+```
 
-[👤 Hesap Bilgilerim]
+**Abonelik Bitişi:**
+```
+⏰ Aboneliğiniz yakında sona eriyor!
+
+Kalan süre: 2 gün
+
+Kesintisiz hizmet için:
+[💳 Şimdi Yenile] [⏰ Hatırlat]
 ```
 
 ### Admin / Developer Kullanımı
@@ -556,21 +650,43 @@ Detaylı çözüm: [BOT_409_FIX.md](backend/BOT_409_FIX.md)
 
 ## 🛣️ Roadmap
 
-### v1.1 (Planlanan)
+### v1.1 (Geliştirme Aşamasında)
+
+- [ ] **💳 Abonelik Satın Alma**
+  - [ ] Telegram Stars entegrasyonu
+  - [ ] Kripto ödeme desteği
+  - [ ] Plan ve fiyat yönetimi
+  - [ ] Otomatik fatura sistemi
+  - [ ] Ödeme geçmişi
+
+- [ ] **👨‍💼 Admin Panel (/admin)**
+  - [ ] Kullanıcı listesi ve arama
+  - [ ] Toplu bildirim gönderme
+  - [ ] İstatistikler ve raporlar
+  - [ ] Kullanıcı işlemleri (aktif/pasif, uzatma)
+  - [ ] Sistem durumu ve loglar
+
+- [ ] **🌍 Çoklu Dil Desteği**
+  - [ ] i18n entegrasyonu
+  - [ ] TR, EN, RU, FA dil seçenekleri
+  - [ ] Otomatik dil tespiti
+
+### v1.2 (Planlanan)
 
 - [ ] Redis entegrasyonu (kalıcı bildirim geçmişi)
-- [ ] Çoklu dil desteği (i18n)
 - [ ] Kullanıcı tercih ayarları (bildirim açma/kapama)
-- [ ] Webhook retry mekanizması
-- [ ] Prometheus metrics
-
-### v1.2 (Gelecek)
-
-- [ ] Admin dashboard
-- [ ] Toplu bildirim gönderme
+- [ ] Referral sistemi (arkadaşını getir)
 - [ ] Bildirim şablonları
-- [ ] A/B testing
 - [ ] Analytics ve raporlama
+- [ ] A/B testing
+
+### v2.0 (Gelecek)
+
+- [ ] Telegram Bot API 7.0 özellikleri
+- [ ] Web3 ödeme entegrasyonu
+- [ ] NFT tabanlı abonelikler
+- [ ] Community features (grup yönetimi)
+- [ ] Gamification (rozet, seviye sistemi)
 
 ---
 
