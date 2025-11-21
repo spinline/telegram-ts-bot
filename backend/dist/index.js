@@ -495,39 +495,25 @@ app.post('/internal/test-webhook/:telegramId', (req, res) => __awaiter(void 0, v
 // Webhook endpoint: RemnaWave panelinden gelen olayları dinle
 app.post('/endpoint', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // Debug: Tüm header'ları logla
-        console.log('=== WEBHOOK RECEIVED ===');
-        console.log('Headers:', JSON.stringify(req.headers, null, 2));
-        console.log('Body:', JSON.stringify(req.body, null, 2));
         const signature = req.headers['x-webhook-signature'];
         const webhookSecret = process.env.WEBHOOK_SECRET;
-        console.log('Signature from header:', signature);
-        console.log('Webhook secret configured:', webhookSecret ? 'YES' : 'NO');
         // Webhook secret varsa VE signature header varsa imza doğrula
         if (webhookSecret && signature) {
             const { verifyWebhookSignature } = yield Promise.resolve().then(() => __importStar(require('./webhook')));
             const payload = JSON.stringify(req.body);
             const isValid = verifyWebhookSignature(payload, signature, webhookSecret);
-            console.log('Signature validation:', isValid ? 'VALID ✅' : 'INVALID ❌');
             if (!isValid) {
                 console.warn('⚠️ Invalid webhook signature - rejecting request');
                 return res.status(401).json({ error: 'Invalid signature' });
             }
-            console.log('✅ Signature validated successfully');
         }
         else if (webhookSecret && !signature) {
-            console.warn('⚠️ Webhook secret configured but no signature received from RemnaWave');
-            console.warn('⚠️ Proceeding anyway - consider enabling signature in RemnaWave .env');
-        }
-        else {
-            console.warn('⚠️ No signature validation (webhook secret not configured)');
+            console.warn('⚠️ Webhook secret configured but no signature received');
         }
         const event = req.body;
-        console.log('📡 Webhook event type:', event.event);
-        console.log('📦 Event data:', JSON.stringify(event.data, null, 2));
+        console.log('📡 Webhook received:', event.event);
         const { handleWebhook } = yield Promise.resolve().then(() => __importStar(require('./webhook')));
         const result = yield handleWebhook(exports.bot, event);
-        console.log('✅ Webhook processed:', JSON.stringify(result, null, 2));
         res.json({ received: true, result });
     }
     catch (e) {

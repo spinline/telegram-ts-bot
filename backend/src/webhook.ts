@@ -24,67 +24,43 @@ export async function handleWebhook(bot: Bot<any>, event: WebhookEvent, reasonOv
   try {
     const { event: eventType, data } = event;
 
-    // RemnaWave user data'yı farklı formatlarda gönderebilir:
-    // Format 1: { event: "...", data: { user: {...} } }
-    // Format 2: { event: "...", data: {...} } (direkt user)
-    // Format 3: { event: "...", uuid: "...", username: "..." } (root'ta)
-
+    // RemnaWave user data'yı farklı formatlarda gönderebilir
     let user = data?.user || data || event;
 
-    console.log('🔍 Processing webhook event:', eventType);
-    console.log('👤 User data:', JSON.stringify(user, null, 2));
-
     if (!user || !user.uuid) {
-      console.warn('⚠️ Webhook event received without valid user data:', eventType);
+      console.warn('⚠️ Webhook: Invalid user data for event:', eventType);
       return { ok: false, reason: 'no_user_data' };
     }
 
     const userUuid = user.uuid;
     const telegramId = typeof user.telegramId === 'string' ? parseInt(user.telegramId) : user.telegramId;
 
-    console.log('🆔 User UUID:', userUuid);
-    console.log('👤 Username:', user.username);
-    console.log('📱 Telegram ID:', telegramId);
-    console.log('📊 Status:', user.status);
-
     if (!telegramId) {
-      console.log(`⚠️ User ${user.username} has no telegramId, skipping notification`);
+      console.log(`⚠️ Webhook: User ${user.username} has no Telegram ID, skipping`);
       return { ok: false, reason: 'no_telegram_id' };
     }
 
-    // Trafik kontrolü - usedTrafficBytes > trafficLimitBytes ise LIMITED olarak değerlendir
+    // Trafik kontrolü
     const usedTraffic = typeof user.usedTrafficBytes === 'string' ? parseInt(user.usedTrafficBytes) : user.usedTrafficBytes || 0;
     const limitTraffic = typeof user.trafficLimitBytes === 'string' ? parseInt(user.trafficLimitBytes) : user.trafficLimitBytes || 0;
     const isTrafficExceeded = usedTraffic > limitTraffic;
 
-    console.log('📈 Traffic Check:');
-    console.log('   Used:', usedTraffic, 'bytes');
-    console.log('   Limit:', limitTraffic, 'bytes');
-    console.log('   Exceeded:', isTrafficExceeded);
-
-    // Süre kontrolü - expireAt geçmiş mi?
+    // Süre kontrolü
     const isExpired = user.expireAt ? new Date(user.expireAt) < new Date() : false;
-    console.log('⏰ Expiration Check:');
-    console.log('   ExpireAt:', user.expireAt);
-    console.log('   Expired:', isExpired);
 
-    // Sadece status değişikliği veya kullanım olaylarında bildirim gönder
+    // Sadece relevant event'lerde bildirim gönder
     const shouldNotify =
       eventType === 'user.status.changed' ||
       eventType === 'user.disabled' ||
       eventType === 'user.limited' ||
       eventType === 'user.expired' ||
-      eventType === 'user.modified';  // RemnaWave bu event'i gönderiyor
-
-    console.log('🔔 Should notify?', shouldNotify, '(event type:', eventType, ')');
+      eventType === 'user.modified';
 
     if (!shouldNotify) {
-      console.log('⏭️ Event not relevant for notifications');
       return { ok: false, reason: 'event_not_relevant' };
     }
 
     // Kullanıcı kısıtlı mı?
-    // Status kontrolü VEYA trafik aşımı VEYA süre dolumu
     const isRestricted =
       user.status === 'LIMITED' ||
       user.status === 'EXPIRED' ||
@@ -92,23 +68,13 @@ export async function handleWebhook(bot: Bot<any>, event: WebhookEvent, reasonOv
       isTrafficExceeded ||
       isExpired;
 
-    console.log('🚫 User restricted?', isRestricted);
-    console.log('   Reasons:', {
-      statusLimited: user.status === 'LIMITED',
-      statusExpired: user.status === 'EXPIRED',
-      statusDisabled: user.status === 'DISABLED',
-      trafficExceeded: isTrafficExceeded,
-      expired: isExpired
-    });
-
     if (!isRestricted) {
-      console.log('✅ User not restricted, skipping notification');
       return { ok: false, reason: 'user_not_restricted' };
     }
 
     // Daha önce bildirim gönderildiyse atla
     if (notifiedUsers[userUuid]) {
-      console.log(`⏭️ User ${user.username} already notified, skipping`);
+      console.log(`⏭️ Webhook: User ${user.username} already notified`);
       return { ok: false, reason: 'already_notified' };
     }
 
@@ -126,9 +92,6 @@ export async function handleWebhook(bot: Bot<any>, event: WebhookEvent, reasonOv
 
     const text = `⚠️ Hesabınız kısıtlandı!\n\n${reason}\n\nHesap detaylarınızı görmek için aşağıdaki butona tıklayın.`;
 
-    console.log('📤 Sending notification to Telegram ID:', telegramId);
-    console.log('💬 Message:', text);
-
     // Telegram bildirimi gönder
     await bot.api.sendMessage(telegramId, text, {
       reply_markup: {
@@ -140,11 +103,11 @@ export async function handleWebhook(bot: Bot<any>, event: WebhookEvent, reasonOv
 
     // Başarılı, kullanıcıyı işaretle
     notifiedUsers[userUuid] = true;
-    console.log(`✅ Notification sent successfully to user ${user.username} (${telegramId})`);
+    console.log(`✅ Notification sent: ${user.username} (${telegramId}) - ${reason}`);
 
     return { ok: true, event: eventType };
   } catch (e: any) {
-    console.error('❌ Webhook handler error:', e?.message || e);
+    console.error('❌ Webhook error:', e?.message || e);
     return { ok: false, error: e?.message || e };
   }
 }
@@ -157,12 +120,13 @@ export function verifyWebhookSignature(payload: string, signature: string, secre
     hmac.update(payload);
     const expectedSignature = hmac.digest('hex');
 
-    console.log('🔐 Signature verification:');
-    console.log('   Expected:', expectedSignature);
-    console.log('   Received:', signature);
-    console.log('   Match:', signature === expectedSignature);
+    const isValid = signature === expectedSignature;
 
-    return signature === expectedSignature;
+    if (!isValid) {
+      console.warn('🔐 Signature mismatch - Expected:', expectedSignature.substring(0, 16) + '...');
+    }
+
+    return isValid;
   } catch (e: any) {
     console.error('❌ Signature verification error:', e?.message || e);
     return false;
