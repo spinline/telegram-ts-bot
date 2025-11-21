@@ -654,25 +654,34 @@ function startApp() {
         // Start the Express server
         app.listen(port, () => {
             console.log(`API server listening on port ${port}`);
-            console.log(`Webhook endpoint: POST /endpoint`);
+            console.log(`Webhook endpoint: POST /endpoint (RemnaWave)`);
         });
         // Validate configuration
         yield validateConfigAtStartup();
-        // IMPORTANT: Don't use bot.start() in production when using webhooks!
-        // bot.start() uses long polling (getUpdates) which conflicts with webhook mode
-        // We only handle incoming updates through our /endpoint webhook
-        console.log("✅ Bot initialized (webhook mode - no polling)");
-        console.log("✅ Webhook endpoint ready: POST /endpoint");
-        console.log("⚡ Real-time notifications enabled via RemnaWave webhooks");
+        // Start Telegram bot with long polling for commands
+        // This is needed for /start, /admin and other Telegram interactions
+        console.log("🤖 Starting Telegram bot (long polling)...");
+        try {
+            yield exports.bot.start({
+                onStart: (botInfo) => {
+                    console.log(`✅ Bot @${botInfo.username} is running!`);
+                    console.log(`📱 Commands: /start, /admin, /help, /app`);
+                    console.log(`⚡ RemnaWave webhook: POST /endpoint`);
+                }
+            });
+        }
+        catch (error) {
+            console.error("❌ Failed to start bot:", error === null || error === void 0 ? void 0 : error.message);
+            console.error("Check if BOT_TOKEN is correct in .env");
+        }
         // Handle graceful shutdown
-        process.on('SIGINT', () => {
+        const shutdown = () => __awaiter(this, void 0, void 0, function* () {
             console.log('Shutting down gracefully...');
+            yield exports.bot.stop();
             process.exit(0);
         });
-        process.on('SIGTERM', () => {
-            console.log('Shutting down gracefully...');
-            process.exit(0);
-        });
+        process.on('SIGINT', shutdown);
+        process.on('SIGTERM', shutdown);
     });
 }
 startApp();
