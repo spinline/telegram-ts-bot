@@ -41,9 +41,14 @@ INTERNAL_NOTIFY_TOKEN=your_test_token
 **Adım 1:** RemnaWave panel → Settings → Webhooks
 
 **Adım 2:** Yeni webhook ekleyin:
-- **URL:** `https://telegram-ts-bot-backend.karatatar.com/endpoint`
+- **URL:** `https://telegram-mini-app-backend.karatatar.com/endpoint`
 - **Secret:** Yukarıda oluşturduğunuz secret
 - **Events:** Tüm eventler (backend otomatik filtreleyecek)
+
+**NOT:** RemnaWave panelinde webhook **ZATEN AYARLI!**
+- ✅ WEBHOOK_ENABLED=true
+- ✅ WEBHOOK_URL=https://telegram-mini-app-backend.karatatar.com/endpoint
+- ✅ WEBHOOK_SECRET_HEADER ayarlanmış
 
 **Adım 3:** Kaydet ve test edin
 
@@ -62,26 +67,53 @@ docker run -p 3000:3000 telegram-bot
 
 ### 5. Test Edin
 
-```bash
-# Health check
-curl https://your-domain.com/health
+#### Test Script (En Kolay)
 
-# Manuel webhook testi
-curl -X POST "https://your-domain.com/webhook/remnawave" \
+```bash
+cd backend
+
+# Test script'i çalıştırın (Telegram ID'nizi girin)
+./test-webhook.sh YOUR_TELEGRAM_ID
+
+# Örnek: ./test-webhook.sh 123456789
+```
+
+#### Manuel Test (curl ile)
+
+```bash
+# 1. Health check
+curl https://telegram-mini-app-backend.karatatar.com/health
+
+# 2. Webhook test - Sahte event gönder (ÇALIŞAN ÖRNEK!)
+curl -X POST "https://telegram-mini-app-backend.karatatar.com/endpoint" \
   -H "Content-Type: application/json" \
   -d '{
     "event": "user.limited",
     "timestamp": "2024-11-21T10:30:00Z",
     "data": {
       "user": {
-        "uuid": "test-uuid",
+        "uuid": "test-uuid-989928474",
         "username": "test_user",
         "status": "LIMITED",
-        "telegramId": YOUR_TELEGRAM_ID
+        "telegramId": 989928474
       }
     }
   }'
+
+# Başarılı yanıt: {"received":true,"result":{"ok":true,"event":"user.limited"}}
+# Telegram'da bildirim gelecek!
 ```
+
+**Telegram ID'nizi öğrenmek için:**
+- Telegram'da @userinfobot'a mesaj gönderin
+- Veya @myidbot kullanın
+
+**Başarılı yanıt:**
+```json
+{"ok": true, "event": "user.limited"}
+```
+
+**Detaylı test rehberi:** [WEBHOOK_TEST.md](./WEBHOOK_TEST.md)
 
 ## 🔄 Nasıl Çalışır?
 
@@ -90,7 +122,7 @@ Kullanıcı trafik limitini aşar (örn: 2GB)
     ↓
 RemnaWave paneli status değiştirir: ACTIVE → LIMITED
     ↓
-Panel webhook gönderir: POST https://telegram-ts-bot-backend.karatatar.com/endpoint
+Panel webhook gönderir: POST https://telegram-mini-app-backend.karatatar.com/endpoint
     ↓
 Backend webhook'u alır ve imzayı doğrular (HMAC SHA256)
     ↓
