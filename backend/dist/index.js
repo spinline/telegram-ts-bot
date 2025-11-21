@@ -119,6 +119,50 @@ app.get('/api/account', verifyTelegramWebAppData, (req, res) => __awaiter(void 0
 }));
 // --- GRAMMY BOT SETUP ---
 exports.bot = new grammy_1.Bot(process.env.BOT_TOKEN || "");
+// Error handler - Grammy hatalarını yakala
+exports.bot.catch((err) => {
+    const ctx = err.ctx;
+    console.error(`Error while handling update ${ctx.update.update_id}:`);
+    const e = err.error;
+    if (e instanceof Error) {
+        console.error("Error name:", e.name);
+        console.error("Error message:", e.message);
+        // Callback query timeout hatası - normal, atla
+        if (e.message.includes("query is too old")) {
+            console.warn("⚠️ Callback query timeout (normal, ignored)");
+            return;
+        }
+        // Bot blocked hatası - kullanıcı botu engellemiş
+        if (e.message.includes("bot was blocked")) {
+            console.warn("⚠️ User blocked the bot");
+            return;
+        }
+    }
+    console.error("Full error:", e);
+});
+// Helper: Safe callback query answer (timeout hatalarını yakala)
+function safeAnswerCallback(ctx, text) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
+        try {
+            if (text) {
+                yield ctx.answerCallbackQuery(text);
+            }
+            else {
+                yield ctx.answerCallbackQuery();
+            }
+        }
+        catch (e) {
+            // Timeout hatası - normal, logla ve devam et
+            if (((_a = e.message) === null || _a === void 0 ? void 0 : _a.includes("query is too old")) || ((_b = e.message) === null || _b === void 0 ? void 0 : _b.includes("query ID is invalid"))) {
+                console.warn("⚠️ Callback query timeout (ignored)");
+                return;
+            }
+            // Diğer hatalar
+            console.error("❌ answerCallbackQuery error:", e.message);
+        }
+    });
+}
 // OpenAPI YAML dosyasını yükle
 let openApiDocument;
 const openApiFilePath = "./openapi.yaml";
@@ -289,7 +333,7 @@ exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function
 }));
 // Admin Panel - Kullanıcı Listesi
 exports.bot.callbackQuery("admin_users", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield ctx.answerCallbackQuery();
+    yield safeAnswerCallback(ctx);
     try {
         const response = yield axios_1.default.get(`${API_BASE_URL}/api/users`, {
             headers: { Authorization: `Bearer ${API_TOKEN}` },
@@ -312,19 +356,19 @@ exports.bot.callbackQuery("admin_users", (ctx) => __awaiter(void 0, void 0, void
 }));
 // Admin Panel - Kullanıcı Arama
 exports.bot.callbackQuery("admin_search", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield ctx.answerCallbackQuery();
+    yield safeAnswerCallback(ctx);
     yield ctx.editMessageText("🔍 *Kullanıcı Arama*\n\nKullanıcı adı yazın:", { parse_mode: "Markdown" });
     // TODO: Message handler ekle
 }));
 // Admin Panel - Toplu Bildirim
 exports.bot.callbackQuery("admin_broadcast", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield ctx.answerCallbackQuery();
+    yield safeAnswerCallback(ctx);
     yield ctx.editMessageText("📢 *Toplu Bildirim*\n\nGöndermek istediğiniz mesajı yazın:", { parse_mode: "Markdown" });
     // TODO: Message handler ve broadcast fonksiyonu ekle
 }));
 // Admin Panel - İstatistikler
 exports.bot.callbackQuery("admin_stats", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield ctx.answerCallbackQuery();
+    yield safeAnswerCallback(ctx);
     try {
         const response = yield axios_1.default.get(`${API_BASE_URL}/api/users`, {
             headers: { Authorization: `Bearer ${API_TOKEN}` }
@@ -351,7 +395,7 @@ exports.bot.callbackQuery("admin_stats", (ctx) => __awaiter(void 0, void 0, void
 }));
 // Admin Panel - Kullanıcı İşlemleri
 exports.bot.callbackQuery("admin_user_ops", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield ctx.answerCallbackQuery();
+    yield safeAnswerCallback(ctx);
     const keyboard = new grammy_1.InlineKeyboard()
         .text("✅ Kullanıcı Aktifleştir", "admin_activate")
         .text("⛔ Kullanıcı Pasifleştir", "admin_deactivate").row()
@@ -362,7 +406,7 @@ exports.bot.callbackQuery("admin_user_ops", (ctx) => __awaiter(void 0, void 0, v
 }));
 // Admin Panel - Sistem Durumu
 exports.bot.callbackQuery("admin_status", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield ctx.answerCallbackQuery();
+    yield safeAnswerCallback(ctx);
     const uptime = process.uptime();
     const days = Math.floor(uptime / 86400);
     const hours = Math.floor((uptime % 86400) / 3600);
@@ -380,7 +424,7 @@ exports.bot.callbackQuery("admin_status", (ctx) => __awaiter(void 0, void 0, voi
 }));
 // Admin Panel - Geri butonu
 exports.bot.callbackQuery("admin_back", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield ctx.answerCallbackQuery();
+    yield safeAnswerCallback(ctx);
     const keyboard = new grammy_1.InlineKeyboard()
         .text("👥 Kullanıcı Listesi", "admin_users")
         .text("🔍 Kullanıcı Ara", "admin_search").row()
@@ -397,28 +441,24 @@ exports.bot.callbackQuery("try_free", (ctx) => __awaiter(void 0, void 0, void 0,
 }));
 // "Satın Al" düğmesine basıldığında
 exports.bot.callbackQuery("buy_subscription", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield ctx.answerCallbackQuery({
-        text: "Çok yakında!",
-        show_alert: true,
-    });
+    yield safeAnswerCallback(ctx, "Çok yakında!");
 }));
 // "Hesabım" düğmesine basıldığında
 exports.bot.callbackQuery("my_account", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const telegramId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
     if (!telegramId) {
-        yield ctx.answerCallbackQuery("Hata!");
+        yield safeAnswerCallback(ctx, "Hata!");
         yield ctx.reply("Telegram ID'niz alınamadı. Lütfen tekrar deneyin.");
         return;
     }
     try {
-        yield ctx.answerCallbackQuery("Hesap bilgileriniz getiriliyor...");
+        yield safeAnswerCallback(ctx, "Hesap bilgileriniz getiriliyor...");
         const user = yield (0, api_1.getUserByTelegramId)(telegramId);
         if (!user) {
             yield ctx.reply("Sistemde kayıtlı bir hesabınız bulunamadı. Lütfen önce 'Try for Free' seçeneği ile bir deneme hesabı oluşturun.");
             return;
         }
-        // Satın al butonu
         const buyKeyboard = new grammy_1.InlineKeyboard().text("💳 Yeni Abonelik Satın Al", "buy_subscription");
         // Eğer hesap limitli veya süresi dolmuşsa, kullanıcıyı bilgilendir ve satın almaya yönlendir
         if (user.status === 'LIMITED' || user.status === 'EXPIRED') {

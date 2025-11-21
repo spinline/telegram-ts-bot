@@ -96,6 +96,51 @@ app.get('/api/account', verifyTelegramWebAppData, async (req: Request, res: Resp
 // --- GRAMMY BOT SETUP ---
 export const bot = new Bot<Context>(process.env.BOT_TOKEN || "");
 
+// Error handler - Grammy hatalarını yakala
+bot.catch((err) => {
+  const ctx = err.ctx;
+  console.error(`Error while handling update ${ctx.update.update_id}:`);
+  const e = err.error;
+
+  if (e instanceof Error) {
+    console.error("Error name:", e.name);
+    console.error("Error message:", e.message);
+
+    // Callback query timeout hatası - normal, atla
+    if (e.message.includes("query is too old")) {
+      console.warn("⚠️ Callback query timeout (normal, ignored)");
+      return;
+    }
+
+    // Bot blocked hatası - kullanıcı botu engellemiş
+    if (e.message.includes("bot was blocked")) {
+      console.warn("⚠️ User blocked the bot");
+      return;
+    }
+  }
+
+  console.error("Full error:", e);
+});
+
+// Helper: Safe callback query answer (timeout hatalarını yakala)
+async function safeAnswerCallback(ctx: any, text?: string) {
+  try {
+    if (text) {
+      await ctx.answerCallbackQuery(text);
+    } else {
+      await ctx.answerCallbackQuery();
+    }
+  } catch (e: any) {
+    // Timeout hatası - normal, logla ve devam et
+    if (e.message?.includes("query is too old") || e.message?.includes("query ID is invalid")) {
+      console.warn("⚠️ Callback query timeout (ignored)");
+      return;
+    }
+    // Diğer hatalar
+    console.error("❌ answerCallbackQuery error:", e.message);
+  }
+}
+
 // OpenAPI YAML dosyasını yükle
 let openApiDocument: any;
 const openApiFilePath = "./openapi.yaml";
@@ -284,7 +329,7 @@ bot.command("admin", async (ctx) => {
 
 // Admin Panel - Kullanıcı Listesi
 bot.callbackQuery("admin_users", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswerCallback(ctx);
 
   try {
     const response = await axios.get(`${API_BASE_URL}/api/users`, {
@@ -311,7 +356,7 @@ bot.callbackQuery("admin_users", async (ctx) => {
 
 // Admin Panel - Kullanıcı Arama
 bot.callbackQuery("admin_search", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswerCallback(ctx);
   await ctx.editMessageText(
     "🔍 *Kullanıcı Arama*\n\nKullanıcı adı yazın:",
     { parse_mode: "Markdown" }
@@ -321,7 +366,7 @@ bot.callbackQuery("admin_search", async (ctx) => {
 
 // Admin Panel - Toplu Bildirim
 bot.callbackQuery("admin_broadcast", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswerCallback(ctx);
   await ctx.editMessageText(
     "📢 *Toplu Bildirim*\n\nGöndermek istediğiniz mesajı yazın:",
     { parse_mode: "Markdown" }
@@ -331,7 +376,7 @@ bot.callbackQuery("admin_broadcast", async (ctx) => {
 
 // Admin Panel - İstatistikler
 bot.callbackQuery("admin_stats", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswerCallback(ctx);
 
   try {
     const response = await axios.get(`${API_BASE_URL}/api/users`, {
@@ -363,7 +408,7 @@ bot.callbackQuery("admin_stats", async (ctx) => {
 
 // Admin Panel - Kullanıcı İşlemleri
 bot.callbackQuery("admin_user_ops", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswerCallback(ctx);
 
   const keyboard = new InlineKeyboard()
     .text("✅ Kullanıcı Aktifleştir", "admin_activate")
@@ -380,7 +425,7 @@ bot.callbackQuery("admin_user_ops", async (ctx) => {
 
 // Admin Panel - Sistem Durumu
 bot.callbackQuery("admin_status", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswerCallback(ctx);
 
   const uptime = process.uptime();
   const days = Math.floor(uptime / 86400);
@@ -403,7 +448,7 @@ bot.callbackQuery("admin_status", async (ctx) => {
 
 // Admin Panel - Geri butonu
 bot.callbackQuery("admin_back", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await safeAnswerCallback(ctx);
 
   const keyboard = new InlineKeyboard()
     .text("👥 Kullanıcı Listesi", "admin_users")
@@ -427,10 +472,7 @@ bot.callbackQuery("try_free", async (ctx) => {
 
 // "Satın Al" düğmesine basıldığında
 bot.callbackQuery("buy_subscription", async (ctx) => {
-  await ctx.answerCallbackQuery({
-    text: "Çok yakında!",
-    show_alert: true,
-  });
+  await safeAnswerCallback(ctx, "Çok yakında!");
 });
 
 // "Hesabım" düğmesine basıldığında
@@ -438,13 +480,13 @@ bot.callbackQuery("my_account", async (ctx) => {
   const telegramId = ctx.from?.id;
 
   if (!telegramId) {
-    await ctx.answerCallbackQuery("Hata!");
+    await safeAnswerCallback(ctx, "Hata!");
     await ctx.reply("Telegram ID'niz alınamadı. Lütfen tekrar deneyin.");
     return;
   }
 
   try {
-    await ctx.answerCallbackQuery("Hesap bilgileriniz getiriliyor...");
+    await safeAnswerCallback(ctx, "Hesap bilgileriniz getiriliyor...");
 
     const user = await getUserByTelegramId(telegramId);
 
@@ -452,8 +494,6 @@ bot.callbackQuery("my_account", async (ctx) => {
       await ctx.reply("Sistemde kayıtlı bir hesabınız bulunamadı. Lütfen önce 'Try for Free' seçeneği ile bir deneme hesabı oluşturun.");
       return;
     }
-
-    // Satın al butonu
     const buyKeyboard = new InlineKeyboard().text("💳 Yeni Abonelik Satın Al", "buy_subscription");
 
     // Eğer hesap limitli veya süresi dolmuşsa, kullanıcıyı bilgilendir ve satın almaya yönlendir
