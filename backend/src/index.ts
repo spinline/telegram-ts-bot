@@ -518,7 +518,7 @@ app.post('/endpoint', async (req: Request, res: Response) => {
     console.log('Signature from header:', signature);
     console.log('Webhook secret configured:', webhookSecret ? 'YES' : 'NO');
 
-    // Webhook secret varsa imza doğrula
+    // Webhook secret varsa VE signature header varsa imza doğrula
     if (webhookSecret && signature) {
       const { verifyWebhookSignature } = await import('./webhook');
       const payload = JSON.stringify(req.body);
@@ -530,8 +530,12 @@ app.post('/endpoint', async (req: Request, res: Response) => {
         console.warn('⚠️ Invalid webhook signature - rejecting request');
         return res.status(401).json({ error: 'Invalid signature' });
       }
+      console.log('✅ Signature validated successfully');
+    } else if (webhookSecret && !signature) {
+      console.warn('⚠️ Webhook secret configured but no signature received from RemnaWave');
+      console.warn('⚠️ Proceeding anyway - consider enabling signature in RemnaWave .env');
     } else {
-      console.warn('⚠️ No signature validation (secret or signature missing)');
+      console.warn('⚠️ No signature validation (webhook secret not configured)');
     }
 
     const event = req.body;
