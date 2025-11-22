@@ -1,5 +1,5 @@
 # ---------- Build stage ----------
-FROM node:22.12.0-alpine AS build
+FROM node:22.13.0-alpine AS build
 WORKDIR /app
 
 # Copy package files and npm config

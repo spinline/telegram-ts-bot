@@ -20,4 +20,5 @@ cmd = "npm start"
 
 [variables]
 PORT = "3000"
+NIXPACKS_NODE_VERSION = "22.13"
 
