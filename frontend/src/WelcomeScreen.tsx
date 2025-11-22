@@ -123,16 +123,19 @@ function WelcomeScreen({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        marginTop: '120px',
+        marginTop: '60px',
+        marginBottom: '20px',
         width: '100%',
-        padding: '0 20px'
+        maxWidth: '600px',
+        padding: '0 20px',
+        minHeight: 'calc(100dvh - 80px)',
       }}>
         {/* Kalkan animasyonu */}
         <div
           className="shield-ripple"
           style={{
             position: 'absolute',
-            top: -100,
+            top: -40,
             zIndex: 3,
             ['--signal-color' as any]: 'rgba(20, 184, 166, 0.55)',
           }}
@@ -140,7 +143,7 @@ function WelcomeScreen({
           <div className="ripple ripple-1" />
           <div className="ripple ripple-2" />
           <div className="ripple ripple-3" />
-          <ThemeIcon variant="filled" size={120} radius="xl" color="teal" className="shield-core">
+          <ThemeIcon variant="filled" size={100} radius="xl" color="teal" className="shield-core">
             <IconShield style={{ width: '70%', height: '70%' }} stroke={1.6} />
           </ThemeIcon>
         </div>
@@ -151,14 +154,14 @@ function WelcomeScreen({
             display: 'flex',
             width: '100%',
             backgroundColor: '#0006',
-            overflow: 'auto',
+            overflowY: 'auto',
+            overflowX: 'hidden',
             zIndex: 2,
             position: 'relative',
-            padding: 30,
-            paddingTop: 80,
+            padding: '20px',
+            paddingTop: 70,
             flexDirection: 'column',
             borderRadius: '1rem',
-            maxHeight: '90%',
             boxShadow: 'none',
             border: 'none',
           }}

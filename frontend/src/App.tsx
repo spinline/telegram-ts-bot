@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MantineProvider, AppShell, Group } from '@mantine/core';
+import { MantineProvider, AppShell } from '@mantine/core';
 import { useColorScheme } from '@mantine/hooks';
 // tabler icons are not used in this file (used inside AccountPage)
 import '@mantine/core/styles.css';
@@ -234,8 +234,16 @@ function App() {
   return (
     <MantineProvider defaultColorScheme={preferredColorScheme}>
       <AppShell padding="md">
-        <AppShell.Main>
-          <Group justify="center" align="center" style={{ width: '100%', minHeight: '100dvh' }}>
+        <AppShell.Main style={{
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          height: '100dvh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          padding: '0'
+        }}>
+          <div style={{ width: '100%', maxWidth: '800px', padding: '16px' }}>
             {currentScreen === 'welcome' && (
               <WelcomeScreen
                 onViewAccount={handleViewAccount}
@@ -274,7 +282,7 @@ function App() {
             {currentScreen === 'congratulations' && (
               <Congratulations onFinish={handleCongratulationsFinish} />
             )}
-          </Group>
+          </div>
         </AppShell.Main>
       </AppShell>
     </MantineProvider>
