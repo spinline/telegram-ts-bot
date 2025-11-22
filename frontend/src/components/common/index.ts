@@ -5,4 +5,5 @@
 export { ShieldAnimation } from './ShieldAnimation';
 export { StatusBadge } from './StatusBadge';
 export { LoadingScreen } from './LoadingScreen';
+export { ErrorBoundary } from './ErrorBoundary';
 

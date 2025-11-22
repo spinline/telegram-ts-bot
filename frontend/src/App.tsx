@@ -20,6 +20,9 @@ import AccountPage from './components/screens/AccountPage';
 // Custom Hooks - Using barrel exports
 import { useTelegram, useAccount, useNavigation } from './hooks';
 
+// Common Components
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+
 // Constants - Using barrel exports
 import { COLORS } from './utils';
 
@@ -58,60 +61,62 @@ function App() {
   };
 
   return (
-    <MantineProvider defaultColorScheme={preferredColorScheme}>
-      <AppShell padding="md">
-        <AppShell.Main style={{
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          height: '100dvh',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          padding: '0'
-        }}>
-          <div style={{ width: '100%', maxWidth: '800px', padding: '16px' }}>
-            {currentScreen === 'welcome' && (
-              <WelcomeScreen
-                onViewAccount={handleViewAccount}
-                onBuySubscription={handleBuySubscription}
-                onInstallSetup={handleInstallSetup}
-                onSupport={handleSupport}
-                onlineStatus={onlineStatus}
-                expireAt={account?.expireAt}
-                isRegistered={isRegistered}
-                loading={loading}
-              />
-            )}
-            {currentScreen === 'account' && (
-              <AccountPage
-                loading={loading}
-                error={error}
-                account={account}
-                onBuySubscription={handleBuySubscription}
-              />
-            )}
-            {currentScreen === 'buySubscription' && (
-              <BuySubscription />
-            )}
-            {currentScreen === 'installSetup' && (
-              <InstallSetup onInstallOnThisDevice={handleInstallOnThisDevice} />
-            )}
-            {currentScreen === 'installOnThisDevice' && (
-              <InstallOnThisDevice onNext={handleInstallOnThisDeviceNext} />
-            )}
-            {currentScreen === 'addSubscription' && (
-              <AddSubscription
-                onNext={handleAddSubscriptionNext}
-                subscriptionUrl={account?.happ?.cryptoLink}
-              />
-            )}
-            {currentScreen === 'congratulations' && (
-              <Congratulations onFinish={handleCongratulationsFinish} />
-            )}
-          </div>
-        </AppShell.Main>
-      </AppShell>
-    </MantineProvider>
+    <ErrorBoundary>
+      <MantineProvider defaultColorScheme={preferredColorScheme}>
+        <AppShell padding="md">
+          <AppShell.Main style={{
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            height: '100dvh',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            padding: '0'
+          }}>
+            <div style={{ width: '100%', maxWidth: '800px', padding: '16px' }}>
+              {currentScreen === 'welcome' && (
+                <WelcomeScreen
+                  onViewAccount={handleViewAccount}
+                  onBuySubscription={handleBuySubscription}
+                  onInstallSetup={handleInstallSetup}
+                  onSupport={handleSupport}
+                  onlineStatus={onlineStatus}
+                  expireAt={account?.expireAt}
+                  isRegistered={isRegistered}
+                  loading={loading}
+                />
+              )}
+              {currentScreen === 'account' && (
+                <AccountPage
+                  loading={loading}
+                  error={error}
+                  account={account}
+                  onBuySubscription={handleBuySubscription}
+                />
+              )}
+              {currentScreen === 'buySubscription' && (
+                <BuySubscription />
+              )}
+              {currentScreen === 'installSetup' && (
+                <InstallSetup onInstallOnThisDevice={handleInstallOnThisDevice} />
+              )}
+              {currentScreen === 'installOnThisDevice' && (
+                <InstallOnThisDevice onNext={handleInstallOnThisDeviceNext} />
+              )}
+              {currentScreen === 'addSubscription' && (
+                <AddSubscription
+                  onNext={handleAddSubscriptionNext}
+                  subscriptionUrl={account?.happ?.cryptoLink}
+                />
+              )}
+              {currentScreen === 'congratulations' && (
+                <Congratulations onFinish={handleCongratulationsFinish} />
+              )}
+            </div>
+          </AppShell.Main>
+        </AppShell>
+      </MantineProvider>
+    </ErrorBoundary>
   );
 }
 
