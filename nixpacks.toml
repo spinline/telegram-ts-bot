@@ -1,7 +1,8 @@
 # Force Dokploy/Nixpacks to build and run the backend app
+# Using Node.js 22.12+ (latest 22.x)
 
 [phases.setup]
-nixPkgs = ["nodejs_22"]
+nixPkgs = ["nodejs-22_x"]
 
 [phases.install]
 cmds = [

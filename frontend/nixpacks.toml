@@ -1,0 +1,20 @@
+# Frontend Nixpacks Configuration
+# Force Node.js 22.12+ for Vite 7.x compatibility
+
+[phases.setup]
+nixPkgs = ["nodejs-22_x"]
+
+[phases.install]
+cmds = [
+  "node --version",
+  "npm ci"
+]
+
+[phases.build]
+cmds = [
+  "npm run build"
+]
+
+[start]
+cmd = "npx serve -s dist -l 80"
+
