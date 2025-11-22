@@ -122,6 +122,14 @@ bot.catch((err) => {
   console.error("Full error:", e);
 });
 
+// Admin session management - kullanıcının beklenen aksiyonunu takip et
+interface AdminSession {
+  action: 'search' | 'broadcast' | 'extend_days' | 'add_traffic' | null;
+  targetUser?: string;
+}
+
+const adminSessions = new Map<number, AdminSession>();
+
 // Helper: Safe callback query answer (timeout hatalarını yakala)
 async function safeAnswerCallback(ctx: any, text?: string) {
   try {
@@ -147,6 +155,125 @@ bot.use(async (ctx, next) => {
     console.log(`📥 Mesaj alındı: "${ctx.message.text}" (user: ${ctx.from?.id})`);
   }
   await next();
+});
+
+// Admin mesaj handler - session tabanlı işlemler
+bot.on("message:text", async (ctx, next) => {
+  const userId = ctx.from?.id;
+  const text = ctx.message.text;
+
+  if (!userId || !text) {
+    return next();
+  }
+
+  // Cancel komutu
+  if (text === '/cancel') {
+    if (adminSessions.has(userId)) {
+      adminSessions.delete(userId);
+      await ctx.reply("❌ İşlem iptal edildi.");
+      return;
+    }
+  }
+
+  const session = adminSessions.get(userId);
+
+  if (!session || !session.action) {
+    return next(); // Normal komut işlemeye devam et
+  }
+
+  // Admin session varsa işle
+  try {
+    if (session.action === 'search') {
+      // Kullanıcı arama
+      const username = text.trim();
+
+      try {
+        const user = await getUserByUsername(username);
+
+        if (!user) {
+          await ctx.reply(`❌ Kullanıcı bulunamadı: ${username}`);
+          adminSessions.delete(userId);
+          return;
+        }
+
+        const expireDate = new Date(user.expireAt);
+        const now = new Date();
+        const daysLeft = Math.ceil((expireDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+        const statusEmoji = user.status === 'ACTIVE' ? '🟢' :
+                           user.status === 'LIMITED' ? '🟡' :
+                           user.status === 'EXPIRED' ? '🔴' : '⚫';
+
+        const trafficUsed = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
+        const trafficLimit = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
+        const trafficPercent = ((user.usedTrafficBytes / user.trafficLimitBytes) * 100).toFixed(0);
+
+        let message = `👤 *Kullanıcı Detayları*\n\n`;
+        message += `📝 Kullanıcı Adı: \`${user.username}\`\n`;
+        message += `🆔 UUID: \`${user.uuid}\`\n`;
+        message += `${statusEmoji} Durum: ${user.status}\n`;
+        message += `🏷️ Tag: ${user.tag || 'N/A'}\n\n`;
+        message += `📊 Trafik: ${trafficUsed} GB / ${trafficLimit} GB (%${trafficPercent})\n`;
+        message += `📅 Bitiş: ${expireDate.toLocaleDateString('tr-TR')}\n`;
+        message += `⏰ Kalan: ${daysLeft} gün\n`;
+        message += `📱 Telegram ID: ${user.telegramId || 'Yok'}\n`;
+        message += `📧 Email: ${user.email || 'Yok'}\n`;
+        message += `📅 Oluşturulma: ${new Date(user.createdAt).toLocaleDateString('tr-TR')}\n`;
+
+        await ctx.reply(message, { parse_mode: "Markdown" });
+        adminSessions.delete(userId);
+
+      } catch (e: any) {
+        await ctx.reply(`❌ Hata: ${e?.message || 'Bilinmeyen hata'}`);
+        adminSessions.delete(userId);
+      }
+
+    } else if (session.action === 'broadcast') {
+      // Toplu bildirim gönder
+      const message = text;
+
+      await ctx.reply("📤 Toplu bildirim gönderiliyor...");
+
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/users`, {
+          headers: { Authorization: `Bearer ${API_TOKEN}` }
+        });
+
+        const users = response.data.data || [];
+        const usersWithTelegram = users.filter((u: any) => u.telegramId);
+
+        let sent = 0;
+        let failed = 0;
+
+        for (const user of usersWithTelegram) {
+          try {
+            await bot.api.sendMessage(user.telegramId, message);
+            sent++;
+            await new Promise(resolve => setTimeout(resolve, 100)); // Rate limit
+          } catch (e) {
+            failed++;
+          }
+        }
+
+        await ctx.reply(
+          `✅ Toplu bildirim tamamlandı!\n\n` +
+          `📤 Gönderilen: ${sent}\n` +
+          `❌ Başarısız: ${failed}\n` +
+          `👥 Toplam: ${usersWithTelegram.length}`
+        );
+
+        adminSessions.delete(userId);
+
+      } catch (e: any) {
+        await ctx.reply(`❌ Hata: ${e?.message || 'Bilinmeyen hata'}`);
+        adminSessions.delete(userId);
+      }
+    }
+  } catch (e: any) {
+    console.error('Admin session error:', e);
+    await ctx.reply(`❌ İşlem sırasında hata oluştu: ${e?.message}`);
+    adminSessions.delete(userId);
+  }
 });
 
 // OpenAPI YAML dosyasını yükle
@@ -412,21 +539,31 @@ bot.callbackQuery("admin_users", async (ctx) => {
 // Admin Panel - Kullanıcı Arama
 bot.callbackQuery("admin_search", async (ctx) => {
   await safeAnswerCallback(ctx);
+
+  const adminId = ctx.from?.id;
+  if (adminId) {
+    adminSessions.set(adminId, { action: 'search' });
+  }
+
   await ctx.editMessageText(
-    "🔍 *Kullanıcı Arama*\n\nKullanıcı adı yazın:",
+    "🔍 *Kullanıcı Arama*\n\nKullanıcı adını yazın:",
     { parse_mode: "Markdown" }
   );
-  // TODO: Message handler ekle
 });
 
 // Admin Panel - Toplu Bildirim
 bot.callbackQuery("admin_broadcast", async (ctx) => {
   await safeAnswerCallback(ctx);
+
+  const adminId = ctx.from?.id;
+  if (adminId) {
+    adminSessions.set(adminId, { action: 'broadcast' });
+  }
+
   await ctx.editMessageText(
-    "📢 *Toplu Bildirim*\n\nGöndermek istediğiniz mesajı yazın:",
+    "📢 *Toplu Bildirim*\n\nGöndermek istediğiniz mesajı yazın:\n\n_İptal için /cancel yazın_",
     { parse_mode: "Markdown" }
   );
-  // TODO: Message handler ve broadcast fonksiyonu ekle
 });
 
 // Admin Panel - İstatistikler
@@ -497,6 +634,22 @@ bot.callbackQuery("admin_status", async (ctx) => {
     `🤖 Bot: Çalışıyor ✅\n` +
     `🔗 Webhook: Aktif ✅\n` +
     `📡 RemnaWave API: Bağlı ✅`;
+
+  await ctx.editMessageText(message, { parse_mode: "Markdown" });
+});
+
+// Admin Panel - Sistem Logları
+bot.callbackQuery("admin_logs", async (ctx) => {
+  await safeAnswerCallback(ctx);
+
+  // Not: Production'da log dosyası okuma gerekir
+  // Şimdilik basit bilgi gösterelim
+  const message = `📝 *Sistem Logları*\n\n` +
+    `Bu özellik geliştirme aşamasındadır.\n\n` +
+    `Log'ları görmek için:\n` +
+    `• Dokploy: Logs sekmesi\n` +
+    `• PM2: \`pm2 logs telegram-bot\`\n` +
+    `• Docker: \`docker logs -f container_name\``;
 
   await ctx.editMessageText(message, { parse_mode: "Markdown" });
 });

@@ -140,6 +140,7 @@ exports.bot.catch((err) => {
     }
     console.error("Full error:", e);
 });
+const adminSessions = new Map();
 // Helper: Safe callback query answer (timeout hatalarını yakala)
 function safeAnswerCallback(ctx, text) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -170,6 +171,106 @@ exports.bot.use((ctx, next) => __awaiter(void 0, void 0, void 0, function* () {
         console.log(`📥 Mesaj alındı: "${ctx.message.text}" (user: ${(_b = ctx.from) === null || _b === void 0 ? void 0 : _b.id})`);
     }
     yield next();
+}));
+// Admin mesaj handler - session tabanlı işlemler
+exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const userId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
+    const text = ctx.message.text;
+    if (!userId || !text) {
+        return next();
+    }
+    // Cancel komutu
+    if (text === '/cancel') {
+        if (adminSessions.has(userId)) {
+            adminSessions.delete(userId);
+            yield ctx.reply("❌ İşlem iptal edildi.");
+            return;
+        }
+    }
+    const session = adminSessions.get(userId);
+    if (!session || !session.action) {
+        return next(); // Normal komut işlemeye devam et
+    }
+    // Admin session varsa işle
+    try {
+        if (session.action === 'search') {
+            // Kullanıcı arama
+            const username = text.trim();
+            try {
+                const user = yield (0, api_1.getUserByUsername)(username);
+                if (!user) {
+                    yield ctx.reply(`❌ Kullanıcı bulunamadı: ${username}`);
+                    adminSessions.delete(userId);
+                    return;
+                }
+                const expireDate = new Date(user.expireAt);
+                const now = new Date();
+                const daysLeft = Math.ceil((expireDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                const statusEmoji = user.status === 'ACTIVE' ? '🟢' :
+                    user.status === 'LIMITED' ? '🟡' :
+                        user.status === 'EXPIRED' ? '🔴' : '⚫';
+                const trafficUsed = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
+                const trafficLimit = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
+                const trafficPercent = ((user.usedTrafficBytes / user.trafficLimitBytes) * 100).toFixed(0);
+                let message = `👤 *Kullanıcı Detayları*\n\n`;
+                message += `📝 Kullanıcı Adı: \`${user.username}\`\n`;
+                message += `🆔 UUID: \`${user.uuid}\`\n`;
+                message += `${statusEmoji} Durum: ${user.status}\n`;
+                message += `🏷️ Tag: ${user.tag || 'N/A'}\n\n`;
+                message += `📊 Trafik: ${trafficUsed} GB / ${trafficLimit} GB (%${trafficPercent})\n`;
+                message += `📅 Bitiş: ${expireDate.toLocaleDateString('tr-TR')}\n`;
+                message += `⏰ Kalan: ${daysLeft} gün\n`;
+                message += `📱 Telegram ID: ${user.telegramId || 'Yok'}\n`;
+                message += `📧 Email: ${user.email || 'Yok'}\n`;
+                message += `📅 Oluşturulma: ${new Date(user.createdAt).toLocaleDateString('tr-TR')}\n`;
+                yield ctx.reply(message, { parse_mode: "Markdown" });
+                adminSessions.delete(userId);
+            }
+            catch (e) {
+                yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Bilinmeyen hata'}`);
+                adminSessions.delete(userId);
+            }
+        }
+        else if (session.action === 'broadcast') {
+            // Toplu bildirim gönder
+            const message = text;
+            yield ctx.reply("📤 Toplu bildirim gönderiliyor...");
+            try {
+                const response = yield axios_1.default.get(`${API_BASE_URL}/api/users`, {
+                    headers: { Authorization: `Bearer ${API_TOKEN}` }
+                });
+                const users = response.data.data || [];
+                const usersWithTelegram = users.filter((u) => u.telegramId);
+                let sent = 0;
+                let failed = 0;
+                for (const user of usersWithTelegram) {
+                    try {
+                        yield exports.bot.api.sendMessage(user.telegramId, message);
+                        sent++;
+                        yield new Promise(resolve => setTimeout(resolve, 100)); // Rate limit
+                    }
+                    catch (e) {
+                        failed++;
+                    }
+                }
+                yield ctx.reply(`✅ Toplu bildirim tamamlandı!\n\n` +
+                    `📤 Gönderilen: ${sent}\n` +
+                    `❌ Başarısız: ${failed}\n` +
+                    `👥 Toplam: ${usersWithTelegram.length}`);
+                adminSessions.delete(userId);
+            }
+            catch (e) {
+                yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Bilinmeyen hata'}`);
+                adminSessions.delete(userId);
+            }
+        }
+    }
+    catch (e) {
+        console.error('Admin session error:', e);
+        yield ctx.reply(`❌ İşlem sırasında hata oluştu: ${e === null || e === void 0 ? void 0 : e.message}`);
+        adminSessions.delete(userId);
+    }
 }));
 // OpenAPI YAML dosyasını yükle
 let openApiDocument;
@@ -403,15 +504,23 @@ exports.bot.callbackQuery("admin_users", (ctx) => __awaiter(void 0, void 0, void
 }));
 // Admin Panel - Kullanıcı Arama
 exports.bot.callbackQuery("admin_search", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     yield safeAnswerCallback(ctx);
-    yield ctx.editMessageText("🔍 *Kullanıcı Arama*\n\nKullanıcı adı yazın:", { parse_mode: "Markdown" });
-    // TODO: Message handler ekle
+    const adminId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
+    if (adminId) {
+        adminSessions.set(adminId, { action: 'search' });
+    }
+    yield ctx.editMessageText("🔍 *Kullanıcı Arama*\n\nKullanıcı adını yazın:", { parse_mode: "Markdown" });
 }));
 // Admin Panel - Toplu Bildirim
 exports.bot.callbackQuery("admin_broadcast", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     yield safeAnswerCallback(ctx);
-    yield ctx.editMessageText("📢 *Toplu Bildirim*\n\nGöndermek istediğiniz mesajı yazın:", { parse_mode: "Markdown" });
-    // TODO: Message handler ve broadcast fonksiyonu ekle
+    const adminId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
+    if (adminId) {
+        adminSessions.set(adminId, { action: 'broadcast' });
+    }
+    yield ctx.editMessageText("📢 *Toplu Bildirim*\n\nGöndermek istediğiniz mesajı yazın:\n\n_İptal için /cancel yazın_", { parse_mode: "Markdown" });
 }));
 // Admin Panel - İstatistikler
 exports.bot.callbackQuery("admin_stats", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
@@ -467,6 +576,19 @@ exports.bot.callbackQuery("admin_status", (ctx) => __awaiter(void 0, void 0, voi
         `🤖 Bot: Çalışıyor ✅\n` +
         `🔗 Webhook: Aktif ✅\n` +
         `📡 RemnaWave API: Bağlı ✅`;
+    yield ctx.editMessageText(message, { parse_mode: "Markdown" });
+}));
+// Admin Panel - Sistem Logları
+exports.bot.callbackQuery("admin_logs", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    yield safeAnswerCallback(ctx);
+    // Not: Production'da log dosyası okuma gerekir
+    // Şimdilik basit bilgi gösterelim
+    const message = `📝 *Sistem Logları*\n\n` +
+        `Bu özellik geliştirme aşamasındadır.\n\n` +
+        `Log'ları görmek için:\n` +
+        `• Dokploy: Logs sekmesi\n` +
+        `• PM2: \`pm2 logs telegram-bot\`\n` +
+        `• Docker: \`docker logs -f container_name\``;
     yield ctx.editMessageText(message, { parse_mode: "Markdown" });
 }));
 // Admin Panel - Geri butonu
