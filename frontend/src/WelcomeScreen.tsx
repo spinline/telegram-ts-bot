@@ -159,7 +159,7 @@ function WelcomeScreen({
             zIndex: 2,
             position: 'relative',
             padding: '20px',
-            paddingTop: 70,
+            paddingTop: 90,
             flexDirection: 'column',
             borderRadius: '1rem',
             boxShadow: 'none',
@@ -167,7 +167,7 @@ function WelcomeScreen({
           }}
         >
           <Stack align="center" gap="xl">
-            <Stack align="center" gap="md">
+            <Stack align="center" gap="md" mt="md">
               <Title order={1} style={{ color: '#fff', textAlign: 'center' }}>
                 Hoş Geldiniz!
               </Title>
