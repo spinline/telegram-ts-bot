@@ -69,30 +69,25 @@ export async function adminUsersHandler(ctx: Context) {
       return;
     }
 
-    let message = "👥 *Kullanıcı Listesi* (İlk 10)\n\n";
-    message += "Kullanıcı detaylarını görmek için kullanıcı adına tıklayın:\n\n";
+    const message = "👥 *Kullanıcı Listesi*\n\n" +
+                    "Detaylarını görüntülemek istediğiniz kullanıcıyı seçin:";
 
     const keyboard = new InlineKeyboard();
 
-    users.forEach((user: any, index: number) => {
+    users.forEach((user: any) => {
       const status = user.status === 'ACTIVE' ? '🟢' :
                      user.status === 'LIMITED' ? '🟡' :
                      user.status === 'EXPIRED' ? '🔴' : '⚫';
-      const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
+      const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(1);
       const limitGB = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
 
-      message += `${index + 1}. ${status} ${user.username} (${usedGB}/${limitGB} GB)\n`;
-
-      if (index % 2 === 0) {
-        keyboard.text(`👤 ${user.username}`, `user_detail_${user.username}`);
-      } else {
-        keyboard.text(`👤 ${user.username}`, `user_detail_${user.username}`).row();
-      }
+      // Modern görünüm: Tek satırda detaylı bilgi
+      // Örn: 🟢 username | 5.2/100 GB
+      keyboard.text(
+        `${status} ${user.username} | ${usedGB}/${limitGB} GB`, 
+        `user_detail_${user.username}`
+      ).row();
     });
-
-    if (users.length % 2 === 1) {
-      keyboard.row();
-    }
 
     keyboard.text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
 
