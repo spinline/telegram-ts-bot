@@ -9,13 +9,22 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
 
+// 🎯 NEW: Import modern architecture layers
+import { env } from './config/env';
+import { errorHandler, safeAnswerCallback } from './middlewares/error.middleware';
+import { sessionManager } from './middlewares/session.middleware';
+import { adminAuthMiddleware, isAdmin } from './middlewares/auth.middleware';
+import { userService } from './services/user.service';
+import { notificationService } from './services/notification.service';
+import { logger } from './utils/logger';
+
 // --- EXPRESS API SETUP ---
 const app = express();
-const port = process.env.PORT || 3000;
+const port = env.PORT;
 
-// API Configuration
-const API_BASE_URL = process.env.API_BASE_URL || "";
-const API_TOKEN = process.env.API_TOKEN || "";
+// API Configuration (still used by legacy code)
+const API_BASE_URL = env.API_BASE_URL;
+const API_TOKEN = env.API_TOKEN;
 
 app.use(cors()); // Frontend'den gelen isteklere izin ver
 app.use(express.json());
@@ -94,60 +103,17 @@ app.get('/api/account', verifyTelegramWebAppData, async (req: Request, res: Resp
 
 
 // --- GRAMMY BOT SETUP ---
-export const bot = new Bot<Context>(process.env.BOT_TOKEN || "");
+export const bot = new Bot<Context>(env.BOT_TOKEN);
 
-// Error handler - Grammy hatalarını yakala
-bot.catch((err) => {
-  const ctx = err.ctx;
-  console.error(`Error while handling update ${ctx.update.update_id}:`);
-  const e = err.error;
+// 🎯 NEW: Use error handler middleware
+bot.catch(errorHandler);
 
-  if (e instanceof Error) {
-    console.error("Error name:", e.name);
-    console.error("Error message:", e.message);
+// 🗑️ DELETED: Old adminSessions Map - now using sessionManager
+// interface AdminSession { ... }
+// const adminSessions = new Map<number, AdminSession>();
 
-    // Callback query timeout hatası - normal, atla
-    if (e.message.includes("query is too old")) {
-      console.warn("⚠️ Callback query timeout (normal, ignored)");
-      return;
-    }
-
-    // Bot blocked hatası - kullanıcı botu engellemiş
-    if (e.message.includes("bot was blocked")) {
-      console.warn("⚠️ User blocked the bot");
-      return;
-    }
-  }
-
-  console.error("Full error:", e);
-});
-
-// Admin session management - kullanıcının beklenen aksiyonunu takip et
-interface AdminSession {
-  action: 'search' | 'broadcast' | 'extend_days' | 'add_traffic' | null;
-  targetUser?: string;
-}
-
-const adminSessions = new Map<number, AdminSession>();
-
-// Helper: Safe callback query answer (timeout hatalarını yakala)
-async function safeAnswerCallback(ctx: any, text?: string) {
-  try {
-    if (text) {
-      await ctx.answerCallbackQuery(text);
-    } else {
-      await ctx.answerCallbackQuery();
-    }
-  } catch (e: any) {
-    // Timeout hatası - normal, logla ve devam et
-    if (e.message?.includes("query is too old") || e.message?.includes("query ID is invalid")) {
-      console.warn("⚠️ Callback query timeout (ignored)");
-      return;
-    }
-    // Diğer hatalar
-    console.error("❌ answerCallbackQuery error:", e.message);
-  }
-}
+// 🗑️ DELETED: Old safeAnswerCallback - now imported from middleware
+// async function safeAnswerCallback(ctx: any, text?: string) { ... }
 
 // Middleware: Sadece hata durumlarını logla
 bot.use(async (ctx, next) => {
@@ -165,14 +131,14 @@ bot.on("message:text", async (ctx, next) => {
 
   // Cancel komutu
   if (text === '/cancel') {
-    if (adminSessions.has(userId)) {
-      adminSessions.delete(userId);
+    if (sessionManager.has(userId)) {
+      sessionManager.delete(userId);
       await ctx.reply("❌ İşlem iptal edildi.");
       return;
     }
   }
 
-  const session = adminSessions.get(userId);
+  const session = sessionManager.get(userId);
 
   if (!session || !session.action) {
     return next(); // Normal komut işlemeye devam et
@@ -181,102 +147,57 @@ bot.on("message:text", async (ctx, next) => {
   // Admin session varsa işle
   try {
     if (session.action === 'search') {
-      // Kullanıcı arama
+      // 🎯 NEW: Use userService for search
       const username = text.trim();
 
       try {
-        const user = await getUserByUsername(username);
+        const user = await userService.getUserByUsername(username);
 
         if (!user) {
           await ctx.reply(`❌ Kullanıcı bulunamadı: ${username}`);
-          adminSessions.delete(userId);
+          sessionManager.delete(userId);
           return;
         }
 
-        const expireDate = new Date(user.expireAt);
-        const now = new Date();
-        const daysLeft = Math.ceil((expireDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-        const statusEmoji = user.status === 'ACTIVE' ? '🟢' :
-                           user.status === 'LIMITED' ? '🟡' :
-                           user.status === 'EXPIRED' ? '🔴' : '⚫';
-
-        const trafficUsed = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
-        const trafficLimit = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
-        const trafficPercent = ((user.usedTrafficBytes / user.trafficLimitBytes) * 100).toFixed(0);
-
-        let message = `👤 *Kullanıcı Detayları*\n\n`;
-        message += `📝 Kullanıcı Adı: \`${user.username}\`\n`;
-        message += `🆔 UUID: \`${user.uuid}\`\n`;
-        message += `${statusEmoji} Durum: ${user.status}\n`;
-        message += `🏷️ Tag: ${user.tag || 'N/A'}\n\n`;
-        message += `📊 Trafik: ${trafficUsed} GB / ${trafficLimit} GB (%${trafficPercent})\n`;
-        message += `📅 Bitiş: ${expireDate.toLocaleDateString('tr-TR')}\n`;
-        message += `⏰ Kalan: ${daysLeft} gün\n`;
-        message += `📱 Telegram ID: ${user.telegramId || 'Yok'}\n`;
-        message += `📧 Email: ${user.email || 'Yok'}\n`;
-        message += `📅 Oluşturulma: ${new Date(user.createdAt).toLocaleDateString('tr-TR')}\n`;
+        // 🎯 NEW: Use userService.formatUserDetails
+        const message = userService.formatUserDetails(user);
 
         await ctx.reply(message, { parse_mode: "Markdown" });
-        adminSessions.delete(userId);
+        sessionManager.delete(userId);
 
       } catch (e: any) {
         await ctx.reply(`❌ Hata: ${e?.message || 'Bilinmeyen hata'}`);
-        adminSessions.delete(userId);
+        sessionManager.delete(userId);
       }
 
     } else if (session.action === 'broadcast') {
-      // Toplu bildirim gönder
+      // 🎯 NEW: Use notificationService for broadcast
       const message = text;
 
       await ctx.reply("📤 Toplu bildirim gönderiliyor...");
 
       try {
-        const users = await getAllUsers(1, 1000); // Tüm kullanıcılar
-
-        // telegramId veya telegram_id veya tId field'ını kontrol et
-        const usersWithTelegram = users.filter((u: any) => u.telegramId || u.telegram_id || u.tId);
-
-        console.log(`📢 Broadcast: ${users.length} toplam kullanıcı, ${usersWithTelegram.length} Telegram ID'li`);
-
-        let sent = 0;
-        let failed = 0;
-
-        for (const user of usersWithTelegram) {
-          try {
-            const telegramId = user.telegramId || user.telegram_id || user.tId;
-            await bot.api.sendMessage(telegramId, message);
-            sent++;
-            await new Promise(resolve => setTimeout(resolve, 100)); // Rate limit
-          } catch (e: any) {
-            // Sadece kritik hataları logla
-            if (!e?.message?.includes('chat not found')) {
-              console.warn(`⚠️ Broadcast error for ${user.username}:`, e?.message);
-            }
-            failed++;
-          }
-        }
-
-        console.log(`✅ Broadcast tamamlandı: ${sent} başarılı, ${failed} başarısız`);
+        const result = await notificationService.broadcast(message);
 
         await ctx.reply(
           `✅ Toplu bildirim tamamlandı!\n\n` +
-          `📤 Gönderilen: ${sent}\n` +
-          `❌ Başarısız: ${failed}\n` +
-          `👥 Toplam: ${usersWithTelegram.length}`
+          `📤 Gönderilen: ${result.sent}\n` +
+          `❌ Başarısız: ${result.failed}\n` +
+          `👥 Toplam: ${result.sent + result.failed}`
         );
 
-        adminSessions.delete(userId);
+        sessionManager.delete(userId);
 
       } catch (e: any) {
+        logger.error('Broadcast error:', e.message);
         await ctx.reply(`❌ Hata: ${e?.message || 'Bilinmeyen hata'}`);
-        adminSessions.delete(userId);
+        sessionManager.delete(userId);
       }
     }
   } catch (e: any) {
     console.error('Admin session error:', e);
     await ctx.reply(`❌ İşlem sırasında hata oluştu: ${e?.message}`);
-    adminSessions.delete(userId);
+    sessionManager.delete(userId);
   }
 });
 
@@ -483,7 +404,8 @@ bot.callbackQuery("admin_users", async (ctx) => {
   await safeAnswerCallback(ctx);
 
   try {
-    const users = await getAllUsers(1, 10);
+    // 🎯 NEW: Use userService instead of direct API call
+    const users = await userService.getUsers(1, 10);
 
     if (!users || users.length === 0) {
       await ctx.editMessageText("ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
@@ -525,7 +447,8 @@ bot.callbackQuery("admin_users", async (ctx) => {
       parse_mode: "Markdown"
     });
   } catch (e: any) {
-    console.error('❌ Admin panel error (users):', e.message);
+    // 🎯 NEW: Use logger instead of console
+    logger.error('Admin panel error (users):', e.message);
     await ctx.editMessageText(`❌ Hata: ${e?.message || 'Kullanıcı listesi alınamadı'}`);
   }
 });
@@ -536,7 +459,7 @@ bot.callbackQuery("admin_search", async (ctx) => {
 
   const adminId = ctx.from?.id;
   if (adminId) {
-    adminSessions.set(adminId, { action: 'search' });
+    sessionManager.set(adminId, { action: 'search' });
   }
 
   const keyboard = new InlineKeyboard()
@@ -561,36 +484,16 @@ bot.callbackQuery(/^user_detail_(.+)$/, async (ctx) => {
   const username = match[1];
 
   try {
-    const user = await getUserByUsername(username);
+    // 🎯 NEW: Use userService
+    const user = await userService.getUserByUsername(username);
 
     if (!user) {
       await ctx.editMessageText(`❌ Kullanıcı bulunamadı: ${username}`);
       return;
     }
 
-    const expireDate = new Date(user.expireAt);
-    const now = new Date();
-    const daysLeft = Math.ceil((expireDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-    const statusEmoji = user.status === 'ACTIVE' ? '🟢' :
-                       user.status === 'LIMITED' ? '🟡' :
-                       user.status === 'EXPIRED' ? '🔴' : '⚫';
-
-    const trafficUsed = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
-    const trafficLimit = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
-    const trafficPercent = ((user.usedTrafficBytes / user.trafficLimitBytes) * 100).toFixed(0);
-
-    let message = `👤 *Kullanıcı Detayları*\n\n`;
-    message += `📝 Kullanıcı Adı: \`${user.username}\`\n`;
-    message += `🆔 UUID: \`${user.uuid}\`\n`;
-    message += `${statusEmoji} Durum: ${user.status}\n`;
-    message += `🏷️ Tag: ${user.tag || 'N/A'}\n\n`;
-    message += `📊 Trafik: ${trafficUsed} GB / ${trafficLimit} GB (%${trafficPercent})\n`;
-    message += `📅 Bitiş: ${expireDate.toLocaleDateString('tr-TR')}\n`;
-    message += `⏰ Kalan: ${daysLeft} gün\n`;
-    message += `📱 Telegram ID: ${user.telegramId || 'Yok'}\n`;
-    message += `📧 Email: ${user.email || 'Yok'}\n`;
-    message += `📅 Oluşturulma: ${new Date(user.createdAt).toLocaleDateString('tr-TR')}\n`;
+    // 🎯 NEW: Use userService.formatUserDetails for formatting
+    const message = userService.formatUserDetails(user);
 
     const keyboard = new InlineKeyboard()
       .text("🔙 Kullanıcı Listesi", "admin_users");
@@ -610,7 +513,7 @@ bot.callbackQuery("admin_broadcast", async (ctx) => {
 
   const adminId = ctx.from?.id;
   if (adminId) {
-    adminSessions.set(adminId, { action: 'broadcast' });
+    sessionManager.set(adminId, { action: 'broadcast' });
   }
 
   await ctx.editMessageText(
@@ -624,27 +527,21 @@ bot.callbackQuery("admin_stats", async (ctx) => {
   await safeAnswerCallback(ctx);
 
   try {
-    const users = await getAllUsers(1, 1000); // Tüm kullanıcılar
-
-    const total = users.length;
-    const active = users.filter((u: any) => u.status === 'ACTIVE').length;
-    const limited = users.filter((u: any) => u.status === 'LIMITED').length;
-    const expired = users.filter((u: any) => u.status === 'EXPIRED').length;
-
-    const totalTraffic = users.reduce((sum: number, u: any) => sum + (parseInt(u.usedTrafficBytes) || 0), 0);
-    const avgTraffic = total > 0 ? totalTraffic / total : 0;
+    // 🎯 NEW: Use userService.getStatistics
+    const stats = await userService.getStatistics();
 
     const message = `📊 *Sistem İstatistikleri*\n\n` +
-      `👥 Toplam Kullanıcı: ${total}\n` +
-      `🟢 Aktif: ${active}\n` +
-      `🟡 Limitli: ${limited}\n` +
-      `🔴 Süresi Dolmuş: ${expired}\n\n` +
-      `📈 Toplam Trafik: ${(totalTraffic / 1024 / 1024 / 1024).toFixed(2)} GB\n` +
-      `📊 Ortalama Trafik: ${(avgTraffic / 1024 / 1024 / 1024).toFixed(2)} GB/kullanıcı`;
+      `👥 Toplam Kullanıcı: ${stats.total}\n` +
+      `🟢 Aktif: ${stats.active}\n` +
+      `🟡 Limitli: ${stats.limited}\n` +
+      `🔴 Süresi Dolmuş: ${stats.expired}\n\n` +
+      `📈 Toplam Trafik: ${(stats.totalTraffic / 1024 / 1024 / 1024).toFixed(2)} GB\n` +
+      `📊 Ortalama Trafik: ${(stats.avgTraffic / 1024 / 1024 / 1024).toFixed(2)} GB/kullanıcı`;
 
     await ctx.editMessageText(message, { parse_mode: "Markdown" });
   } catch (e: any) {
-    console.error('❌ Admin panel error (stats):', e.message);
+    // 🎯 NEW: Use logger
+    logger.error('Admin panel error (stats):', e.message);
     await ctx.editMessageText(`❌ Hata: ${e?.message || 'İstatistikler alınamadı'}`);
   }
 });
@@ -655,8 +552,8 @@ bot.callbackQuery("admin_user_ops", async (ctx) => {
 
   // Aktif session varsa temizle (kullanıcı ara veya broadcast iptal)
   const adminId = ctx.from?.id;
-  if (adminId && adminSessions.has(adminId)) {
-    adminSessions.delete(adminId);
+  if (adminId && sessionManager.has(adminId)) {
+    sessionManager.delete(adminId);
   }
 
   const keyboard = new InlineKeyboard()

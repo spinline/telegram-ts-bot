@@ -54,12 +54,19 @@ const api_1 = require("./api");
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const crypto_1 = __importDefault(require("crypto"));
+// 🎯 NEW: Import modern architecture layers
+const env_1 = require("./config/env");
+const error_middleware_1 = require("./middlewares/error.middleware");
+const session_middleware_1 = require("./middlewares/session.middleware");
+const user_service_1 = require("./services/user.service");
+const notification_service_1 = require("./services/notification.service");
+const logger_1 = require("./utils/logger");
 // --- EXPRESS API SETUP ---
 const app = (0, express_1.default)();
-const port = process.env.PORT || 3000;
-// API Configuration
-const API_BASE_URL = process.env.API_BASE_URL || "";
-const API_TOKEN = process.env.API_TOKEN || "";
+const port = env_1.env.PORT;
+// API Configuration (still used by legacy code)
+const API_BASE_URL = env_1.env.API_BASE_URL;
+const API_TOKEN = env_1.env.API_TOKEN;
 app.use((0, cors_1.default)()); // Frontend'den gelen isteklere izin ver
 app.use(express_1.default.json());
 // Health check endpoint for deployments/load balancers
@@ -117,59 +124,21 @@ app.get('/api/account', verifyTelegramWebAppData, (req, res) => __awaiter(void 0
     }
 }));
 // --- GRAMMY BOT SETUP ---
-exports.bot = new grammy_1.Bot(process.env.BOT_TOKEN || "");
-// Error handler - Grammy hatalarını yakala
-exports.bot.catch((err) => {
-    const ctx = err.ctx;
-    console.error(`Error while handling update ${ctx.update.update_id}:`);
-    const e = err.error;
-    if (e instanceof Error) {
-        console.error("Error name:", e.name);
-        console.error("Error message:", e.message);
-        // Callback query timeout hatası - normal, atla
-        if (e.message.includes("query is too old")) {
-            console.warn("⚠️ Callback query timeout (normal, ignored)");
-            return;
-        }
-        // Bot blocked hatası - kullanıcı botu engellemiş
-        if (e.message.includes("bot was blocked")) {
-            console.warn("⚠️ User blocked the bot");
-            return;
-        }
-    }
-    console.error("Full error:", e);
-});
-const adminSessions = new Map();
-// Helper: Safe callback query answer (timeout hatalarını yakala)
-function safeAnswerCallback(ctx, text) {
-    return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b;
-        try {
-            if (text) {
-                yield ctx.answerCallbackQuery(text);
-            }
-            else {
-                yield ctx.answerCallbackQuery();
-            }
-        }
-        catch (e) {
-            // Timeout hatası - normal, logla ve devam et
-            if (((_a = e.message) === null || _a === void 0 ? void 0 : _a.includes("query is too old")) || ((_b = e.message) === null || _b === void 0 ? void 0 : _b.includes("query ID is invalid"))) {
-                console.warn("⚠️ Callback query timeout (ignored)");
-                return;
-            }
-            // Diğer hatalar
-            console.error("❌ answerCallbackQuery error:", e.message);
-        }
-    });
-}
+exports.bot = new grammy_1.Bot(env_1.env.BOT_TOKEN);
+// 🎯 NEW: Use error handler middleware
+exports.bot.catch(error_middleware_1.errorHandler);
+// 🗑️ DELETED: Old adminSessions Map - now using sessionManager
+// interface AdminSession { ... }
+// const adminSessions = new Map<number, AdminSession>();
+// 🗑️ DELETED: Old safeAnswerCallback - now imported from middleware
+// async function safeAnswerCallback(ctx: any, text?: string) { ... }
 // Middleware: Sadece hata durumlarını logla
 exports.bot.use((ctx, next) => __awaiter(void 0, void 0, void 0, function* () {
     yield next();
 }));
 // Admin mesaj handler - session tabanlı işlemler
 exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a;
     const userId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
     const text = ctx.message.text;
     if (!userId || !text) {
@@ -177,99 +146,61 @@ exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, 
     }
     // Cancel komutu
     if (text === '/cancel') {
-        if (adminSessions.has(userId)) {
-            adminSessions.delete(userId);
+        if (session_middleware_1.sessionManager.has(userId)) {
+            session_middleware_1.sessionManager.delete(userId);
             yield ctx.reply("❌ İşlem iptal edildi.");
             return;
         }
     }
-    const session = adminSessions.get(userId);
+    const session = session_middleware_1.sessionManager.get(userId);
     if (!session || !session.action) {
         return next(); // Normal komut işlemeye devam et
     }
     // Admin session varsa işle
     try {
         if (session.action === 'search') {
-            // Kullanıcı arama
+            // 🎯 NEW: Use userService for search
             const username = text.trim();
             try {
-                const user = yield (0, api_1.getUserByUsername)(username);
+                const user = yield user_service_1.userService.getUserByUsername(username);
                 if (!user) {
                     yield ctx.reply(`❌ Kullanıcı bulunamadı: ${username}`);
-                    adminSessions.delete(userId);
+                    session_middleware_1.sessionManager.delete(userId);
                     return;
                 }
-                const expireDate = new Date(user.expireAt);
-                const now = new Date();
-                const daysLeft = Math.ceil((expireDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                const statusEmoji = user.status === 'ACTIVE' ? '🟢' :
-                    user.status === 'LIMITED' ? '🟡' :
-                        user.status === 'EXPIRED' ? '🔴' : '⚫';
-                const trafficUsed = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
-                const trafficLimit = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
-                const trafficPercent = ((user.usedTrafficBytes / user.trafficLimitBytes) * 100).toFixed(0);
-                let message = `👤 *Kullanıcı Detayları*\n\n`;
-                message += `📝 Kullanıcı Adı: \`${user.username}\`\n`;
-                message += `🆔 UUID: \`${user.uuid}\`\n`;
-                message += `${statusEmoji} Durum: ${user.status}\n`;
-                message += `🏷️ Tag: ${user.tag || 'N/A'}\n\n`;
-                message += `📊 Trafik: ${trafficUsed} GB / ${trafficLimit} GB (%${trafficPercent})\n`;
-                message += `📅 Bitiş: ${expireDate.toLocaleDateString('tr-TR')}\n`;
-                message += `⏰ Kalan: ${daysLeft} gün\n`;
-                message += `📱 Telegram ID: ${user.telegramId || 'Yok'}\n`;
-                message += `📧 Email: ${user.email || 'Yok'}\n`;
-                message += `📅 Oluşturulma: ${new Date(user.createdAt).toLocaleDateString('tr-TR')}\n`;
+                // 🎯 NEW: Use userService.formatUserDetails
+                const message = user_service_1.userService.formatUserDetails(user);
                 yield ctx.reply(message, { parse_mode: "Markdown" });
-                adminSessions.delete(userId);
+                session_middleware_1.sessionManager.delete(userId);
             }
             catch (e) {
                 yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Bilinmeyen hata'}`);
-                adminSessions.delete(userId);
+                session_middleware_1.sessionManager.delete(userId);
             }
         }
         else if (session.action === 'broadcast') {
-            // Toplu bildirim gönder
+            // 🎯 NEW: Use notificationService for broadcast
             const message = text;
             yield ctx.reply("📤 Toplu bildirim gönderiliyor...");
             try {
-                const users = yield (0, api_1.getAllUsers)(1, 1000); // Tüm kullanıcılar
-                // telegramId veya telegram_id veya tId field'ını kontrol et
-                const usersWithTelegram = users.filter((u) => u.telegramId || u.telegram_id || u.tId);
-                console.log(`📢 Broadcast: ${users.length} toplam kullanıcı, ${usersWithTelegram.length} Telegram ID'li`);
-                let sent = 0;
-                let failed = 0;
-                for (const user of usersWithTelegram) {
-                    try {
-                        const telegramId = user.telegramId || user.telegram_id || user.tId;
-                        yield exports.bot.api.sendMessage(telegramId, message);
-                        sent++;
-                        yield new Promise(resolve => setTimeout(resolve, 100)); // Rate limit
-                    }
-                    catch (e) {
-                        // Sadece kritik hataları logla
-                        if (!((_b = e === null || e === void 0 ? void 0 : e.message) === null || _b === void 0 ? void 0 : _b.includes('chat not found'))) {
-                            console.warn(`⚠️ Broadcast error for ${user.username}:`, e === null || e === void 0 ? void 0 : e.message);
-                        }
-                        failed++;
-                    }
-                }
-                console.log(`✅ Broadcast tamamlandı: ${sent} başarılı, ${failed} başarısız`);
+                const result = yield notification_service_1.notificationService.broadcast(message);
                 yield ctx.reply(`✅ Toplu bildirim tamamlandı!\n\n` +
-                    `📤 Gönderilen: ${sent}\n` +
-                    `❌ Başarısız: ${failed}\n` +
-                    `👥 Toplam: ${usersWithTelegram.length}`);
-                adminSessions.delete(userId);
+                    `📤 Gönderilen: ${result.sent}\n` +
+                    `❌ Başarısız: ${result.failed}\n` +
+                    `👥 Toplam: ${result.sent + result.failed}`);
+                session_middleware_1.sessionManager.delete(userId);
             }
             catch (e) {
+                logger_1.logger.error('Broadcast error:', e.message);
                 yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Bilinmeyen hata'}`);
-                adminSessions.delete(userId);
+                session_middleware_1.sessionManager.delete(userId);
             }
         }
     }
     catch (e) {
         console.error('Admin session error:', e);
         yield ctx.reply(`❌ İşlem sırasında hata oluştu: ${e === null || e === void 0 ? void 0 : e.message}`);
-        adminSessions.delete(userId);
+        session_middleware_1.sessionManager.delete(userId);
     }
 }));
 // OpenAPI YAML dosyasını yükle
@@ -455,9 +386,10 @@ exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function
 }));
 // Admin Panel - Kullanıcı Listesi
 exports.bot.callbackQuery("admin_users", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield safeAnswerCallback(ctx);
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     try {
-        const users = yield (0, api_1.getAllUsers)(1, 10);
+        // 🎯 NEW: Use userService instead of direct API call
+        const users = yield user_service_1.userService.getUsers(1, 10);
         if (!users || users.length === 0) {
             yield ctx.editMessageText("ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
             return;
@@ -492,17 +424,18 @@ exports.bot.callbackQuery("admin_users", (ctx) => __awaiter(void 0, void 0, void
         });
     }
     catch (e) {
-        console.error('❌ Admin panel error (users):', e.message);
+        // 🎯 NEW: Use logger instead of console
+        logger_1.logger.error('Admin panel error (users):', e.message);
         yield ctx.editMessageText(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Kullanıcı listesi alınamadı'}`);
     }
 }));
 // Admin Panel - Kullanıcı Arama
 exports.bot.callbackQuery("admin_search", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    yield safeAnswerCallback(ctx);
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     const adminId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
     if (adminId) {
-        adminSessions.set(adminId, { action: 'search' });
+        session_middleware_1.sessionManager.set(adminId, { action: 'search' });
     }
     const keyboard = new grammy_1.InlineKeyboard()
         .text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
@@ -513,37 +446,20 @@ exports.bot.callbackQuery("admin_search", (ctx) => __awaiter(void 0, void 0, voi
 }));
 // Admin Panel - Kullanıcı Detayı (tıklanabilir listeden)
 exports.bot.callbackQuery(/^user_detail_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield safeAnswerCallback(ctx);
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     const match = ctx.match;
     if (!match)
         return;
     const username = match[1];
     try {
-        const user = yield (0, api_1.getUserByUsername)(username);
+        // 🎯 NEW: Use userService
+        const user = yield user_service_1.userService.getUserByUsername(username);
         if (!user) {
             yield ctx.editMessageText(`❌ Kullanıcı bulunamadı: ${username}`);
             return;
         }
-        const expireDate = new Date(user.expireAt);
-        const now = new Date();
-        const daysLeft = Math.ceil((expireDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        const statusEmoji = user.status === 'ACTIVE' ? '🟢' :
-            user.status === 'LIMITED' ? '🟡' :
-                user.status === 'EXPIRED' ? '🔴' : '⚫';
-        const trafficUsed = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
-        const trafficLimit = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
-        const trafficPercent = ((user.usedTrafficBytes / user.trafficLimitBytes) * 100).toFixed(0);
-        let message = `👤 *Kullanıcı Detayları*\n\n`;
-        message += `📝 Kullanıcı Adı: \`${user.username}\`\n`;
-        message += `🆔 UUID: \`${user.uuid}\`\n`;
-        message += `${statusEmoji} Durum: ${user.status}\n`;
-        message += `🏷️ Tag: ${user.tag || 'N/A'}\n\n`;
-        message += `📊 Trafik: ${trafficUsed} GB / ${trafficLimit} GB (%${trafficPercent})\n`;
-        message += `📅 Bitiş: ${expireDate.toLocaleDateString('tr-TR')}\n`;
-        message += `⏰ Kalan: ${daysLeft} gün\n`;
-        message += `📱 Telegram ID: ${user.telegramId || 'Yok'}\n`;
-        message += `📧 Email: ${user.email || 'Yok'}\n`;
-        message += `📅 Oluşturulma: ${new Date(user.createdAt).toLocaleDateString('tr-TR')}\n`;
+        // 🎯 NEW: Use userService.formatUserDetails for formatting
+        const message = user_service_1.userService.formatUserDetails(user);
         const keyboard = new grammy_1.InlineKeyboard()
             .text("🔙 Kullanıcı Listesi", "admin_users");
         yield ctx.editMessageText(message, {
@@ -558,46 +474,42 @@ exports.bot.callbackQuery(/^user_detail_(.+)$/, (ctx) => __awaiter(void 0, void 
 // Admin Panel - Toplu Bildirim
 exports.bot.callbackQuery("admin_broadcast", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    yield safeAnswerCallback(ctx);
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     const adminId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
     if (adminId) {
-        adminSessions.set(adminId, { action: 'broadcast' });
+        session_middleware_1.sessionManager.set(adminId, { action: 'broadcast' });
     }
     yield ctx.editMessageText("📢 *Toplu Bildirim*\n\nGöndermek istediğiniz mesajı yazın:\n\n_İptal için /cancel yazın_", { parse_mode: "Markdown" });
 }));
 // Admin Panel - İstatistikler
 exports.bot.callbackQuery("admin_stats", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield safeAnswerCallback(ctx);
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     try {
-        const users = yield (0, api_1.getAllUsers)(1, 1000); // Tüm kullanıcılar
-        const total = users.length;
-        const active = users.filter((u) => u.status === 'ACTIVE').length;
-        const limited = users.filter((u) => u.status === 'LIMITED').length;
-        const expired = users.filter((u) => u.status === 'EXPIRED').length;
-        const totalTraffic = users.reduce((sum, u) => sum + (parseInt(u.usedTrafficBytes) || 0), 0);
-        const avgTraffic = total > 0 ? totalTraffic / total : 0;
+        // 🎯 NEW: Use userService.getStatistics
+        const stats = yield user_service_1.userService.getStatistics();
         const message = `📊 *Sistem İstatistikleri*\n\n` +
-            `👥 Toplam Kullanıcı: ${total}\n` +
-            `🟢 Aktif: ${active}\n` +
-            `🟡 Limitli: ${limited}\n` +
-            `🔴 Süresi Dolmuş: ${expired}\n\n` +
-            `📈 Toplam Trafik: ${(totalTraffic / 1024 / 1024 / 1024).toFixed(2)} GB\n` +
-            `📊 Ortalama Trafik: ${(avgTraffic / 1024 / 1024 / 1024).toFixed(2)} GB/kullanıcı`;
+            `👥 Toplam Kullanıcı: ${stats.total}\n` +
+            `🟢 Aktif: ${stats.active}\n` +
+            `🟡 Limitli: ${stats.limited}\n` +
+            `🔴 Süresi Dolmuş: ${stats.expired}\n\n` +
+            `📈 Toplam Trafik: ${(stats.totalTraffic / 1024 / 1024 / 1024).toFixed(2)} GB\n` +
+            `📊 Ortalama Trafik: ${(stats.avgTraffic / 1024 / 1024 / 1024).toFixed(2)} GB/kullanıcı`;
         yield ctx.editMessageText(message, { parse_mode: "Markdown" });
     }
     catch (e) {
-        console.error('❌ Admin panel error (stats):', e.message);
+        // 🎯 NEW: Use logger
+        logger_1.logger.error('Admin panel error (stats):', e.message);
         yield ctx.editMessageText(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'İstatistikler alınamadı'}`);
     }
 }));
 // Admin Panel - Kullanıcı İşlemleri
 exports.bot.callbackQuery("admin_user_ops", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    yield safeAnswerCallback(ctx);
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     // Aktif session varsa temizle (kullanıcı ara veya broadcast iptal)
     const adminId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
-    if (adminId && adminSessions.has(adminId)) {
-        adminSessions.delete(adminId);
+    if (adminId && session_middleware_1.sessionManager.has(adminId)) {
+        session_middleware_1.sessionManager.delete(adminId);
     }
     const keyboard = new grammy_1.InlineKeyboard()
         .text("👥 Kullanıcı Listesi", "admin_users")
@@ -609,7 +521,7 @@ exports.bot.callbackQuery("admin_user_ops", (ctx) => __awaiter(void 0, void 0, v
 }));
 // Admin Panel - Sistem Durumu
 exports.bot.callbackQuery("admin_status", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield safeAnswerCallback(ctx);
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     const uptime = process.uptime();
     const days = Math.floor(uptime / 86400);
     const hours = Math.floor((uptime % 86400) / 3600);
@@ -627,7 +539,7 @@ exports.bot.callbackQuery("admin_status", (ctx) => __awaiter(void 0, void 0, voi
 }));
 // Admin Panel - Sistem Logları
 exports.bot.callbackQuery("admin_logs", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield safeAnswerCallback(ctx);
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     // Not: Production'da log dosyası okuma gerekir
     // Şimdilik basit bilgi gösterelim
     const message = `📝 *Sistem Logları*\n\n` +
@@ -640,7 +552,7 @@ exports.bot.callbackQuery("admin_logs", (ctx) => __awaiter(void 0, void 0, void 
 }));
 // Admin Panel - Geri butonu
 exports.bot.callbackQuery("admin_back", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield safeAnswerCallback(ctx);
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     const keyboard = new grammy_1.InlineKeyboard()
         .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
         .text("📢 Toplu Bildirim", "admin_broadcast").row()
@@ -655,19 +567,19 @@ exports.bot.callbackQuery("try_free", (ctx) => __awaiter(void 0, void 0, void 0,
 }));
 // "Satın Al" düğmesine basıldığında
 exports.bot.callbackQuery("buy_subscription", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    yield safeAnswerCallback(ctx, "Çok yakında!");
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx, "Çok yakında!");
 }));
 // "Hesabım" düğmesine basıldığında
 exports.bot.callbackQuery("my_account", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const telegramId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
     if (!telegramId) {
-        yield safeAnswerCallback(ctx, "Hata!");
+        yield (0, error_middleware_1.safeAnswerCallback)(ctx, "Hata!");
         yield ctx.reply("Telegram ID'niz alınamadı. Lütfen tekrar deneyin.");
         return;
     }
     try {
-        yield safeAnswerCallback(ctx, "Hesap bilgileriniz getiriliyor...");
+        yield (0, error_middleware_1.safeAnswerCallback)(ctx, "Hesap bilgileriniz getiriliyor...");
         const user = yield (0, api_1.getUserByTelegramId)(telegramId);
         if (!user) {
             yield ctx.reply("Sistemde kayıtlı bir hesabınız bulunamadı. Lütfen önce 'Try for Free' seçeneği ile bir deneme hesabı oluşturun.");
