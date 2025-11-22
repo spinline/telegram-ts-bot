@@ -48,7 +48,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.bot = void 0;
 require("dotenv/config");
 const grammy_1 = require("grammy");
-const YAML = require("yamljs");
+const yaml = __importStar(require("js-yaml"));
 const fs_1 = __importDefault(require("fs"));
 const api_1 = require("./api");
 const express_1 = __importDefault(require("express"));
@@ -208,7 +208,7 @@ let openApiDocument;
 const openApiFilePath = "./openapi.yaml";
 try {
     const yamlContent = fs_1.default.readFileSync(openApiFilePath, "utf8");
-    openApiDocument = YAML.parse(yamlContent);
+    openApiDocument = yaml.load(yamlContent);
     console.log("OpenAPI document loaded.");
 }
 catch (error) {

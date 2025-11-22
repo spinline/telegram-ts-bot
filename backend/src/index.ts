@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { Bot, Context, InlineKeyboard } from "grammy";
 import axios from "axios";
-const YAML = require("yamljs");
+import * as yaml from "js-yaml";
 import path from "path";
 import fs from "fs";
 import { createUser, getUserByTelegramId, getInternalSquads, getUserByUsername, getUserHwidDevices, deleteUserHwidDevice, getAllUsers } from "./api";
@@ -207,7 +207,7 @@ const openApiFilePath = "./openapi.yaml";
 
 try {
   const yamlContent = fs.readFileSync(openApiFilePath, "utf8");
-  openApiDocument = YAML.parse(yamlContent);
+  openApiDocument = yaml.load(yamlContent);
   console.log("OpenAPI document loaded.");
 } catch (error) {
   console.error("Error loading OpenAPI document:", error);

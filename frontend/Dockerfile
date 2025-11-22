@@ -2,8 +2,8 @@
 FROM node:22.12-alpine AS build
 WORKDIR /app
 
-# Install deps
-COPY package*.json ./
+# Copy package files and npm config
+COPY package*.json .npmrc ./
 RUN npm ci
 
 # Build app
