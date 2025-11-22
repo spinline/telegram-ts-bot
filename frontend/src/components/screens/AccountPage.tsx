@@ -25,41 +25,9 @@ import {
   IconX,
 } from '@tabler/icons-react';
 
-export interface HwidDevice {
-  hwid: string;
-  userUuid: string;
-  platform?: string | null;
-  osVersion?: string | null;
-  deviceModel?: string | null;
-  userAgent?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AccountResponse {
-  status: 'ACTIVE' | 'DISABLED' | 'LIMITED' | 'EXPIRED' | string;
-  trafficLimitBytes: number;
-  usedTrafficBytes: number;
-  expireAt: string;
-  username: string;
-  tag?: string;
-  manageUrl?: string;
-  subscriptionUrl?: string;
-  onlineAt?: string | null;
-  hwidDeviceLimit?: number | null;
-  lastConnectedNode?: {
-    connectedAt?: string | null;
-    nodeName?: string;
-    countryCode?: string;
-  } | null;
-  happ?: {
-    cryptoLink: string;
-  };
-  hwid?: {
-    total: number;
-    devices: HwidDevice[];
-  };
-}
+// Import types from centralized location
+// @ts-ignore - HwidDevice used in AccountResponse type
+import type { AccountResponse, HwidDevice } from '../../types/account';
 
 export function AccountPage({
   loading,
