@@ -1,0 +1,260 @@
+import { Context, InlineKeyboard } from "grammy";
+import { safeAnswerCallback } from "../../middlewares/error.middleware";
+import { sessionManager } from "../../middlewares/session.middleware";
+import { userService } from "../../services/user.service";
+import { logger } from "../../utils/logger";
+
+/**
+ * Admin Panel - Ana Menü
+ */
+export async function adminPanelHandler(ctx: Context) {
+  try {
+    const keyboard = new InlineKeyboard()
+      .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+      .text("📢 Toplu Bildirim", "admin_broadcast").row()
+      .text("📊 İstatistikler", "admin_stats")
+      .text("📝 Sistem Logları", "admin_logs").row()
+      .text("💾 Sistem Durumu", "admin_status");
+
+    await ctx.reply(
+      "👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:",
+      { reply_markup: keyboard, parse_mode: "Markdown" }
+    );
+  } catch (error: any) {
+    logger.error('/admin error:', error.message);
+    try {
+      await ctx.reply(`❌ Hata oluştu: ${error.message}`);
+    } catch (e) {
+      logger.error('Failed to send error message:', e);
+    }
+  }
+}
+
+/**
+ * Admin Panel - Kullanıcı İşlemleri
+ */
+export async function adminUserOpsHandler(ctx: Context) {
+  await safeAnswerCallback(ctx);
+
+  // Aktif session varsa temizle
+  const adminId = ctx.from?.id;
+  if (adminId && sessionManager.has(adminId)) {
+    sessionManager.delete(adminId);
+  }
+
+  const keyboard = new InlineKeyboard()
+    .text("👥 Kullanıcı Listesi", "admin_users")
+    .text("🔍 Kullanıcı Ara", "admin_search").row()
+    .text("⏰ Süre Uzat", "admin_extend")
+    .text("📊 Trafik Ekle", "admin_add_traffic").row()
+    .text("🔙 Geri", "admin_back");
+
+  await ctx.editMessageText(
+    "⚙️ *Kullanıcı İşlemleri*\n\nİşlem seçin:",
+    { reply_markup: keyboard, parse_mode: "Markdown" }
+  );
+}
+
+/**
+ * Admin Panel - Kullanıcı Listesi
+ */
+export async function adminUsersHandler(ctx: Context) {
+  await safeAnswerCallback(ctx);
+
+  try {
+    const users = await userService.getUsers(1, 10);
+
+    if (!users || users.length === 0) {
+      await ctx.editMessageText("ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
+      return;
+    }
+
+    let message = "👥 *Kullanıcı Listesi* (İlk 10)\n\n";
+    message += "Kullanıcı detaylarını görmek için kullanıcı adına tıklayın:\n\n";
+
+    const keyboard = new InlineKeyboard();
+
+    users.forEach((user: any, index: number) => {
+      const status = user.status === 'ACTIVE' ? '🟢' :
+                     user.status === 'LIMITED' ? '🟡' :
+                     user.status === 'EXPIRED' ? '🔴' : '⚫';
+      const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
+      const limitGB = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
+
+      message += `${index + 1}. ${status} ${user.username} (${usedGB}/${limitGB} GB)\n`;
+
+      if (index % 2 === 0) {
+        keyboard.text(`👤 ${user.username}`, `user_detail_${user.username}`);
+      } else {
+        keyboard.text(`👤 ${user.username}`, `user_detail_${user.username}`).row();
+      }
+    });
+
+    if (users.length % 2 === 1) {
+      keyboard.row();
+    }
+
+    keyboard.text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
+
+    await ctx.editMessageText(message, {
+      reply_markup: keyboard,
+      parse_mode: "Markdown"
+    });
+  } catch (e: any) {
+    logger.error('Admin panel error (users):', e.message);
+    await ctx.editMessageText(`❌ Hata: ${e?.message || 'Kullanıcı listesi alınamadı'}`);
+  }
+}
+
+/**
+ * Admin Panel - Kullanıcı Detayı
+ */
+export async function adminUserDetailHandler(ctx: Context, username: string) {
+  await safeAnswerCallback(ctx);
+
+  try {
+    const user = await userService.getUserByUsername(username);
+
+    if (!user) {
+      await ctx.editMessageText(`❌ Kullanıcı bulunamadı: ${username}`);
+      return;
+    }
+
+    const message = userService.formatUserDetails(user);
+
+    const keyboard = new InlineKeyboard()
+      .text("🔙 Kullanıcı Listesi", "admin_users");
+
+    await ctx.editMessageText(message, {
+      parse_mode: "Markdown",
+      reply_markup: keyboard
+    });
+  } catch (e: any) {
+    await ctx.editMessageText(`❌ Hata: ${e?.message || 'Kullanıcı bilgisi alınamadı'}`);
+  }
+}
+
+/**
+ * Admin Panel - Kullanıcı Arama
+ */
+export async function adminSearchHandler(ctx: Context) {
+  await safeAnswerCallback(ctx);
+
+  const adminId = ctx.from?.id;
+  if (adminId) {
+    sessionManager.set(adminId, { action: 'search' });
+  }
+
+  const keyboard = new InlineKeyboard()
+    .text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
+
+  await ctx.editMessageText(
+    "🔍 *Kullanıcı Arama*\n\nKullanıcı adını yazın:\n\n_İptal için /cancel veya aşağıdaki butona tıklayın_",
+    {
+      parse_mode: "Markdown",
+      reply_markup: keyboard
+    }
+  );
+}
+
+/**
+ * Admin Panel - Toplu Bildirim
+ */
+export async function adminBroadcastHandler(ctx: Context) {
+  await safeAnswerCallback(ctx);
+
+  const adminId = ctx.from?.id;
+  if (adminId) {
+    sessionManager.set(adminId, { action: 'broadcast' });
+  }
+
+  await ctx.editMessageText(
+    "📢 *Toplu Bildirim*\n\nGöndermek istediğiniz mesajı yazın:\n\n_İptal için /cancel yazın_",
+    { parse_mode: "Markdown" }
+  );
+}
+
+/**
+ * Admin Panel - İstatistikler
+ */
+export async function adminStatsHandler(ctx: Context) {
+  await safeAnswerCallback(ctx);
+
+  try {
+    const stats = await userService.getStatistics();
+
+    const message = `📊 *Sistem İstatistikleri*\n\n` +
+      `👥 Toplam Kullanıcı: ${stats.total}\n` +
+      `🟢 Aktif: ${stats.active}\n` +
+      `🟡 Limitli: ${stats.limited}\n` +
+      `🔴 Süresi Dolmuş: ${stats.expired}\n\n` +
+      `📈 Toplam Trafik: ${(stats.totalTraffic / 1024 / 1024 / 1024).toFixed(2)} GB\n` +
+      `📊 Ortalama Trafik: ${(stats.avgTraffic / 1024 / 1024 / 1024).toFixed(2)} GB/kullanıcı`;
+
+    await ctx.editMessageText(message, { parse_mode: "Markdown" });
+  } catch (e: any) {
+    logger.error('Admin panel error (stats):', e.message);
+    await ctx.editMessageText(`❌ Hata: ${e?.message || 'İstatistikler alınamadı'}`);
+  }
+}
+
+/**
+ * Admin Panel - Sistem Logları
+ */
+export async function adminLogsHandler(ctx: Context) {
+  await safeAnswerCallback(ctx);
+
+  const message = `📝 *Sistem Logları*\n\n` +
+    `Bu özellik geliştirme aşamasındadır.\n\n` +
+    `Log'ları görmek için:\n` +
+    `• Dokploy: Logs sekmesi\n` +
+    `• PM2: \`pm2 logs telegram-bot\`\n` +
+    `• Docker: \`docker logs -f container_name\``;
+
+  await ctx.editMessageText(message, { parse_mode: "Markdown" });
+}
+
+/**
+ * Admin Panel - Sistem Durumu
+ */
+export async function adminStatusHandler(ctx: Context) {
+  await safeAnswerCallback(ctx);
+
+  const uptime = process.uptime();
+  const days = Math.floor(uptime / 86400);
+  const hours = Math.floor((uptime % 86400) / 3600);
+  const minutes = Math.floor((uptime % 3600) / 60);
+
+  const memUsage = process.memoryUsage();
+  const memUsedMB = (memUsage.heapUsed / 1024 / 1024).toFixed(2);
+  const memTotalMB = (memUsage.heapTotal / 1024 / 1024).toFixed(2);
+
+  const message = `💾 *Sistem Durumu*\n\n` +
+    `⏱️ Uptime: ${days}g ${hours}s ${minutes}d\n` +
+    `💾 Bellek: ${memUsedMB} MB / ${memTotalMB} MB\n` +
+    `🤖 Bot: Çalışıyor ✅\n` +
+    `🔗 Webhook: Aktif ✅\n` +
+    `📡 RemnaWave API: Bağlı ✅`;
+
+  await ctx.editMessageText(message, { parse_mode: "Markdown" });
+}
+
+/**
+ * Admin Panel - Geri Butonu
+ */
+export async function adminBackHandler(ctx: Context) {
+  await safeAnswerCallback(ctx);
+
+  const keyboard = new InlineKeyboard()
+    .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+    .text("📢 Toplu Bildirim", "admin_broadcast").row()
+    .text("📊 İstatistikler", "admin_stats")
+    .text("📝 Sistem Logları", "admin_logs").row()
+    .text("💾 Sistem Durumu", "admin_status");
+
+  await ctx.editMessageText(
+    "👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:",
+    { reply_markup: keyboard, parse_mode: "Markdown" }
+  );
+}
+

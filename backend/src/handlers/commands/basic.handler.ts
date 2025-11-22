@@ -1,5 +1,6 @@
 import { Context, InlineKeyboard } from "grammy";
 import { env } from "../../config/env";
+import { adminAuthMiddleware } from "../../middlewares/auth.middleware";
 
 /**
  * /start command handler
