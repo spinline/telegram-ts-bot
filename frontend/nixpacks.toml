@@ -7,8 +7,9 @@ nixPkgs = ["nodejs_22"]
 [phases.install]
 cmds = [
   "node --version",
+  "npm cache clean --force || true",
   "npm ci",
-  "npm install -g serve"
+  "npm install -g serve@14.2.5"
 ]
 
 [phases.build]
@@ -17,5 +18,8 @@ cmds = [
 ]
 
 [start]
-cmd = "serve -s dist -l 3000"
+cmd = "serve -s dist -l ${PORT:-3000}"
+
+[variables]
+PORT = "3000"
 
