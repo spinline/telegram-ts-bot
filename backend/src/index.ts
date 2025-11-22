@@ -211,7 +211,7 @@ bot.on("message:text", async (ctx, next) => {
             .text("⏰ Süre Uzat", `admin_extend_${user.username}`)
             .text("📊 Trafik Ekle", `admin_add_traffic_${user.username}`).row()
             .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${user.username}`).row()
-            .text("🔙 Kullanıcı Listesi", "users");
+            .text("🔙 Kullanıcı Listesi", "ls");
 
           await ctx.reply(message, { parse_mode: "Markdown", reply_markup: keyboard });
         } else {
@@ -223,7 +223,7 @@ bot.on("message:text", async (ctx, next) => {
             const status = user.status === 'ACTIVE' ? '🟢' :
                            user.status === 'LIMITED' ? '🟡' :
                            user.status === 'EXPIRED' ? '🔴' : '⚫';
-            keyboard.text(`${status} ${user.username}`, `u_d_${user.username}`).row();
+            keyboard.text(`${status} ${user.username}`, `ud${user.username}`).row();
           });
 
           keyboard.text("🔙 İptal", "admin_user_ops");
@@ -524,7 +524,7 @@ bot.command("admin", async (ctx) => {
 });
 
 // Admin Panel - Kullanıcı Listesi
-bot.callbackQuery(/^users(_p_(\d+))?(_s_(\w+))?(_f_(\w+))?$/, async (ctx) => {
+bot.callbackQuery(/^ls(p(\d+))?(s(\w+))?(f(\w+))?$/, async (ctx) => {
   await safeAnswerCallback(ctx);
 
   const page = ctx.match && ctx.match[2] ? parseInt(ctx.match[2]) : 1;
@@ -547,21 +547,21 @@ bot.callbackQuery(/^users(_p_(\d+))?(_s_(\w+))?(_f_(\w+))?$/, async (ctx) => {
 
     const keyboard = new InlineKeyboard();
 
-    const sortParam = sort ? `_s_${sort}` : '';
-    const filterParam = filter ? `_f_${filter}` : '';
+    const sortParam = sort ? `s${sort}` : '';
+    const filterParam = filter ? `f${filter}` : '';
 
     // Filtreleme Butonları
     keyboard
-      .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `users_p_1${sortParam}_f_ALL`)
-      .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `users_p_1${sortParam}_f_ACTIVE`)
-      .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `users_p_1${sortParam}_f_EXPIRED`)
+      .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `lsp1${sortParam}fALL`)
+      .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `lsp1${sortParam}fACTIVE`)
+      .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `lsp1${sortParam}fEXPIRED`)
       .row();
 
     // Sıralama Butonları
     keyboard
-      .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `users_p_1_s_traffic${filterParam}`)
-      .text(sort === 'date' ? "✅ Tarih" : "Tarih", `users_p_1_s_date${filterParam}`)
-      .text(sort === 'status' ? "✅ Durum" : "Durum", `users_p_1_s_status${filterParam}`)
+      .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `lsp1straffic${filterParam}`)
+      .text(sort === 'date' ? "✅ Tarih" : "Tarih", `lsp1sdate${filterParam}`)
+      .text(sort === 'status' ? "✅ Durum" : "Durum", `lsp1sstatus${filterParam}`)
       .row();
 
     if (users.length === 0) {
@@ -576,7 +576,7 @@ bot.callbackQuery(/^users(_p_(\d+))?(_s_(\w+))?(_f_(\w+))?$/, async (ctx) => {
 
         keyboard.text(
           `${status} ${user.username} | ${usedGB}/${limitGB} GB`, 
-          `u_d_${user.username}`
+          `ud${user.username}`
         ).row();
       });
     }
@@ -584,10 +584,10 @@ bot.callbackQuery(/^users(_p_(\d+))?(_s_(\w+))?(_f_(\w+))?$/, async (ctx) => {
     // Pagination buttons
     const paginationRow = [];
     if (page > 1) {
-      paginationRow.push({ text: "⬅️ Önceki", callback_data: `users_p_${page - 1}${sortParam}${filterParam}` });
+      paginationRow.push({ text: "⬅️ Önceki", callback_data: `lsp${page - 1}${sortParam}${filterParam}` });
     }
     if (page < totalPages) {
-      paginationRow.push({ text: "Sonraki ➡️", callback_data: `users_p_${page + 1}${sortParam}${filterParam}` });
+      paginationRow.push({ text: "Sonraki ➡️", callback_data: `lsp${page + 1}${sortParam}${filterParam}` });
     }
     
     if (paginationRow.length > 0) {
@@ -628,7 +628,7 @@ bot.callbackQuery("admin_search", async (ctx) => {
 });
 
 // Admin Panel - Kullanıcı Detayı (tıklanabilir listeden)
-bot.callbackQuery(/^u_d_(.+)$/, async (ctx) => {
+bot.callbackQuery(/^ud(.+)$/, async (ctx) => {
   await safeAnswerCallback(ctx);
 
   const match = ctx.match;
@@ -649,7 +649,7 @@ bot.callbackQuery(/^u_d_(.+)$/, async (ctx) => {
       .text("⏰ Süre Uzat", `admin_extend_${username}`)
       .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
       .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
-      .text("🔙 Kullanıcı Listesi", "users");
+      .text("🔙 Kullanıcı Listesi", "ls");
 
     await safeEditMessageText(ctx, message, {
       parse_mode: "Markdown",
@@ -672,7 +672,7 @@ bot.callbackQuery(/^admin_extend_(.+)$/, async (ctx) => {
   }
 
   const keyboard = new InlineKeyboard()
-    .text("🔙 İptal", `u_d_${username}`);
+    .text("🔙 İptal", `ud${username}`);
 
   await safeEditMessageText(ctx,
     `⏰ *Süre Uzatma: ${username}*\n\nKaç gün eklemek istiyorsunuz? (Örn: 30)\n\n_İptal için aşağıdaki butona tıklayın_`,
@@ -692,7 +692,7 @@ bot.callbackQuery(/^admin_add_traffic_(.+)$/, async (ctx) => {
   }
 
   const keyboard = new InlineKeyboard()
-    .text("🔙 İptal", `u_d_${username}`);
+    .text("🔙 İptal", `ud${username}`);
 
   await safeEditMessageText(ctx,
     `📊 *Trafik Ekleme: ${username}*\n\nKaç GB eklemek istiyorsunuz? (Örn: 10)\n\n_İptal için aşağıdaki butona tıklayın_`,
@@ -719,7 +719,7 @@ bot.callbackQuery(/^admin_reset_devices_(.+)$/, async (ctx) => {
         .text("⏰ Süre Uzat", `admin_extend_${username}`)
         .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
         .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
-        .text("🔙 Kullanıcı Listesi", "users");
+        .text("🔙 Kullanıcı Listesi", "ls");
         
       await safeEditMessageText(ctx, message, {
         parse_mode: "Markdown",
@@ -784,7 +784,7 @@ bot.callbackQuery("admin_user_ops", async (ctx) => {
   }
 
   const keyboard = new InlineKeyboard()
-    .text("👥 Kullanıcı Listesi", "users")
+    .text("👥 Kullanıcı Listesi", "ls")
     .text("🔍 Kullanıcı Ara", "admin_search").row()
     .text("🔙 Geri", "admin_back");
 

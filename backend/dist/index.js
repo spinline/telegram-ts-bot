@@ -216,7 +216,7 @@ exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, 
                         .text("⏰ Süre Uzat", `admin_extend_${user.username}`)
                         .text("📊 Trafik Ekle", `admin_add_traffic_${user.username}`).row()
                         .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${user.username}`).row()
-                        .text("🔙 Kullanıcı Listesi", "users");
+                        .text("🔙 Kullanıcı Listesi", "ls");
                     yield ctx.reply(message, { parse_mode: "Markdown", reply_markup: keyboard });
                 }
                 else {
@@ -227,7 +227,7 @@ exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, 
                         const status = user.status === 'ACTIVE' ? '🟢' :
                             user.status === 'LIMITED' ? '🟡' :
                                 user.status === 'EXPIRED' ? '🔴' : '⚫';
-                        keyboard.text(`${status} ${user.username}`, `u_d_${user.username}`).row();
+                        keyboard.text(`${status} ${user.username}`, `ud${user.username}`).row();
                     });
                     keyboard.text("🔙 İptal", "admin_user_ops");
                     yield ctx.reply(message, { parse_mode: "Markdown", reply_markup: keyboard });
@@ -495,7 +495,7 @@ exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function
     }
 }));
 // Admin Panel - Kullanıcı Listesi
-exports.bot.callbackQuery(/^users(_p_(\d+))?(_s_(\w+))?(_f_(\w+))?$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+exports.bot.callbackQuery(/^ls(p(\d+))?(s(\w+))?(f(\w+))?$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     const page = ctx.match && ctx.match[2] ? parseInt(ctx.match[2]) : 1;
     const sort = (ctx.match && ctx.match[4] ? ctx.match[4] : undefined);
@@ -512,19 +512,19 @@ exports.bot.callbackQuery(/^users(_p_(\d+))?(_s_(\w+))?(_f_(\w+))?$/, (ctx) => _
         const filterLabel = filter !== 'ALL' ? ` [${filter}]` : '';
         const message = `👥 *Kullanıcı Listesi*${sortLabel}${filterLabel} (Sayfa ${page}/${totalPages})`;
         const keyboard = new grammy_1.InlineKeyboard();
-        const sortParam = sort ? `_s_${sort}` : '';
-        const filterParam = filter ? `_f_${filter}` : '';
+        const sortParam = sort ? `s${sort}` : '';
+        const filterParam = filter ? `f${filter}` : '';
         // Filtreleme Butonları
         keyboard
-            .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `users_p_1${sortParam}_f_ALL`)
-            .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `users_p_1${sortParam}_f_ACTIVE`)
-            .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `users_p_1${sortParam}_f_EXPIRED`)
+            .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `lsp1${sortParam}fALL`)
+            .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `lsp1${sortParam}fACTIVE`)
+            .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `lsp1${sortParam}fEXPIRED`)
             .row();
         // Sıralama Butonları
         keyboard
-            .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `users_p_1_s_traffic${filterParam}`)
-            .text(sort === 'date' ? "✅ Tarih" : "Tarih", `users_p_1_s_date${filterParam}`)
-            .text(sort === 'status' ? "✅ Durum" : "Durum", `users_p_1_s_status${filterParam}`)
+            .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `lsp1straffic${filterParam}`)
+            .text(sort === 'date' ? "✅ Tarih" : "Tarih", `lsp1sdate${filterParam}`)
+            .text(sort === 'status' ? "✅ Durum" : "Durum", `lsp1sstatus${filterParam}`)
             .row();
         if (users.length === 0) {
             keyboard.row().text("⚠️ Bu filtrede kullanıcı yok", "noop");
@@ -536,16 +536,16 @@ exports.bot.callbackQuery(/^users(_p_(\d+))?(_s_(\w+))?(_f_(\w+))?$/, (ctx) => _
                         user.status === 'EXPIRED' ? '🔴' : '⚫';
                 const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(1);
                 const limitGB = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
-                keyboard.text(`${status} ${user.username} | ${usedGB}/${limitGB} GB`, `u_d_${user.username}`).row();
+                keyboard.text(`${status} ${user.username} | ${usedGB}/${limitGB} GB`, `ud${user.username}`).row();
             });
         }
         // Pagination buttons
         const paginationRow = [];
         if (page > 1) {
-            paginationRow.push({ text: "⬅️ Önceki", callback_data: `users_p_${page - 1}${sortParam}${filterParam}` });
+            paginationRow.push({ text: "⬅️ Önceki", callback_data: `lsp${page - 1}${sortParam}${filterParam}` });
         }
         if (page < totalPages) {
-            paginationRow.push({ text: "Sonraki ➡️", callback_data: `users_p_${page + 1}${sortParam}${filterParam}` });
+            paginationRow.push({ text: "Sonraki ➡️", callback_data: `lsp${page + 1}${sortParam}${filterParam}` });
         }
         if (paginationRow.length > 0) {
             keyboard.row(...paginationRow);
@@ -577,7 +577,7 @@ exports.bot.callbackQuery("admin_search", (ctx) => __awaiter(void 0, void 0, voi
     });
 }));
 // Admin Panel - Kullanıcı Detayı (tıklanabilir listeden)
-exports.bot.callbackQuery(/^u_d_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+exports.bot.callbackQuery(/^ud(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     const match = ctx.match;
@@ -595,7 +595,7 @@ exports.bot.callbackQuery(/^u_d_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 
             .text("⏰ Süre Uzat", `admin_extend_${username}`)
             .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
             .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
-            .text("🔙 Kullanıcı Listesi", "users");
+            .text("🔙 Kullanıcı Listesi", "ls");
         yield (0, error_middleware_1.safeEditMessageText)(ctx, message, {
             parse_mode: "Markdown",
             reply_markup: keyboard
@@ -617,7 +617,7 @@ exports.bot.callbackQuery(/^admin_extend_(.+)$/, (ctx) => __awaiter(void 0, void
         session_middleware_1.sessionManager.set(adminId, { action: 'extend_days', targetUser: username });
     }
     const keyboard = new grammy_1.InlineKeyboard()
-        .text("🔙 İptal", `u_d_${username}`);
+        .text("🔙 İptal", `ud${username}`);
     yield (0, error_middleware_1.safeEditMessageText)(ctx, `⏰ *Süre Uzatma: ${username}*\n\nKaç gün eklemek istiyorsunuz? (Örn: 30)\n\n_İptal için aşağıdaki butona tıklayın_`, { parse_mode: "Markdown", reply_markup: keyboard });
 }));
 // Admin Panel - Trafik Ekle (Seçim)
@@ -632,7 +632,7 @@ exports.bot.callbackQuery(/^admin_add_traffic_(.+)$/, (ctx) => __awaiter(void 0,
         session_middleware_1.sessionManager.set(adminId, { action: 'add_traffic', targetUser: username });
     }
     const keyboard = new grammy_1.InlineKeyboard()
-        .text("🔙 İptal", `u_d_${username}`);
+        .text("🔙 İptal", `ud${username}`);
     yield (0, error_middleware_1.safeEditMessageText)(ctx, `📊 *Trafik Ekleme: ${username}*\n\nKaç GB eklemek istiyorsunuz? (Örn: 10)\n\n_İptal için aşağıdaki butona tıklayın_`, { parse_mode: "Markdown", reply_markup: keyboard });
 }));
 // Admin Panel - Cihaz Sıfırla (İşlem)
@@ -651,7 +651,7 @@ exports.bot.callbackQuery(/^admin_reset_devices_(.+)$/, (ctx) => __awaiter(void 
                 .text("⏰ Süre Uzat", `admin_extend_${username}`)
                 .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
                 .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
-                .text("🔙 Kullanıcı Listesi", "users");
+                .text("🔙 Kullanıcı Listesi", "ls");
             yield (0, error_middleware_1.safeEditMessageText)(ctx, message, {
                 parse_mode: "Markdown",
                 reply_markup: keyboard
@@ -707,7 +707,7 @@ exports.bot.callbackQuery("admin_user_ops", (ctx) => __awaiter(void 0, void 0, v
         session_middleware_1.sessionManager.delete(adminId);
     }
     const keyboard = new grammy_1.InlineKeyboard()
-        .text("👥 Kullanıcı Listesi", "users")
+        .text("👥 Kullanıcı Listesi", "ls")
         .text("🔍 Kullanıcı Ara", "admin_search").row()
         .text("🔙 Geri", "admin_back");
     yield (0, error_middleware_1.safeEditMessageText)(ctx, "⚙️ *Kullanıcı İşlemleri*\n\nİşlem seçin:", { reply_markup: keyboard, parse_mode: "Markdown" });
