@@ -48,7 +48,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.bot = void 0;
 require("dotenv/config");
 const grammy_1 = require("grammy");
-const axios_1 = __importDefault(require("axios"));
 const YAML = require("yamljs");
 const fs_1 = __importDefault(require("fs"));
 const api_1 = require("./api");
@@ -237,11 +236,11 @@ exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, 
             const message = text;
             yield ctx.reply("📤 Toplu bildirim gönderiliyor...");
             try {
-                const response = yield axios_1.default.get(`${API_BASE_URL}/api/users`, {
-                    headers: { Authorization: `Bearer ${API_TOKEN}` }
-                });
-                const users = response.data.data || [];
+                console.log('Admin: Toplu bildirim başlatılıyor');
+                const users = yield (0, api_1.getAllUsers)(1, 1000); // Tüm kullanıcılar
+                console.log(`Admin: ${users.length} kullanıcı bulundu`);
                 const usersWithTelegram = users.filter((u) => u.telegramId);
+                console.log(`Admin: ${usersWithTelegram.length} kullanıcının Telegram ID'si var`);
                 let sent = 0;
                 let failed = 0;
                 for (const user of usersWithTelegram) {
@@ -251,6 +250,7 @@ exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, 
                         yield new Promise(resolve => setTimeout(resolve, 100)); // Rate limit
                     }
                     catch (e) {
+                        console.warn(`Broadcast failed for user ${user.username}:`, e);
                         failed++;
                     }
                 }
@@ -483,23 +483,28 @@ exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function
 exports.bot.callbackQuery("admin_users", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield safeAnswerCallback(ctx);
     try {
-        const response = yield axios_1.default.get(`${API_BASE_URL}/api/users`, {
-            headers: { Authorization: `Bearer ${API_TOKEN}` },
-            params: { page: 1, take: 10 }
-        });
-        const users = response.data.data || [];
+        console.log('Admin: Kullanıcı listesi istendi');
+        const users = yield (0, api_1.getAllUsers)(1, 10);
+        console.log(`Admin: ${users.length} kullanıcı bulundu`);
+        if (!users || users.length === 0) {
+            yield ctx.editMessageText("ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
+            return;
+        }
         let message = "👥 *Kullanıcı Listesi* (İlk 10)\n\n";
         users.forEach((user, index) => {
             const status = user.status === 'ACTIVE' ? '🟢' :
                 user.status === 'LIMITED' ? '🟡' :
                     user.status === 'EXPIRED' ? '🔴' : '⚫';
+            const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
+            const limitGB = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
             message += `${index + 1}. ${status} ${user.username}\n`;
-            message += `   📊 ${(user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2)} GB / ${(user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0)} GB\n`;
+            message += `   📊 ${usedGB} GB / ${limitGB} GB\n`;
         });
         yield ctx.editMessageText(message, { parse_mode: "Markdown" });
     }
     catch (e) {
-        yield ctx.editMessageText(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Bilinmeyen hata'}`);
+        console.error('Admin: Kullanıcı listesi hatası:', e.message);
+        yield ctx.editMessageText(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Kullanıcı listesi alınamadı'}`);
     }
 }));
 // Admin Panel - Kullanıcı Arama
@@ -526,15 +531,14 @@ exports.bot.callbackQuery("admin_broadcast", (ctx) => __awaiter(void 0, void 0, 
 exports.bot.callbackQuery("admin_stats", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield safeAnswerCallback(ctx);
     try {
-        const response = yield axios_1.default.get(`${API_BASE_URL}/api/users`, {
-            headers: { Authorization: `Bearer ${API_TOKEN}` }
-        });
-        const users = response.data.data || [];
+        console.log('Admin: İstatistikler istendi');
+        const users = yield (0, api_1.getAllUsers)(1, 1000); // Tüm kullanıcılar
+        console.log(`Admin: ${users.length} kullanıcı için istatistik hesaplanıyor`);
         const total = users.length;
         const active = users.filter((u) => u.status === 'ACTIVE').length;
         const limited = users.filter((u) => u.status === 'LIMITED').length;
         const expired = users.filter((u) => u.status === 'EXPIRED').length;
-        const totalTraffic = users.reduce((sum, u) => sum + (u.usedTrafficBytes || 0), 0);
+        const totalTraffic = users.reduce((sum, u) => sum + (parseInt(u.usedTrafficBytes) || 0), 0);
         const avgTraffic = total > 0 ? totalTraffic / total : 0;
         const message = `📊 *Sistem İstatistikleri*\n\n` +
             `👥 Toplam Kullanıcı: ${total}\n` +
@@ -546,7 +550,8 @@ exports.bot.callbackQuery("admin_stats", (ctx) => __awaiter(void 0, void 0, void
         yield ctx.editMessageText(message, { parse_mode: "Markdown" });
     }
     catch (e) {
-        yield ctx.editMessageText(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Bilinmeyen hata'}`);
+        console.error('Admin: İstatistik hatası:', e.message);
+        yield ctx.editMessageText(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'İstatistikler alınamadı'}`);
     }
 }));
 // Admin Panel - Kullanıcı İşlemleri

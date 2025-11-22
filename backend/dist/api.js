@@ -25,6 +25,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUserByTelegramId = getUserByTelegramId;
 exports.getUserByUsername = getUserByUsername;
+exports.getAllUsers = getAllUsers;
 exports.getInternalSquads = getInternalSquads;
 exports.getUserHwidDevices = getUserHwidDevices;
 exports.deleteUserHwidDevice = deleteUserHwidDevice;
@@ -77,6 +78,34 @@ function getUserByUsername(username) {
             }
             console.error(`Failed to get user ${username}:`, ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
             throw new Error(((_c = (_b = error.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.message) || "Kullanıcı bilgisi alınamadı.");
+        }
+    });
+}
+function getAllUsers() {
+    return __awaiter(this, arguments, void 0, function* (page = 1, take = 100) {
+        var _a, _b, _c;
+        try {
+            const response = yield apiClient.get('/api/users', {
+                params: { page, take }
+            });
+            const data = response.data;
+            console.log('getAllUsers response:', JSON.stringify(data).substring(0, 200));
+            // RemnaWave API response format: { response: [...] } veya { data: [...] }
+            if (data.response && Array.isArray(data.response)) {
+                return data.response;
+            }
+            else if (data.data && Array.isArray(data.data)) {
+                return data.data;
+            }
+            else if (Array.isArray(data)) {
+                return data;
+            }
+            console.error('Unexpected API response format:', data);
+            return [];
+        }
+        catch (error) {
+            console.error('Failed to get users:', ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
+            throw new Error(((_c = (_b = error.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.message) || "Kullanıcı listesi alınamadı.");
         }
     });
 }

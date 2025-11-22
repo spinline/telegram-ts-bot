@@ -4,7 +4,7 @@ import axios from "axios";
 const YAML = require("yamljs");
 import path from "path";
 import fs from "fs";
-import { createUser, getUserByTelegramId, getInternalSquads, getUserByUsername, getUserHwidDevices, deleteUserHwidDevice } from "./api";
+import { createUser, getUserByTelegramId, getInternalSquads, getUserByUsername, getUserHwidDevices, deleteUserHwidDevice, getAllUsers } from "./api";
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
@@ -235,12 +235,12 @@ bot.on("message:text", async (ctx, next) => {
       await ctx.reply("📤 Toplu bildirim gönderiliyor...");
 
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/users`, {
-          headers: { Authorization: `Bearer ${API_TOKEN}` }
-        });
+        console.log('Admin: Toplu bildirim başlatılıyor');
+        const users = await getAllUsers(1, 1000); // Tüm kullanıcılar
+        console.log(`Admin: ${users.length} kullanıcı bulundu`);
 
-        const users = response.data.data || [];
         const usersWithTelegram = users.filter((u: any) => u.telegramId);
+        console.log(`Admin: ${usersWithTelegram.length} kullanıcının Telegram ID'si var`);
 
         let sent = 0;
         let failed = 0;
@@ -251,6 +251,7 @@ bot.on("message:text", async (ctx, next) => {
             sent++;
             await new Promise(resolve => setTimeout(resolve, 100)); // Rate limit
           } catch (e) {
+            console.warn(`Broadcast failed for user ${user.username}:`, e);
             failed++;
           }
         }
@@ -514,25 +515,31 @@ bot.callbackQuery("admin_users", async (ctx) => {
   await safeAnswerCallback(ctx);
 
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/users`, {
-      headers: { Authorization: `Bearer ${API_TOKEN}` },
-      params: { page: 1, take: 10 }
-    });
+    console.log('Admin: Kullanıcı listesi istendi');
+    const users = await getAllUsers(1, 10);
+    console.log(`Admin: ${users.length} kullanıcı bulundu`);
 
-    const users = response.data.data || [];
+    if (!users || users.length === 0) {
+      await ctx.editMessageText("ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
+      return;
+    }
+
     let message = "👥 *Kullanıcı Listesi* (İlk 10)\n\n";
 
     users.forEach((user: any, index: number) => {
       const status = user.status === 'ACTIVE' ? '🟢' :
                      user.status === 'LIMITED' ? '🟡' :
                      user.status === 'EXPIRED' ? '🔴' : '⚫';
+      const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
+      const limitGB = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
       message += `${index + 1}. ${status} ${user.username}\n`;
-      message += `   📊 ${(user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2)} GB / ${(user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0)} GB\n`;
+      message += `   📊 ${usedGB} GB / ${limitGB} GB\n`;
     });
 
     await ctx.editMessageText(message, { parse_mode: "Markdown" });
   } catch (e: any) {
-    await ctx.editMessageText(`❌ Hata: ${e?.message || 'Bilinmeyen hata'}`);
+    console.error('Admin: Kullanıcı listesi hatası:', e.message);
+    await ctx.editMessageText(`❌ Hata: ${e?.message || 'Kullanıcı listesi alınamadı'}`);
   }
 });
 
@@ -571,17 +578,16 @@ bot.callbackQuery("admin_stats", async (ctx) => {
   await safeAnswerCallback(ctx);
 
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/users`, {
-      headers: { Authorization: `Bearer ${API_TOKEN}` }
-    });
+    console.log('Admin: İstatistikler istendi');
+    const users = await getAllUsers(1, 1000); // Tüm kullanıcılar
+    console.log(`Admin: ${users.length} kullanıcı için istatistik hesaplanıyor`);
 
-    const users = response.data.data || [];
     const total = users.length;
     const active = users.filter((u: any) => u.status === 'ACTIVE').length;
     const limited = users.filter((u: any) => u.status === 'LIMITED').length;
     const expired = users.filter((u: any) => u.status === 'EXPIRED').length;
 
-    const totalTraffic = users.reduce((sum: number, u: any) => sum + (u.usedTrafficBytes || 0), 0);
+    const totalTraffic = users.reduce((sum: number, u: any) => sum + (parseInt(u.usedTrafficBytes) || 0), 0);
     const avgTraffic = total > 0 ? totalTraffic / total : 0;
 
     const message = `📊 *Sistem İstatistikleri*\n\n` +
@@ -594,7 +600,8 @@ bot.callbackQuery("admin_stats", async (ctx) => {
 
     await ctx.editMessageText(message, { parse_mode: "Markdown" });
   } catch (e: any) {
-    await ctx.editMessageText(`❌ Hata: ${e?.message || 'Bilinmeyen hata'}`);
+    console.error('Admin: İstatistik hatası:', e.message);
+    await ctx.editMessageText(`❌ Hata: ${e?.message || 'İstatistikler alınamadı'}`);
   }
 });
 

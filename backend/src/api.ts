@@ -47,6 +47,31 @@ export async function getUserByUsername(username: string) {
   }
 }
 
+export async function getAllUsers(page: number = 1, take: number = 100) {
+  try {
+    const response = await apiClient.get('/api/users', {
+      params: { page, take }
+    });
+    const data: any = response.data;
+    console.log('getAllUsers response:', JSON.stringify(data).substring(0, 200));
+
+    // RemnaWave API response format: { response: [...] } veya { data: [...] }
+    if (data.response && Array.isArray(data.response)) {
+      return data.response;
+    } else if (data.data && Array.isArray(data.data)) {
+      return data.data;
+    } else if (Array.isArray(data)) {
+      return data;
+    }
+
+    console.error('Unexpected API response format:', data);
+    return [];
+  } catch (error: any) {
+    console.error('Failed to get users:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Kullanıcı listesi alınamadı.");
+  }
+}
+
 export async function getInternalSquads(): Promise<any[]> {
   try {
     const response = await apiClient.get("/api/internal-squads");
