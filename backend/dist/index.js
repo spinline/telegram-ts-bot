@@ -159,27 +159,21 @@ exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, 
     // Admin session varsa işle
     try {
         if (session.action === 'search') {
-            // 🎯 NEW: Use userService for search
             const username = text.trim();
             try {
-                const user = yield user_service_1.userService.getUserByUsername(username);
-                if (!user) {
-                    yield ctx.reply(`❌ Kullanıcı bulunamadı: ${username}`);
-                    session_middleware_1.sessionManager.delete(userId);
-                    return;
-                }
-                // 🎯 NEW: Use userService.formatUserDetails
-                const message = user_service_1.userService.formatUserDetails(user);
-                yield ctx.reply(message, { parse_mode: "Markdown" });
+                const message = yield user_service_1.userService.getUserDetailsMessage(username);
+                // Kullanıcı detayına gitmek için buton ekle
+                const keyboard = new grammy_1.InlineKeyboard()
+                    .text("📋 Detayları Görüntüle", `user_detail_${username}`);
+                yield ctx.reply(message, { parse_mode: "Markdown", reply_markup: keyboard });
                 session_middleware_1.sessionManager.delete(userId);
             }
             catch (e) {
-                yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Bilinmeyen hata'}`);
+                yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Kullanıcı bulunamadı'}`);
                 session_middleware_1.sessionManager.delete(userId);
             }
         }
         else if (session.action === 'broadcast') {
-            // 🎯 NEW: Use notificationService for broadcast
             const message = text;
             yield ctx.reply("📤 Toplu bildirim gönderiliyor...");
             try {
@@ -193,6 +187,54 @@ exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, 
             catch (e) {
                 logger_1.logger.error('Broadcast error:', e.message);
                 yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Bilinmeyen hata'}`);
+                session_middleware_1.sessionManager.delete(userId);
+            }
+        }
+        else if (session.action === 'extend_days') {
+            const days = parseInt(text);
+            const username = session.targetUser;
+            if (isNaN(days) || days <= 0) {
+                yield ctx.reply("❌ Lütfen geçerli bir gün sayısı girin (Örn: 30).");
+                return;
+            }
+            if (!username) {
+                yield ctx.reply("❌ Hedef kullanıcı bulunamadı.");
+                session_middleware_1.sessionManager.delete(userId);
+                return;
+            }
+            try {
+                yield ctx.reply("⏳ İşlem yapılıyor...");
+                const updatedUser = yield user_service_1.userService.extendTime(username, days);
+                const newDate = new Date(updatedUser.expireAt).toLocaleDateString('tr-TR');
+                yield ctx.reply(`✅ *${username}* kullanıcısının süresi *${days} gün* uzatıldı.\n📅 Yeni Bitiş: ${newDate}`, { parse_mode: "Markdown" });
+                session_middleware_1.sessionManager.delete(userId);
+            }
+            catch (e) {
+                yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Süre uzatılamadı'}`);
+                session_middleware_1.sessionManager.delete(userId);
+            }
+        }
+        else if (session.action === 'add_traffic') {
+            const gb = parseFloat(text);
+            const username = session.targetUser;
+            if (isNaN(gb) || gb <= 0) {
+                yield ctx.reply("❌ Lütfen geçerli bir GB miktarı girin (Örn: 10).");
+                return;
+            }
+            if (!username) {
+                yield ctx.reply("❌ Hedef kullanıcı bulunamadı.");
+                session_middleware_1.sessionManager.delete(userId);
+                return;
+            }
+            try {
+                yield ctx.reply("⏳ İşlem yapılıyor...");
+                const updatedUser = yield user_service_1.userService.addTraffic(username, gb);
+                const limitGB = (updatedUser.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
+                yield ctx.reply(`✅ *${username}* kullanıcısına *${gb} GB* trafik eklendi.\n📊 Yeni Limit: ${limitGB} GB`, { parse_mode: "Markdown" });
+                session_middleware_1.sessionManager.delete(userId);
+            }
+            catch (e) {
+                yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Trafik eklenemedi'}`);
                 session_middleware_1.sessionManager.delete(userId);
             }
         }
@@ -385,46 +427,54 @@ exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function
     }
 }));
 // Admin Panel - Kullanıcı Listesi
-exports.bot.callbackQuery("admin_users", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+exports.bot.callbackQuery(/^admin_users(_page_(\d+))?(_sort_(\w+))?$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, error_middleware_1.safeAnswerCallback)(ctx);
+    const page = ctx.match && ctx.match[2] ? parseInt(ctx.match[2]) : 1;
+    const sort = (ctx.match && ctx.match[4] ? ctx.match[4] : undefined);
+    const limit = 10;
     try {
-        // 🎯 NEW: Use userService instead of direct API call
-        const users = yield user_service_1.userService.getUsers(1, 10);
+        const { users, total } = yield user_service_1.userService.getUsers(page, limit, sort);
         if (!users || users.length === 0) {
             yield ctx.editMessageText("ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
             return;
         }
-        let message = "👥 *Kullanıcı Listesi* (İlk 10)\n\n";
-        message += "Kullanıcı detaylarını görmek için kullanıcı adına tıklayın:\n\n";
+        const totalPages = Math.ceil(total / limit);
+        const sortLabel = sort === 'traffic' ? ' (Trafik)' : sort === 'date' ? ' (Tarih)' : sort === 'status' ? ' (Durum)' : '';
+        const message = `👥 *Kullanıcı Listesi*${sortLabel} (Sayfa ${page}/${totalPages})`;
         const keyboard = new grammy_1.InlineKeyboard();
-        users.forEach((user, index) => {
+        // Filtreleme Butonları
+        keyboard
+            .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `admin_users_page_1_sort_traffic`)
+            .text(sort === 'date' ? "✅ Tarih" : "Tarih", `admin_users_page_1_sort_date`)
+            .text(sort === 'status' ? "✅ Durum" : "Durum", `admin_users_page_1_sort_status`)
+            .row();
+        users.forEach((user) => {
             const status = user.status === 'ACTIVE' ? '🟢' :
                 user.status === 'LIMITED' ? '🟡' :
                     user.status === 'EXPIRED' ? '🔴' : '⚫';
-            const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
+            const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(1);
             const limitGB = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
-            message += `${index + 1}. ${status} ${user.username} (${usedGB}/${limitGB} GB)\n`;
-            // Her kullanıcı için tıklanabilir buton
-            if (index % 2 === 0) {
-                keyboard.text(`👤 ${user.username}`, `user_detail_${user.username}`);
-            }
-            else {
-                keyboard.text(`👤 ${user.username}`, `user_detail_${user.username}`).row();
-            }
+            keyboard.text(`${status} ${user.username} | ${usedGB}/${limitGB} GB`, `user_detail_${user.username}`).row();
         });
-        // Son satır tek ise row ekle
-        if (users.length % 2 === 1) {
-            keyboard.row();
+        // Pagination buttons
+        const paginationRow = [];
+        const sortParam = sort ? `_sort_${sort}` : '';
+        if (page > 1) {
+            paginationRow.push({ text: "⬅️ Önceki", callback_data: `admin_users_page_${page - 1}${sortParam}` });
         }
-        // Geri butonu - Kullanıcı İşlemleri menüsüne dön
-        keyboard.text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
+        if (page < totalPages) {
+            paginationRow.push({ text: "Sonraki ➡️", callback_data: `admin_users_page_${page + 1}${sortParam}` });
+        }
+        if (paginationRow.length > 0) {
+            keyboard.row(...paginationRow);
+        }
+        keyboard.row().text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
         yield ctx.editMessageText(message, {
             reply_markup: keyboard,
             parse_mode: "Markdown"
         });
     }
     catch (e) {
-        // 🎯 NEW: Use logger instead of console
         logger_1.logger.error('Admin panel error (users):', e.message);
         yield ctx.editMessageText(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Kullanıcı listesi alınamadı'}`);
     }
@@ -452,15 +502,11 @@ exports.bot.callbackQuery(/^user_detail_(.+)$/, (ctx) => __awaiter(void 0, void 
         return;
     const username = match[1];
     try {
-        // 🎯 NEW: Use userService
-        const user = yield user_service_1.userService.getUserByUsername(username);
-        if (!user) {
-            yield ctx.editMessageText(`❌ Kullanıcı bulunamadı: ${username}`);
-            return;
-        }
-        // 🎯 NEW: Use userService.formatUserDetails for formatting
-        const message = user_service_1.userService.formatUserDetails(user);
+        const message = yield user_service_1.userService.getUserDetailsMessage(username);
         const keyboard = new grammy_1.InlineKeyboard()
+            .text("⏰ Süre Uzat", `admin_extend_${username}`)
+            .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
+            .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
             .text("🔙 Kullanıcı Listesi", "admin_users");
         yield ctx.editMessageText(message, {
             parse_mode: "Markdown",
@@ -469,6 +515,67 @@ exports.bot.callbackQuery(/^user_detail_(.+)$/, (ctx) => __awaiter(void 0, void 
     }
     catch (e) {
         yield ctx.editMessageText(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Kullanıcı bilgisi alınamadı'}`);
+    }
+}));
+// Admin Panel - Süre Uzat (Seçim)
+exports.bot.callbackQuery(/^admin_extend_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
+    const username = ctx.match ? ctx.match[1] : null;
+    if (!username)
+        return;
+    const adminId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
+    if (adminId) {
+        session_middleware_1.sessionManager.set(adminId, { action: 'extend_days', targetUser: username });
+    }
+    const keyboard = new grammy_1.InlineKeyboard()
+        .text("🔙 İptal", `user_detail_${username}`);
+    yield ctx.editMessageText(`⏰ *Süre Uzatma: ${username}*\n\nKaç gün eklemek istiyorsunuz? (Örn: 30)\n\n_İptal için aşağıdaki butona tıklayın_`, { parse_mode: "Markdown", reply_markup: keyboard });
+}));
+// Admin Panel - Trafik Ekle (Seçim)
+exports.bot.callbackQuery(/^admin_add_traffic_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
+    const username = ctx.match ? ctx.match[1] : null;
+    if (!username)
+        return;
+    const adminId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
+    if (adminId) {
+        session_middleware_1.sessionManager.set(adminId, { action: 'add_traffic', targetUser: username });
+    }
+    const keyboard = new grammy_1.InlineKeyboard()
+        .text("🔙 İptal", `user_detail_${username}`);
+    yield ctx.editMessageText(`📊 *Trafik Ekleme: ${username}*\n\nKaç GB eklemek istiyorsunuz? (Örn: 10)\n\n_İptal için aşağıdaki butona tıklayın_`, { parse_mode: "Markdown", reply_markup: keyboard });
+}));
+// Admin Panel - Cihaz Sıfırla (İşlem)
+exports.bot.callbackQuery(/^admin_reset_devices_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    const username = ctx.match ? ctx.match[1] : null;
+    if (!username)
+        return;
+    try {
+        yield (0, error_middleware_1.safeAnswerCallback)(ctx, "Cihazlar sıfırlanıyor...");
+        yield user_service_1.userService.resetDevices(username);
+        yield ctx.reply(`✅ *${username}* kullanıcısının tüm cihazları sıfırlandı!`, { parse_mode: "Markdown" });
+        // Kullanıcı detayına geri dön
+        try {
+            const message = yield user_service_1.userService.getUserDetailsMessage(username);
+            const keyboard = new grammy_1.InlineKeyboard()
+                .text("⏰ Süre Uzat", `admin_extend_${username}`)
+                .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
+                .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
+                .text("🔙 Kullanıcı Listesi", "admin_users");
+            yield ctx.editMessageText(message, {
+                parse_mode: "Markdown",
+                reply_markup: keyboard
+            });
+        }
+        catch (e) {
+            // Detay sayfasına dönemezsek sorun değil
+        }
+    }
+    catch (e) {
+        logger_1.logger.error(`Reset devices error for ${username}:`, e.message);
+        yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Cihazlar sıfırlanamadı'}`);
     }
 }));
 // Admin Panel - Toplu Bildirim

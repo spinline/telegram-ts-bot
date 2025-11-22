@@ -61,15 +61,21 @@ export async function adminUserOpsHandler(ctx: Context) {
 export async function adminUsersHandler(ctx: Context) {
   await safeAnswerCallback(ctx);
 
+  // Callback data'dan sayfa numarasını al (admin_users_page_2 gibi)
+  const match = ctx.callbackQuery?.data?.match(/admin_users(_page_(\d+))?/);
+  const page = match && match[2] ? parseInt(match[2]) : 1;
+  const limit = 10;
+
   try {
-    const users = await userService.getUsers(1, 10);
+    const { users, total } = await userService.getUsers(page, limit);
 
     if (!users || users.length === 0) {
       await ctx.editMessageText("ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
       return;
     }
 
-    const message = "👥 *Kullanıcı Listesi*";
+    const totalPages = Math.ceil(total / limit);
+    const message = `👥 *Kullanıcı Listesi* (Sayfa ${page}/${totalPages})`;
 
     const keyboard = new InlineKeyboard();
 
@@ -88,7 +94,20 @@ export async function adminUsersHandler(ctx: Context) {
       ).row();
     });
 
-    keyboard.text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
+    // Pagination buttons
+    const paginationRow = [];
+    if (page > 1) {
+      paginationRow.push({ text: "⬅️ Önceki", callback_data: `admin_users_page_${page - 1}` });
+    }
+    if (page < totalPages) {
+      paginationRow.push({ text: "Sonraki ➡️", callback_data: `admin_users_page_${page + 1}` });
+    }
+    
+    if (paginationRow.length > 0) {
+      keyboard.row(...paginationRow);
+    }
+
+    keyboard.row().text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
 
     await ctx.editMessageText(message, {
       reply_markup: keyboard,

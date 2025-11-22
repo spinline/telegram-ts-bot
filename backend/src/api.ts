@@ -47,33 +47,41 @@ export async function getUserByUsername(username: string) {
   }
 }
 
-export async function getAllUsers(page: number = 1, take: number = 100) {
+export async function getAllUsers(page: number = 1, take: number = 100): Promise<{ users: any[], total: number }> {
   try {
     const response = await apiClient.get('/api/users', {
       params: { page, take }
     });
     const data: any = response.data;
 
+    let users: any[] = [];
+    let total = 0;
+
     // RemnaWave API response formats:
     // Format 1: { response: { users: [...], total: X } }
     if (data.response && data.response.users && Array.isArray(data.response.users)) {
-      return data.response.users;
+      users = data.response.users;
+      total = data.response.total || users.length;
     }
     // Format 2: { response: [...] }
     else if (data.response && Array.isArray(data.response)) {
-      return data.response;
+      users = data.response;
+      total = users.length;
     }
     // Format 3: { data: [...] }
     else if (data.data && Array.isArray(data.data)) {
-      return data.data;
+      users = data.data;
+      total = users.length;
     }
     // Format 4: Direct array
     else if (Array.isArray(data)) {
-      return data;
+      users = data;
+      total = users.length;
+    } else {
+      console.error('⚠️ Unexpected API response format:', JSON.stringify(data).substring(0, 100));
     }
 
-    console.error('⚠️ Unexpected API response format:', JSON.stringify(data).substring(0, 100));
-    return [];
+    return { users, total };
   } catch (error: any) {
     console.error('❌ Failed to get users:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || "Kullanıcı listesi alınamadı.");
@@ -135,5 +143,39 @@ export async function createUser(userData: any) {
     const message = data?.message || error.message || "Kullanıcı oluşturulamadı.";
     const code = data?.errorCode || status;
     throw new Error(code ? `${message} [${code}]` : message);
+  }
+}
+
+export async function updateUser(uuid: string, userData: any) {
+  try {
+    const response = await apiClient.patch(`/api/users/${uuid}`, userData);
+    const data: any = response.data;
+    return data.response;
+  } catch (error: any) {
+    console.error(`Failed to update user ${uuid}:`, error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Kullanıcı güncellenemedi.");
+  }
+}
+
+export async function resetAllUserDevices(userUuid: string) {
+  try {
+    // 1. Mevcut cihazları çek
+    const { devices } = await getUserHwidDevices(userUuid);
+    
+    if (!devices || devices.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    // 2. Hepsini tek tek sil (API toplu silmeyi desteklemiyorsa)
+    let deletedCount = 0;
+    for (const device of devices) {
+      await deleteUserHwidDevice(userUuid, device.hwid);
+      deletedCount++;
+    }
+
+    return { success: true, count: deletedCount };
+  } catch (error: any) {
+    console.error(`Failed to reset devices for ${userUuid}:`, error.message);
+    throw new Error("Cihazlar sıfırlanırken hata oluştu.");
   }
 }

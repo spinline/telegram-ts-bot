@@ -30,6 +30,8 @@ exports.getInternalSquads = getInternalSquads;
 exports.getUserHwidDevices = getUserHwidDevices;
 exports.deleteUserHwidDevice = deleteUserHwidDevice;
 exports.createUser = createUser;
+exports.updateUser = updateUser;
+exports.resetAllUserDevices = resetAllUserDevices;
 const axios_1 = __importDefault(require("axios"));
 require("dotenv/config");
 const API_BASE_URL = process.env.API_BASE_URL;
@@ -89,25 +91,33 @@ function getAllUsers() {
                 params: { page, take }
             });
             const data = response.data;
+            let users = [];
+            let total = 0;
             // RemnaWave API response formats:
             // Format 1: { response: { users: [...], total: X } }
             if (data.response && data.response.users && Array.isArray(data.response.users)) {
-                return data.response.users;
+                users = data.response.users;
+                total = data.response.total || users.length;
             }
             // Format 2: { response: [...] }
             else if (data.response && Array.isArray(data.response)) {
-                return data.response;
+                users = data.response;
+                total = users.length;
             }
             // Format 3: { data: [...] }
             else if (data.data && Array.isArray(data.data)) {
-                return data.data;
+                users = data.data;
+                total = users.length;
             }
             // Format 4: Direct array
             else if (Array.isArray(data)) {
-                return data;
+                users = data;
+                total = users.length;
             }
-            console.error('⚠️ Unexpected API response format:', JSON.stringify(data).substring(0, 100));
-            return [];
+            else {
+                console.error('⚠️ Unexpected API response format:', JSON.stringify(data).substring(0, 100));
+            }
+            return { users, total };
         }
         catch (error) {
             console.error('❌ Failed to get users:', ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
@@ -181,6 +191,42 @@ function createUser(userData) {
             const message = (data === null || data === void 0 ? void 0 : data.message) || error.message || "Kullanıcı oluşturulamadı.";
             const code = (data === null || data === void 0 ? void 0 : data.errorCode) || status;
             throw new Error(code ? `${message} [${code}]` : message);
+        }
+    });
+}
+function updateUser(uuid, userData) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c;
+        try {
+            const response = yield apiClient.patch(`/api/users/${uuid}`, userData);
+            const data = response.data;
+            return data.response;
+        }
+        catch (error) {
+            console.error(`Failed to update user ${uuid}:`, ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
+            throw new Error(((_c = (_b = error.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.message) || "Kullanıcı güncellenemedi.");
+        }
+    });
+}
+function resetAllUserDevices(userUuid) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            // 1. Mevcut cihazları çek
+            const { devices } = yield getUserHwidDevices(userUuid);
+            if (!devices || devices.length === 0) {
+                return { success: true, count: 0 };
+            }
+            // 2. Hepsini tek tek sil (API toplu silmeyi desteklemiyorsa)
+            let deletedCount = 0;
+            for (const device of devices) {
+                yield deleteUserHwidDevice(userUuid, device.hwid);
+                deletedCount++;
+            }
+            return { success: true, count: deletedCount };
+        }
+        catch (error) {
+            console.error(`Failed to reset devices for ${userUuid}:`, error.message);
+            throw new Error("Cihazlar sıfırlanırken hata oluştu.");
         }
     });
 }
