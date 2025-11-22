@@ -217,6 +217,17 @@ export async function handleTicketMessage(ctx: Context, next: () => Promise<void
     const ticket = await ticketService.createTicket(userId, title, text);
     
     await ctx.reply(`✅ **Ticket #${ticket.id} Created!**\n\nWe will reply as soon as possible.`);
+
+    // Notify Admins
+    const adminIds = (process.env.ADMIN_TELEGRAM_IDS || "").split(",").map(id => id.trim()).filter(id => id);
+    for (const adminId of adminIds) {
+      try {
+        await ctx.api.sendMessage(adminId, `🎫 **Yeni Destek Talebi**\n\n**Ticket #${ticket.id}**\n👤 Kullanıcı: ${ctx.from?.username || userId}\n📝 Başlık: ${title}\n💬 Mesaj: ${text}`, { parse_mode: "Markdown" });
+      } catch (e) {
+        console.error(`Failed to notify admin ${adminId}:`, e);
+      }
+    }
+
     sessionManager.delete(userId);
     return;
   }
@@ -231,6 +242,17 @@ export async function handleTicketMessage(ctx: Context, next: () => Promise<void
     await ticketService.addMessage(ticketId, userId, text, true);
     
     await ctx.reply("✅ Reply sent!");
+
+    // Notify Admins about user reply
+    const adminIds = (process.env.ADMIN_TELEGRAM_IDS || "").split(",").map(id => id.trim()).filter(id => id);
+    for (const adminId of adminIds) {
+      try {
+        await ctx.api.sendMessage(adminId, `💬 **Yeni Yanıt (Kullanıcı)**\n\n**Ticket #${ticketId}**\n👤 Kullanıcı: ${ctx.from?.username || userId}\n💬 Mesaj: ${text}`, { parse_mode: "Markdown" });
+      } catch (e) {
+        console.error(`Failed to notify admin ${adminId} about reply:`, e);
+      }
+    }
+
     sessionManager.delete(userId);
     return;
   }
