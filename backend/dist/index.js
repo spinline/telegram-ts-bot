@@ -163,6 +163,14 @@ function safeAnswerCallback(ctx, text) {
         }
     });
 }
+// Middleware: Tüm gelen mesajları logla (DEBUG)
+exports.bot.use((ctx, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    if ((_a = ctx.message) === null || _a === void 0 ? void 0 : _a.text) {
+        console.log(`📥 Mesaj alındı: "${ctx.message.text}" (user: ${(_b = ctx.from) === null || _b === void 0 ? void 0 : _b.id})`);
+    }
+    yield next();
+}));
 // OpenAPI YAML dosyasını yükle
 let openApiDocument;
 const openApiFilePath = "./openapi.yaml";
@@ -211,6 +219,7 @@ const startKeyboard = new grammy_1.InlineKeyboard()
     .webApp("📱 Mini App", miniAppUrl); // Doğrudan webApp butonu kullan
 // /start komutuna yanıt ver
 exports.bot.command("start", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('✅ /start komutu alındı - çalışıyor!');
     const welcomeMessage = `
 Hoş geldiniz! Bu bot ile VPN hizmetinize erişebilirsiniz.
 

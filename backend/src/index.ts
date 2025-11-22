@@ -141,6 +141,14 @@ async function safeAnswerCallback(ctx: any, text?: string) {
   }
 }
 
+// Middleware: Tüm gelen mesajları logla (DEBUG)
+bot.use(async (ctx, next) => {
+  if (ctx.message?.text) {
+    console.log(`📥 Mesaj alındı: "${ctx.message.text}" (user: ${ctx.from?.id})`);
+  }
+  await next();
+});
+
 // OpenAPI YAML dosyasını yükle
 let openApiDocument: any;
 const openApiFilePath = "./openapi.yaml";
@@ -190,6 +198,7 @@ const startKeyboard = new InlineKeyboard()
 
 // /start komutuna yanıt ver
 bot.command("start", async (ctx) => {
+  console.log('✅ /start komutu alındı - çalışıyor!');
   const welcomeMessage = `
 Hoş geldiniz! Bu bot ile VPN hizmetinize erişebilirsiniz.
 
