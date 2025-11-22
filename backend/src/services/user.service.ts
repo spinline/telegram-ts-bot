@@ -134,7 +134,10 @@ class UserService {
   /**
    * Add traffic to user
    */
-  async addTraffic(user: any, amountGB: number) {
+  async addTraffic(username: string, amountGB: number) {
+    const user = await this.getUserByUsername(username);
+    if (!user) throw new Error("Kullanıcı bulunamadı");
+
     const currentLimit = parseInt(user.trafficLimitBytes);
     const additionalBytes = amountGB * 1024 * 1024 * 1024;
     const newLimit = currentLimit + additionalBytes;
@@ -148,7 +151,10 @@ class UserService {
   /**
    * Extend user expiration
    */
-  async extendTime(user: any, days: number) {
+  async extendTime(username: string, days: number) {
+    const user = await this.getUserByUsername(username);
+    if (!user) throw new Error("Kullanıcı bulunamadı");
+
     const currentExpire = new Date(user.expireAt).getTime() > Date.now() 
       ? new Date(user.expireAt) 
       : new Date(); // Süresi bitmişse şimdiden başlat
@@ -164,7 +170,10 @@ class UserService {
   /**
    * Reset user devices
    */
-  async resetDevices(user: any) {
+  async resetDevices(username: string) {
+    const user = await this.getUserByUsername(username);
+    if (!user) throw new Error("Kullanıcı bulunamadı");
+
     return await resetAllUserDevices(user.uuid);
   }
 }
