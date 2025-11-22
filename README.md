@@ -281,43 +281,27 @@ WEBHOOK_SECRET_HEADER=your_64_char_secret_here
 
 ```
 telegram-ts-bot/
-├── backend/
+├── backend/          # Backend source code
 │   ├── src/
-│   │   ├── config/           # Environment configuration
-│   │   ├── middlewares/      # Auth, error, session middlewares
-│   │   ├── services/         # Business logic
-│   │   │   ├── telegram.service.ts
-│   │   │   ├── user.service.ts
-│   │   │   └── notification.service.ts
-│   │   ├── handlers/         # Command & callback handlers
-│   │   │   ├── commands/     # /start, /help, /app
-│   │   │   ├── callbacks/    # admin.callbacks.ts
-│   │   │   └── messages/     # admin.messages.ts
-│   │   ├── utils/            # Helpers & validators
-│   │   ├── api.ts            # RemnaWave API client
-│   │   ├── types.d.ts        # TypeScript definitions
-│   │   └── index.ts          # Entry point
-│   ├── tests/                # Jest test suites
-│   │   ├── services/         # Service tests
-│   │   ├── middlewares/      # Middleware tests
-│   │   └── utils/            # Utility tests
-│   ├── jest.config.js        # Jest configuration
-│   ├── tsconfig.json         # TypeScript config
-│   ├── package.json
-│   ├── ARCHITECTURE.md       # Architecture documentation
-│   └── MIGRATION_PLAN.md     # Migration guide
-│
-├── frontend/
-│   ├── src/
-│   │   ├── App.tsx           # Main app component
-│   │   ├── AccountPage.tsx   # Account details
-│   │   ├── WelcomeScreen.tsx # Welcome screen
+│   │   ├── config/
+│   │   ├── middlewares/
+│   │   ├── services/
+│   │   ├── handlers/
 │   │   └── ...
-│   ├── public/
-│   ├── vite.config.ts
 │   └── package.json
 │
-├── README.md                 # This file
+├── frontend/         # Frontend source code
+│   ├── src/
+│   └── package.json
+│
+├── docs/             # Documentation
+│   ├── backend/      # Backend guides & architecture
+│   ├── frontend/     # Frontend docs
+│   ├── webhooks/     # Webhook integration guides
+│   └── troubleshooting/ # Fixes & debug guides
+│
+├── CHANGELOG.md      # Version history
+├── README.md         # This file
 └── .gitignore
 ```
 
@@ -325,14 +309,26 @@ telegram-ts-bot/
 
 ## 📚 Dokümantasyon
 
-### Geliştirici Dökümanları
+Detaylı dokümantasyon `docs/` klasörü altında toplanmıştır:
 
-- [ARCHITECTURE.md](backend/ARCHITECTURE.md) - Detaylı mimari açıklama
-- [MIGRATION_PLAN.md](backend/MIGRATION_PLAN.md) - Migration guide (3 phases)
-- [DEPLOYMENT.md](backend/DEPLOYMENT.md) - Deployment kılavuzu
+### 🔧 Backend
+- [Mimari ve Tasarım](docs/backend/ARCHITECTURE.md)
+- [Kurulum Rehberi](docs/backend/SETUP.md)
+- [Deployment](docs/backend/DEPLOYMENT.md)
+- [Güvenlik](docs/backend/SECURITY.md)
+
+### 🎨 Frontend
+- [Frontend Mimarisi](docs/frontend/FRONTEND_ARCHITECTURE.md)
+- [Deployment Değişkenleri](docs/frontend/DEPLOYMENT_ENV_VARS.md)
+
+### 🔌 Entegrasyonlar
+- [Webhook Kurulumu](docs/webhooks/REMNAWAVE_WEBHOOK_SETUP.md)
+- [Webhook Test Rehberi](docs/webhooks/WEBHOOK_TEST.md)
+
+### 🆘 Sorun Giderme
+- [Sık Karşılaşılan Sorunlar](docs/troubleshooting/)
 
 ### API Dökümanları
-
 - OpenAPI Spec: `backend/openapi.yaml`
 - Swagger UI: `http://localhost:3000/docs` (development)
 
