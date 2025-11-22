@@ -662,8 +662,6 @@ bot.callbackQuery("admin_user_ops", async (ctx) => {
   const keyboard = new InlineKeyboard()
     .text("👥 Kullanıcı Listesi", "admin_users")
     .text("🔍 Kullanıcı Ara", "admin_search").row()
-    .text("✅ Kullanıcı Aktifleştir", "admin_activate")
-    .text("⛔ Kullanıcı Pasifleştir", "admin_deactivate").row()
     .text("⏰ Süre Uzat", "admin_extend")
     .text("📊 Trafik Ekle", "admin_add_traffic").row()
     .text("🔙 Geri", "admin_back");
