@@ -69,8 +69,7 @@ export async function adminUsersHandler(ctx: Context) {
       return;
     }
 
-    const message = "👥 *Kullanıcı Listesi*\n\n" +
-                    "Detaylarını görüntülemek istediğiniz kullanıcıyı seçin:";
+    const message = "👥 *Kullanıcı Listesi*";
 
     const keyboard = new InlineKeyboard();
 
