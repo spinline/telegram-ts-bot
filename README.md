@@ -124,8 +124,13 @@ Tam özellikli yönetim konsolu `/admin` komutu ile:
 - Gerçek zamanlı sistem metrikleri
 
 ### 👥 Kullanıcı Yönetimi
-- **Kullanıcı Listesi:** Tıklanabilir liste (10 kullanıcı)
+- **Kullanıcı Listesi:** Tıklanabilir liste (10 kullanıcı), sıralama ve filtreleme
 - **Kullanıcı Arama:** Username ile detaylı arama
+- **Kullanıcı İşlemleri:**
+  - 🚫 **Engelle/Aktif Et:** Kullanıcı erişimini durdurma veya açma
+  - 🗑️ **Sil:** Kullanıcıyı kalıcı olarak silme (Onay korumalı)
+  - ⏰ **Süre/Kota:** Süre uzatma ve trafik ekleme
+  - 🔄 **Cihaz:** Cihaz ID'lerini sıfırlama
 - **Kullanıcı Detayları:** UUID, durum, trafik, süre, Telegram ID
 
 ### 📢 İletişim

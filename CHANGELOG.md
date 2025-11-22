@@ -7,20 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **Docs:** Created a centralized `docs/` directory to organize documentation.
-- **Docs:** Added `CHANGELOG.md` to track project history.
+## [1.1.0] - 2025-11-23
 
-### Changed
-- **Admin UI:** Modernized the user list interface in the Admin Panel.
-  - Replaced text-heavy list with interactive buttons.
-  - Added status icons (🟢, 🟡, 🔴) and usage stats directly on buttons.
-  - Improved layout for better mobile experience.
-- **Build:** Switched from Nixpacks to Railpack for deployment.
-  - Removed `nixpacks.toml` and related migration files.
-  - Updated deployment documentation to reflect Railpack usage.
+### Added
+- **Admin Panel:** Added comprehensive User Management actions.
+  - **Block User:** Ability to disable users directly from the bot.
+  - **Unblock User:** Ability to re-enable blocked users.
+  - **Delete User:** Added user deletion with a confirmation dialog to prevent accidental data loss.
+- **API:** Implemented new endpoints for `enable`, `disable`, and `delete` user actions.
 
 ### Fixed
+- **Admin Panel:** Fixed a critical bug in User List sorting and filtering.
+  - Resolved an issue where callback data was malformed, causing buttons to fail.
+  - Implemented a robust separator-based format (e.g., `ls-p1-s-traffic`) for reliable parsing.
+- **Stability:** Restored missing `handleTryFree` function that caused build failures.
+
+### Changed
+- **Refactor:** Enhanced `UserService` and `Api` layers to support new management features.
+
+### Removed
 - **Cleanup:** Removed unused configuration files to reduce clutter.
 
 ## [1.0.0] - 2024-03-20
