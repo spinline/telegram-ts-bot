@@ -1,8 +1,6 @@
 import "dotenv/config";
 import { Bot, Context, InlineKeyboard } from "grammy";
-import axios from "axios";
 import * as yaml from "js-yaml";
-import path from "path";
 import fs from "fs";
 import { createUser, getUserByTelegramId, getInternalSquads, getUserByUsername, getUserHwidDevices, deleteUserHwidDevice, getAllUsers } from "./api";
 import express, { Request, Response, NextFunction } from 'express';
