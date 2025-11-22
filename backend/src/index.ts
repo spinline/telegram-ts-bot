@@ -171,7 +171,7 @@ bot.on("message:text", async (ctx, next) => {
             .text("⏰ Süre Uzat", `admin_extend_${user.username}`)
             .text("📊 Trafik Ekle", `admin_add_traffic_${user.username}`).row()
             .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${user.username}`).row()
-            .text("🔙 Kullanıcı Listesi", "admin_users");
+            .text("🔙 Kullanıcı Listesi", "users");
 
           await ctx.reply(message, { parse_mode: "Markdown", reply_markup: keyboard });
         } else {
@@ -183,7 +183,7 @@ bot.on("message:text", async (ctx, next) => {
             const status = user.status === 'ACTIVE' ? '🟢' :
                            user.status === 'LIMITED' ? '🟡' :
                            user.status === 'EXPIRED' ? '🔴' : '⚫';
-            keyboard.text(`${status} ${user.username}`, `user_detail_${user.username}`).row();
+            keyboard.text(`${status} ${user.username}`, `u_d_${user.username}`).row();
           });
 
           keyboard.text("🔙 İptal", "admin_user_ops");
@@ -482,7 +482,7 @@ bot.command("admin", async (ctx) => {
 });
 
 // Admin Panel - Kullanıcı Listesi
-bot.callbackQuery(/^admin_users(_page_(\d+))?(_sort_(\w+))?(_filter_(\w+))?$/, async (ctx) => {
+bot.callbackQuery(/^users(_p_(\d+))?(_s_(\w+))?(_f_(\w+))?$/, async (ctx) => {
   await safeAnswerCallback(ctx);
 
   const page = ctx.match && ctx.match[2] ? parseInt(ctx.match[2]) : 1;
@@ -505,21 +505,21 @@ bot.callbackQuery(/^admin_users(_page_(\d+))?(_sort_(\w+))?(_filter_(\w+))?$/, a
 
     const keyboard = new InlineKeyboard();
 
-    const sortParam = sort ? `_sort_${sort}` : '';
-    const filterParam = filter ? `_filter_${filter}` : '';
+    const sortParam = sort ? `_s_${sort}` : '';
+    const filterParam = filter ? `_f_${filter}` : '';
 
     // Filtreleme Butonları
     keyboard
-      .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `admin_users_page_1${sortParam}_filter_ALL`)
-      .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `admin_users_page_1${sortParam}_filter_ACTIVE`)
-      .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `admin_users_page_1${sortParam}_filter_EXPIRED`)
+      .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `users_p_1${sortParam}_f_ALL`)
+      .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `users_p_1${sortParam}_f_ACTIVE`)
+      .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `users_p_1${sortParam}_f_EXPIRED`)
       .row();
 
     // Sıralama Butonları
     keyboard
-      .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `admin_users_page_1_sort_traffic${filterParam}`)
-      .text(sort === 'date' ? "✅ Tarih" : "Tarih", `admin_users_page_1_sort_date${filterParam}`)
-      .text(sort === 'status' ? "✅ Durum" : "Durum", `admin_users_page_1_sort_status${filterParam}`)
+      .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `users_p_1_s_traffic${filterParam}`)
+      .text(sort === 'date' ? "✅ Tarih" : "Tarih", `users_p_1_s_date${filterParam}`)
+      .text(sort === 'status' ? "✅ Durum" : "Durum", `users_p_1_s_status${filterParam}`)
       .row();
 
     if (users.length === 0) {
@@ -534,7 +534,7 @@ bot.callbackQuery(/^admin_users(_page_(\d+))?(_sort_(\w+))?(_filter_(\w+))?$/, a
 
         keyboard.text(
           `${status} ${user.username} | ${usedGB}/${limitGB} GB`, 
-          `user_detail_${user.username}`
+          `u_d_${user.username}`
         ).row();
       });
     }
@@ -542,10 +542,10 @@ bot.callbackQuery(/^admin_users(_page_(\d+))?(_sort_(\w+))?(_filter_(\w+))?$/, a
     // Pagination buttons
     const paginationRow = [];
     if (page > 1) {
-      paginationRow.push({ text: "⬅️ Önceki", callback_data: `admin_users_page_${page - 1}${sortParam}${filterParam}` });
+      paginationRow.push({ text: "⬅️ Önceki", callback_data: `users_p_${page - 1}${sortParam}${filterParam}` });
     }
     if (page < totalPages) {
-      paginationRow.push({ text: "Sonraki ➡️", callback_data: `admin_users_page_${page + 1}${sortParam}${filterParam}` });
+      paginationRow.push({ text: "Sonraki ➡️", callback_data: `users_p_${page + 1}${sortParam}${filterParam}` });
     }
     
     if (paginationRow.length > 0) {
@@ -586,7 +586,7 @@ bot.callbackQuery("admin_search", async (ctx) => {
 });
 
 // Admin Panel - Kullanıcı Detayı (tıklanabilir listeden)
-bot.callbackQuery(/^user_detail_(.+)$/, async (ctx) => {
+bot.callbackQuery(/^u_d_(.+)$/, async (ctx) => {
   await safeAnswerCallback(ctx);
 
   const match = ctx.match;
@@ -607,7 +607,7 @@ bot.callbackQuery(/^user_detail_(.+)$/, async (ctx) => {
       .text("⏰ Süre Uzat", `admin_extend_${username}`)
       .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
       .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
-      .text("🔙 Kullanıcı Listesi", "admin_users");
+      .text("🔙 Kullanıcı Listesi", "users");
 
     await safeEditMessageText(ctx, message, {
       parse_mode: "Markdown",
@@ -630,7 +630,7 @@ bot.callbackQuery(/^admin_extend_(.+)$/, async (ctx) => {
   }
 
   const keyboard = new InlineKeyboard()
-    .text("🔙 İptal", `user_detail_${username}`);
+    .text("🔙 İptal", `u_d_${username}`);
 
   await safeEditMessageText(ctx,
     `⏰ *Süre Uzatma: ${username}*\n\nKaç gün eklemek istiyorsunuz? (Örn: 30)\n\n_İptal için aşağıdaki butona tıklayın_`,
@@ -650,7 +650,7 @@ bot.callbackQuery(/^admin_add_traffic_(.+)$/, async (ctx) => {
   }
 
   const keyboard = new InlineKeyboard()
-    .text("🔙 İptal", `user_detail_${username}`);
+    .text("🔙 İptal", `u_d_${username}`);
 
   await safeEditMessageText(ctx,
     `📊 *Trafik Ekleme: ${username}*\n\nKaç GB eklemek istiyorsunuz? (Örn: 10)\n\n_İptal için aşağıdaki butona tıklayın_`,
@@ -677,7 +677,7 @@ bot.callbackQuery(/^admin_reset_devices_(.+)$/, async (ctx) => {
         .text("⏰ Süre Uzat", `admin_extend_${username}`)
         .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
         .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
-        .text("🔙 Kullanıcı Listesi", "admin_users");
+        .text("🔙 Kullanıcı Listesi", "users");
         
       await safeEditMessageText(ctx, message, {
         parse_mode: "Markdown",
@@ -742,7 +742,7 @@ bot.callbackQuery("admin_user_ops", async (ctx) => {
   }
 
   const keyboard = new InlineKeyboard()
-    .text("👥 Kullanıcı Listesi", "admin_users")
+    .text("👥 Kullanıcı Listesi", "users")
     .text("🔍 Kullanıcı Ara", "admin_search").row()
     .text("🔙 Geri", "admin_back");
 
