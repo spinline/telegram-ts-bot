@@ -11,12 +11,17 @@ src/
 ├── components/              # UI Components
 │   ├── screens/            # Page/Screen components
 │   ├── common/             # Reusable UI components
+│   │   ├── ShieldAnimation.tsx
+│   │   ├── StatusBadge.tsx
+│   │   ├── LoadingScreen.tsx
+│   │   └── index.ts       # Barrel export
 │   └── layouts/            # Layout components
 │
 ├── hooks/                  # Custom React Hooks
 │   ├── useAccount.ts      # Account data management
 │   ├── useTelegram.ts     # Telegram WebApp integration
-│   └── useNavigation.ts   # Navigation logic
+│   ├── useNavigation.ts   # Navigation logic
+│   └── index.ts           # Barrel export
 │
 ├── services/               # External services
 │   ├── api.ts             # Backend API calls
@@ -29,7 +34,8 @@ src/
 │
 ├── utils/                  # Utility functions
 │   ├── formatters.ts      # Data formatting helpers
-│   └── constants.ts       # App constants
+│   ├── constants.ts       # App constants
+│   └── index.ts           # Barrel export
 │
 ├── styles/                 # Global styles
 │
@@ -61,6 +67,14 @@ Reusable hooks for:
 - Shared type definitions
 
 ## 🚀 Usage Examples
+
+### Using Barrel Exports (Recommended)
+```typescript
+// Clean imports using barrel exports
+import { useTelegram, useAccount, useNavigation } from './hooks';
+import { ShieldAnimation, StatusBadge, LoadingScreen } from './components/common';
+import { formatBytes, formatDate, COLORS } from './utils';
+```
 
 ### Using Telegram Hook
 ```typescript
@@ -101,6 +115,21 @@ function MyComponent() {
     <button onClick={() => navigateTo('account')}>
       Go to Account
     </button>
+  );
+}
+```
+
+### Using Common Components
+```typescript
+import { ShieldAnimation, StatusBadge, LoadingScreen } from './components/common';
+
+function MyScreen() {
+  return (
+    <>
+      <ShieldAnimation size={120} color="teal" />
+      <StatusBadge status="online" size="lg" />
+      <LoadingScreen message="Hesap bilgileri yükleniyor..." />
+    </>
   );
 }
 ```

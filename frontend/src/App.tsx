@@ -17,13 +17,11 @@ import AddSubscription from './components/screens/AddSubscription';
 import Congratulations from './components/screens/Congratulations';
 import AccountPage from './components/screens/AccountPage';
 
-// Custom Hooks
-import { useTelegram } from './hooks/useTelegram';
-import { useAccount } from './hooks/useAccount';
-import { useNavigation } from './hooks/useNavigation';
+// Custom Hooks - Using barrel exports
+import { useTelegram, useAccount, useNavigation } from './hooks';
 
-// Constants
-import { COLORS } from './utils/constants';
+// Constants - Using barrel exports
+import { COLORS } from './utils';
 
 function App() {
   const preferredColorScheme = useColorScheme();
