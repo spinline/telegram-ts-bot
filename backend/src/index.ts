@@ -458,11 +458,9 @@ bot.command("admin", async (ctx) => {
     }
 
     const keyboard = new InlineKeyboard()
-      .text("👥 Kullanıcı Listesi", "admin_users")
-      .text("🔍 Kullanıcı Ara", "admin_search").row()
-      .text("📢 Toplu Bildirim", "admin_broadcast")
-      .text("📊 İstatistikler", "admin_stats").row()
       .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+      .text("📢 Toplu Bildirim", "admin_broadcast").row()
+      .text("📊 İstatistikler", "admin_stats")
       .text("📝 Sistem Logları", "admin_logs").row()
       .text("💾 Sistem Durumu", "admin_status");
 
@@ -493,6 +491,9 @@ bot.callbackQuery("admin_users", async (ctx) => {
     }
 
     let message = "👥 *Kullanıcı Listesi* (İlk 10)\n\n";
+    message += "Kullanıcı detaylarını görmek için kullanıcı adına tıklayın:\n\n";
+
+    const keyboard = new InlineKeyboard();
 
     users.forEach((user: any, index: number) => {
       const status = user.status === 'ACTIVE' ? '🟢' :
@@ -500,11 +501,28 @@ bot.callbackQuery("admin_users", async (ctx) => {
                      user.status === 'EXPIRED' ? '🔴' : '⚫';
       const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
       const limitGB = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
-      message += `${index + 1}. ${status} ${user.username}\n`;
-      message += `   📊 ${usedGB} GB / ${limitGB} GB\n`;
+
+      message += `${index + 1}. ${status} ${user.username} (${usedGB}/${limitGB} GB)\n`;
+
+      // Her kullanıcı için tıklanabilir buton
+      if (index % 2 === 0) {
+        keyboard.text(`👤 ${user.username}`, `user_detail_${user.username}`);
+      } else {
+        keyboard.text(`👤 ${user.username}`, `user_detail_${user.username}`).row();
+      }
     });
 
-    await ctx.editMessageText(message, { parse_mode: "Markdown" });
+    // Son satır tek ise row ekle
+    if (users.length % 2 === 1) {
+      keyboard.row();
+    }
+
+    keyboard.text("🔙 Geri", "admin_user_ops");
+
+    await ctx.editMessageText(message, {
+      reply_markup: keyboard,
+      parse_mode: "Markdown"
+    });
   } catch (e: any) {
     console.error('❌ Admin panel error (users):', e.message);
     await ctx.editMessageText(`❌ Hata: ${e?.message || 'Kullanıcı listesi alınamadı'}`);
@@ -524,6 +542,59 @@ bot.callbackQuery("admin_search", async (ctx) => {
     "🔍 *Kullanıcı Arama*\n\nKullanıcı adını yazın:",
     { parse_mode: "Markdown" }
   );
+});
+
+// Admin Panel - Kullanıcı Detayı (tıklanabilir listeden)
+bot.callbackQuery(/^user_detail_(.+)$/, async (ctx) => {
+  await safeAnswerCallback(ctx);
+
+  const match = ctx.match;
+  if (!match) return;
+
+  const username = match[1];
+
+  try {
+    const user = await getUserByUsername(username);
+
+    if (!user) {
+      await ctx.editMessageText(`❌ Kullanıcı bulunamadı: ${username}`);
+      return;
+    }
+
+    const expireDate = new Date(user.expireAt);
+    const now = new Date();
+    const daysLeft = Math.ceil((expireDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    const statusEmoji = user.status === 'ACTIVE' ? '🟢' :
+                       user.status === 'LIMITED' ? '🟡' :
+                       user.status === 'EXPIRED' ? '🔴' : '⚫';
+
+    const trafficUsed = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
+    const trafficLimit = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
+    const trafficPercent = ((user.usedTrafficBytes / user.trafficLimitBytes) * 100).toFixed(0);
+
+    let message = `👤 *Kullanıcı Detayları*\n\n`;
+    message += `📝 Kullanıcı Adı: \`${user.username}\`\n`;
+    message += `🆔 UUID: \`${user.uuid}\`\n`;
+    message += `${statusEmoji} Durum: ${user.status}\n`;
+    message += `🏷️ Tag: ${user.tag || 'N/A'}\n\n`;
+    message += `📊 Trafik: ${trafficUsed} GB / ${trafficLimit} GB (%${trafficPercent})\n`;
+    message += `📅 Bitiş: ${expireDate.toLocaleDateString('tr-TR')}\n`;
+    message += `⏰ Kalan: ${daysLeft} gün\n`;
+    message += `📱 Telegram ID: ${user.telegramId || 'Yok'}\n`;
+    message += `📧 Email: ${user.email || 'Yok'}\n`;
+    message += `📅 Oluşturulma: ${new Date(user.createdAt).toLocaleDateString('tr-TR')}\n`;
+
+    const keyboard = new InlineKeyboard()
+      .text("🔙 Kullanıcı Listesi", "admin_users");
+
+    await ctx.editMessageText(message, {
+      parse_mode: "Markdown",
+      reply_markup: keyboard
+    });
+  } catch (e: any) {
+    await ctx.editMessageText(`❌ Hata: ${e?.message || 'Kullanıcı bilgisi alınamadı'}`);
+  }
 });
 
 // Admin Panel - Toplu Bildirim
@@ -576,6 +647,8 @@ bot.callbackQuery("admin_user_ops", async (ctx) => {
   await safeAnswerCallback(ctx);
 
   const keyboard = new InlineKeyboard()
+    .text("👥 Kullanıcı Listesi", "admin_users")
+    .text("🔍 Kullanıcı Ara", "admin_search").row()
     .text("✅ Kullanıcı Aktifleştir", "admin_activate")
     .text("⛔ Kullanıcı Pasifleştir", "admin_deactivate").row()
     .text("⏰ Süre Uzat", "admin_extend")
@@ -632,11 +705,9 @@ bot.callbackQuery("admin_back", async (ctx) => {
   await safeAnswerCallback(ctx);
 
   const keyboard = new InlineKeyboard()
-    .text("👥 Kullanıcı Listesi", "admin_users")
-    .text("🔍 Kullanıcı Ara", "admin_search").row()
-    .text("📢 Toplu Bildirim", "admin_broadcast")
-    .text("📊 İstatistikler", "admin_stats").row()
     .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+    .text("📢 Toplu Bildirim", "admin_broadcast").row()
+    .text("📊 İstatistikler", "admin_stats")
     .text("📝 Sistem Logları", "admin_logs").row()
     .text("💾 Sistem Durumu", "admin_status");
 

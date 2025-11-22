@@ -436,11 +436,9 @@ exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function
             return;
         }
         const keyboard = new grammy_1.InlineKeyboard()
-            .text("👥 Kullanıcı Listesi", "admin_users")
-            .text("🔍 Kullanıcı Ara", "admin_search").row()
-            .text("📢 Toplu Bildirim", "admin_broadcast")
-            .text("📊 İstatistikler", "admin_stats").row()
             .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+            .text("📢 Toplu Bildirim", "admin_broadcast").row()
+            .text("📊 İstatistikler", "admin_stats")
             .text("📝 Sistem Logları", "admin_logs").row()
             .text("💾 Sistem Durumu", "admin_status");
         yield ctx.reply("👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:", { reply_markup: keyboard, parse_mode: "Markdown" });
@@ -465,16 +463,32 @@ exports.bot.callbackQuery("admin_users", (ctx) => __awaiter(void 0, void 0, void
             return;
         }
         let message = "👥 *Kullanıcı Listesi* (İlk 10)\n\n";
+        message += "Kullanıcı detaylarını görmek için kullanıcı adına tıklayın:\n\n";
+        const keyboard = new grammy_1.InlineKeyboard();
         users.forEach((user, index) => {
             const status = user.status === 'ACTIVE' ? '🟢' :
                 user.status === 'LIMITED' ? '🟡' :
                     user.status === 'EXPIRED' ? '🔴' : '⚫';
             const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
             const limitGB = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
-            message += `${index + 1}. ${status} ${user.username}\n`;
-            message += `   📊 ${usedGB} GB / ${limitGB} GB\n`;
+            message += `${index + 1}. ${status} ${user.username} (${usedGB}/${limitGB} GB)\n`;
+            // Her kullanıcı için tıklanabilir buton
+            if (index % 2 === 0) {
+                keyboard.text(`👤 ${user.username}`, `user_detail_${user.username}`);
+            }
+            else {
+                keyboard.text(`👤 ${user.username}`, `user_detail_${user.username}`).row();
+            }
         });
-        yield ctx.editMessageText(message, { parse_mode: "Markdown" });
+        // Son satır tek ise row ekle
+        if (users.length % 2 === 1) {
+            keyboard.row();
+        }
+        keyboard.text("🔙 Geri", "admin_user_ops");
+        yield ctx.editMessageText(message, {
+            reply_markup: keyboard,
+            parse_mode: "Markdown"
+        });
     }
     catch (e) {
         console.error('❌ Admin panel error (users):', e.message);
@@ -490,6 +504,50 @@ exports.bot.callbackQuery("admin_search", (ctx) => __awaiter(void 0, void 0, voi
         adminSessions.set(adminId, { action: 'search' });
     }
     yield ctx.editMessageText("🔍 *Kullanıcı Arama*\n\nKullanıcı adını yazın:", { parse_mode: "Markdown" });
+}));
+// Admin Panel - Kullanıcı Detayı (tıklanabilir listeden)
+exports.bot.callbackQuery(/^user_detail_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    yield safeAnswerCallback(ctx);
+    const match = ctx.match;
+    if (!match)
+        return;
+    const username = match[1];
+    try {
+        const user = yield (0, api_1.getUserByUsername)(username);
+        if (!user) {
+            yield ctx.editMessageText(`❌ Kullanıcı bulunamadı: ${username}`);
+            return;
+        }
+        const expireDate = new Date(user.expireAt);
+        const now = new Date();
+        const daysLeft = Math.ceil((expireDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const statusEmoji = user.status === 'ACTIVE' ? '🟢' :
+            user.status === 'LIMITED' ? '🟡' :
+                user.status === 'EXPIRED' ? '🔴' : '⚫';
+        const trafficUsed = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2);
+        const trafficLimit = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
+        const trafficPercent = ((user.usedTrafficBytes / user.trafficLimitBytes) * 100).toFixed(0);
+        let message = `👤 *Kullanıcı Detayları*\n\n`;
+        message += `📝 Kullanıcı Adı: \`${user.username}\`\n`;
+        message += `🆔 UUID: \`${user.uuid}\`\n`;
+        message += `${statusEmoji} Durum: ${user.status}\n`;
+        message += `🏷️ Tag: ${user.tag || 'N/A'}\n\n`;
+        message += `📊 Trafik: ${trafficUsed} GB / ${trafficLimit} GB (%${trafficPercent})\n`;
+        message += `📅 Bitiş: ${expireDate.toLocaleDateString('tr-TR')}\n`;
+        message += `⏰ Kalan: ${daysLeft} gün\n`;
+        message += `📱 Telegram ID: ${user.telegramId || 'Yok'}\n`;
+        message += `📧 Email: ${user.email || 'Yok'}\n`;
+        message += `📅 Oluşturulma: ${new Date(user.createdAt).toLocaleDateString('tr-TR')}\n`;
+        const keyboard = new grammy_1.InlineKeyboard()
+            .text("🔙 Kullanıcı Listesi", "admin_users");
+        yield ctx.editMessageText(message, {
+            parse_mode: "Markdown",
+            reply_markup: keyboard
+        });
+    }
+    catch (e) {
+        yield ctx.editMessageText(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Kullanıcı bilgisi alınamadı'}`);
+    }
 }));
 // Admin Panel - Toplu Bildirim
 exports.bot.callbackQuery("admin_broadcast", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
@@ -530,6 +588,8 @@ exports.bot.callbackQuery("admin_stats", (ctx) => __awaiter(void 0, void 0, void
 exports.bot.callbackQuery("admin_user_ops", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield safeAnswerCallback(ctx);
     const keyboard = new grammy_1.InlineKeyboard()
+        .text("👥 Kullanıcı Listesi", "admin_users")
+        .text("🔍 Kullanıcı Ara", "admin_search").row()
         .text("✅ Kullanıcı Aktifleştir", "admin_activate")
         .text("⛔ Kullanıcı Pasifleştir", "admin_deactivate").row()
         .text("⏰ Süre Uzat", "admin_extend")
@@ -572,11 +632,9 @@ exports.bot.callbackQuery("admin_logs", (ctx) => __awaiter(void 0, void 0, void 
 exports.bot.callbackQuery("admin_back", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield safeAnswerCallback(ctx);
     const keyboard = new grammy_1.InlineKeyboard()
-        .text("👥 Kullanıcı Listesi", "admin_users")
-        .text("🔍 Kullanıcı Ara", "admin_search").row()
-        .text("📢 Toplu Bildirim", "admin_broadcast")
-        .text("📊 İstatistikler", "admin_stats").row()
         .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+        .text("📢 Toplu Bildirim", "admin_broadcast").row()
+        .text("📊 İstatistikler", "admin_stats")
         .text("📝 Sistem Logları", "admin_logs").row()
         .text("💾 Sistem Durumu", "admin_status");
     yield ctx.editMessageText("👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:", { reply_markup: keyboard, parse_mode: "Markdown" });
