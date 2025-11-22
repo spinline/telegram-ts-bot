@@ -19,12 +19,24 @@ class UserService {
 
     // Sıralama Mantığı
     if (sortBy === 'traffic') {
-      users.sort((a: any, b: any) => b.usedTrafficBytes - a.usedTrafficBytes);
+      users.sort((a: any, b: any) => {
+        const trafficA = parseInt(a.usedTrafficBytes) || 0;
+        const trafficB = parseInt(b.usedTrafficBytes) || 0;
+        return trafficB - trafficA;
+      });
     } else if (sortBy === 'date') {
-      users.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      users.sort((a: any, b: any) => {
+        const dateA = new Date(a.createdAt).getTime() || 0;
+        const dateB = new Date(b.createdAt).getTime() || 0;
+        return dateB - dateA;
+      });
     } else if (sortBy === 'status') {
       const statusOrder: any = { 'ACTIVE': 1, 'LIMITED': 2, 'EXPIRED': 3, 'DISABLED': 4 };
-      users.sort((a: any, b: any) => (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99));
+      users.sort((a: any, b: any) => {
+        const orderA = statusOrder[a.status] || 99;
+        const orderB = statusOrder[b.status] || 99;
+        return orderA - orderB;
+      });
     }
 
     // Sayfalama (Client-side pagination for sorted results)
