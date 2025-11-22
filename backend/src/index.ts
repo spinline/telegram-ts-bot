@@ -517,7 +517,8 @@ bot.callbackQuery("admin_users", async (ctx) => {
       keyboard.row();
     }
 
-    keyboard.text("🔙 Geri", "admin_user_ops");
+    // Geri butonu - Kullanıcı İşlemleri menüsüne dön
+    keyboard.text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
 
     await ctx.editMessageText(message, {
       reply_markup: keyboard,
@@ -538,9 +539,15 @@ bot.callbackQuery("admin_search", async (ctx) => {
     adminSessions.set(adminId, { action: 'search' });
   }
 
+  const keyboard = new InlineKeyboard()
+    .text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
+
   await ctx.editMessageText(
-    "🔍 *Kullanıcı Arama*\n\nKullanıcı adını yazın:",
-    { parse_mode: "Markdown" }
+    "🔍 *Kullanıcı Arama*\n\nKullanıcı adını yazın:\n\n_İptal için /cancel veya aşağıdaki butona tıklayın_",
+    {
+      parse_mode: "Markdown",
+      reply_markup: keyboard
+    }
   );
 });
 
@@ -645,6 +652,12 @@ bot.callbackQuery("admin_stats", async (ctx) => {
 // Admin Panel - Kullanıcı İşlemleri
 bot.callbackQuery("admin_user_ops", async (ctx) => {
   await safeAnswerCallback(ctx);
+
+  // Aktif session varsa temizle (kullanıcı ara veya broadcast iptal)
+  const adminId = ctx.from?.id;
+  if (adminId && adminSessions.has(adminId)) {
+    adminSessions.delete(adminId);
+  }
 
   const keyboard = new InlineKeyboard()
     .text("👥 Kullanıcı Listesi", "admin_users")
