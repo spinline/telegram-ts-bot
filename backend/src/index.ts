@@ -15,6 +15,8 @@ import { adminAuthMiddleware, isAdmin } from './middlewares/auth.middleware';
 import { userService } from './services/user.service';
 import { notificationService } from './services/notification.service';
 import { logger } from './utils/logger';
+import { registerTicketHandlers, handleTicketMessage } from './handlers/ticket';
+import { ticketService, TicketStatus } from "./services/ticket.service";
 
 // --- EXPRESS API SETUP ---
 const app = express();
@@ -106,6 +108,9 @@ export const bot = new Bot<Context>(env.BOT_TOKEN);
 // 🎯 NEW: Use error handler middleware
 bot.catch(errorHandler);
 
+// Register Ticket Handlers
+registerTicketHandlers(bot);
+
 // 🗑️ DELETED: Old adminSessions Map - now using sessionManager
 // interface AdminSession { ... }
 // const adminSessions = new Map<number, AdminSession>();
@@ -137,6 +142,41 @@ bot.on("message:text", async (ctx, next) => {
   }
 
   const session = sessionManager.get(userId);
+
+  // Ticket Session Handling
+  if (session && ['ticket_title', 'ticket_message', 'ticket_reply'].includes(session.action || '')) {
+    await handleTicketMessage(ctx, async () => {});
+    return;
+  }
+
+  // Admin Ticket Reply Handling
+  if (session && session.action === 'admin_ticket_reply') {
+    const ticketId = session.ticketData?.ticketId;
+    if (!ticketId) {
+      sessionManager.delete(userId);
+      return next();
+    }
+
+    try {
+      await ticketService.addMessage(ticketId, userId, text, false); // false = admin message
+      await ctx.reply("✅ Yanıt gönderildi!");
+      
+      // Notify user about the reply
+      const ticket = await ticketService.getTicketById(ticketId);
+      if (ticket) {
+        try {
+          await ctx.api.sendMessage(Number(ticket.userId), `💬 **Destek Yanıtı**\n\nTicket #${ticketId} için yeni bir yanıtınız var:\n\n"${text}"`, { parse_mode: "Markdown" });
+        } catch (e) {
+          console.error(`Failed to notify user ${ticket.userId}:`, e);
+        }
+      }
+
+      sessionManager.delete(userId);
+    } catch (e: any) {
+      await ctx.reply(`❌ Hata: ${e.message}`);
+    }
+    return;
+  }
 
   if (!session || !session.action) {
     return next(); // Normal komut işlemeye devam et
@@ -328,6 +368,7 @@ const startKeyboard = new InlineKeyboard()
   .text("💳 Satın Al", "buy_subscription")
   .row()
   .text("👤 Hesabım", "my_account")
+  .text("🛠 Destek", "menu_support")
   .webApp("📱 Mini App", miniAppUrl); // Doğrudan webApp butonu kullan
 
 // /start komutuna yanıt ver
@@ -462,6 +503,7 @@ bot.command("admin", async (ctx) => {
 
     const keyboard = new InlineKeyboard()
       .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+      .text("🎫 Destek Talepleri", "admin_tickets").row()
       .text("📢 Toplu Bildirim", "admin_broadcast").row()
       .text("📊 İstatistikler", "admin_stats")
       .text("📝 Sistem Logları", "admin_logs").row()
@@ -791,12 +833,137 @@ bot.callbackQuery("admin_logs", async (ctx) => {
   await safeEditMessageText(ctx, message, { parse_mode: "Markdown" });
 });
 
+// Admin Panel - Destek Talepleri Listesi
+bot.callbackQuery(/^admin_tickets(_p_(\d+))?$/, async (ctx) => {
+  await safeAnswerCallback(ctx);
+
+  const page = ctx.match && ctx.match[2] ? parseInt(ctx.match[2]) : 1;
+  const limit = 5;
+  const statuses = [TicketStatus.OPEN, TicketStatus.ANSWERED, TicketStatus.PENDING];
+
+  try {
+    const tickets = await ticketService.getTickets(statuses, page, limit);
+    const total = await ticketService.countTickets(statuses);
+    const totalPages = Math.ceil(total / limit);
+
+    const keyboard = new InlineKeyboard();
+
+    if (tickets.length === 0) {
+      keyboard.text("✅ Bekleyen talep yok", "noop").row();
+    } else {
+      tickets.forEach(t => {
+        const emoji = t.status === TicketStatus.OPEN ? '🔴' : '🟡';
+        keyboard.text(`${emoji} #${t.id} ${t.title}`, `admin_view_ticket_${t.id}`).row();
+      });
+    }
+
+    // Pagination
+    const navRow = [];
+    if (page > 1) navRow.push({ text: "⬅️", callback_data: `admin_tickets_p_${page - 1}` });
+    if (page < totalPages) navRow.push({ text: "➡️", callback_data: `admin_tickets_p_${page + 1}` });
+    if (navRow.length > 0) keyboard.row(...navRow);
+
+    keyboard.row().text("🔙 Admin Paneli", "admin_back");
+
+    await safeEditMessageText(ctx, `🎫 **Destek Talepleri** (Sayfa ${page}/${totalPages || 1})`, {
+      parse_mode: "Markdown",
+      reply_markup: keyboard
+    });
+  } catch (e: any) {
+    await safeEditMessageText(ctx, `❌ Hata: ${e.message}`);
+  }
+});
+
+// Admin Panel - Ticket Görüntüle
+bot.callbackQuery(/^admin_view_ticket_(\d+)$/, async (ctx) => {
+  await safeAnswerCallback(ctx);
+  const ticketId = parseInt(ctx.match[1]);
+  const ticket = await ticketService.getTicketById(ticketId);
+
+  if (!ticket) {
+    await ctx.reply("❌ Ticket bulunamadı.");
+    return;
+  }
+
+  // Kullanıcı adını bulmaya çalış
+  let username = "Bilinmiyor";
+  try {
+    const user = await getUserByTelegramId(Number(ticket.userId));
+    if (user) username = user.username;
+  } catch (e) {}
+
+  let message = `🎫 **Ticket #${ticket.id}**\n`;
+  message += `👤 **Kullanıcı:** ${username} (ID: ${ticket.userId})\n`;
+  message += `📝 **Başlık:** ${ticket.title}\n`;
+  message += `📊 **Durum:** ${ticket.status}\n`;
+  message += `📅 **Tarih:** ${ticket.createdAt.toLocaleDateString()}\n\n`;
+
+  ticket.messages.forEach(msg => {
+    const sender = msg.isUserMessage ? `👤 ${username}` : "🛠 Admin";
+    message += `**${sender}:**\n${msg.messageText}\n\n`;
+  });
+
+  const keyboard = new InlineKeyboard();
+  if (ticket.status !== TicketStatus.CLOSED) {
+    keyboard.text("💬 Yanıtla", `admin_reply_ticket_${ticket.id}`).text("🔒 Kapat", `admin_close_ticket_${ticket.id}`).row();
+  }
+  keyboard.text("🔙 Listeye Dön", "admin_tickets");
+
+  await safeEditMessageText(ctx, message, {
+    parse_mode: "Markdown",
+    reply_markup: keyboard
+  });
+});
+
+// Admin Panel - Ticket Yanıtla
+bot.callbackQuery(/^admin_reply_ticket_(\d+)$/, async (ctx) => {
+  await safeAnswerCallback(ctx);
+  const ticketId = parseInt(ctx.match[1]);
+  const userId = ctx.from?.id;
+  if (!userId) return;
+
+  sessionManager.set(userId, { 
+    action: 'admin_ticket_reply', 
+    ticketData: { ticketId } 
+  });
+
+  const keyboard = new InlineKeyboard().text("🔙 İptal", `admin_view_ticket_${ticketId}`);
+
+  await safeEditMessageText(ctx, "💬 **Yanıt Yazın**\n\nLütfen yanıtınızı girin:", {
+    parse_mode: "Markdown",
+    reply_markup: keyboard
+  });
+});
+
+// Admin Panel - Ticket Kapat
+bot.callbackQuery(/^admin_close_ticket_(\d+)$/, async (ctx) => {
+  await safeAnswerCallback(ctx);
+  const ticketId = parseInt(ctx.match[1]);
+  
+  await ticketService.closeTicket(ticketId);
+  
+  await ctx.reply("✅ Ticket kapatıldı.");
+  
+  // Kullanıcıya bildir
+  const ticket = await ticketService.getTicketById(ticketId);
+  if (ticket) {
+    try {
+      await ctx.api.sendMessage(Number(ticket.userId), `🔒 **Ticket #${ticketId} kapatıldı.**\n\nSorununuz çözüldüyse ne mutlu bize!`, { parse_mode: "Markdown" });
+    } catch (e) {}
+  }
+
+  // Listeye dön
+  const keyboard = new InlineKeyboard().text("🔙 Listeye Dön", "admin_tickets");
+  await ctx.reply("Ticket kapatıldı.", { reply_markup: keyboard });
+});
+
 // Admin Panel - Geri butonu
 bot.callbackQuery("admin_back", async (ctx) => {
   await safeAnswerCallback(ctx);
 
   const keyboard = new InlineKeyboard()
     .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+    .text("🎫 Destek Talepleri", "admin_tickets").row()
     .text("📢 Toplu Bildirim", "admin_broadcast").row()
     .text("📊 İstatistikler", "admin_stats")
     .text("📝 Sistem Logları", "admin_logs").row()

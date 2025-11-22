@@ -3,12 +3,16 @@
  * Tracks user actions like search, broadcast, etc.
  */
 
-export type AdminAction = 'search' | 'broadcast' | 'extend_days' | 'add_traffic';
+export type AdminAction = 'search' | 'broadcast' | 'extend_days' | 'add_traffic' | 'ticket_title' | 'ticket_message' | 'ticket_reply' | 'admin_ticket_reply';
 
 export interface AdminSession {
   action: AdminAction | null;
   targetUser?: string;
   timestamp?: number;
+  ticketData?: {
+    title?: string;
+    ticketId?: number;
+  };
 }
 
 class SessionManager {

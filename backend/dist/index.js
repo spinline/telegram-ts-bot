@@ -61,6 +61,8 @@ const session_middleware_1 = require("./middlewares/session.middleware");
 const user_service_1 = require("./services/user.service");
 const notification_service_1 = require("./services/notification.service");
 const logger_1 = require("./utils/logger");
+const ticket_1 = require("./handlers/ticket");
+const ticket_service_1 = require("./services/ticket.service");
 // --- EXPRESS API SETUP ---
 const app = (0, express_1.default)();
 const port = env_1.env.PORT;
@@ -127,6 +129,8 @@ app.get('/api/account', verifyTelegramWebAppData, (req, res) => __awaiter(void 0
 exports.bot = new grammy_1.Bot(env_1.env.BOT_TOKEN);
 // 🎯 NEW: Use error handler middleware
 exports.bot.catch(error_middleware_1.errorHandler);
+// Register Ticket Handlers
+(0, ticket_1.registerTicketHandlers)(exports.bot);
 // 🗑️ DELETED: Old adminSessions Map - now using sessionManager
 // interface AdminSession { ... }
 // const adminSessions = new Map<number, AdminSession>();
@@ -138,7 +142,7 @@ exports.bot.use((ctx, next) => __awaiter(void 0, void 0, void 0, function* () {
 }));
 // Admin mesaj handler - session tabanlı işlemler
 exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     const userId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
     const text = ctx.message.text;
     if (!userId || !text) {
@@ -153,11 +157,48 @@ exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, 
         }
     }
     const session = session_middleware_1.sessionManager.get(userId);
+    // Ticket Session Handling
+    if (session && ['ticket_title', 'ticket_message', 'ticket_reply'].includes(session.action || '')) {
+        yield (0, ticket_1.handleTicketMessage)(ctx, () => __awaiter(void 0, void 0, void 0, function* () { }));
+        return;
+    }
+    // Admin Ticket Reply Handling
+    if (session && session.action === 'admin_ticket_reply') {
+        const ticketId = (_b = session.ticketData) === null || _b === void 0 ? void 0 : _b.ticketId;
+        if (!ticketId) {
+            session_middleware_1.sessionManager.delete(userId);
+            return next();
+        }
+        try {
+            yield ticket_service_1.ticketService.addMessage(ticketId, userId, text, false); // false = admin message
+            yield ctx.reply("✅ Yanıt gönderildi!");
+            // Notify user about the reply
+            const ticket = yield ticket_service_1.ticketService.getTicketById(ticketId);
+            if (ticket) {
+                try {
+                    yield ctx.api.sendMessage(Number(ticket.userId), `💬 **Destek Yanıtı**\n\nTicket #${ticketId} için yeni bir yanıtınız var:\n\n"${text}"`, { parse_mode: "Markdown" });
+                }
+                catch (e) {
+                    console.error(`Failed to notify user ${ticket.userId}:`, e);
+                }
+            }
+            session_middleware_1.sessionManager.delete(userId);
+        }
+        catch (e) {
+            yield ctx.reply(`❌ Hata: ${e.message}`);
+        }
+        return;
+    }
     if (!session || !session.action) {
         return next(); // Normal komut işlemeye devam et
     }
     // Admin session varsa işle
     try {
+        // Eğer kullanıcı bir komut girdiyse (/app, /start vb.), session'ı iptal et ve devam et
+        if (text.startsWith('/')) {
+            session_middleware_1.sessionManager.delete(userId);
+            return next();
+        }
         if (session.action === 'search') {
             const query = text.trim();
             try {
@@ -175,7 +216,7 @@ exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, 
                         .text("⏰ Süre Uzat", `admin_extend_${user.username}`)
                         .text("📊 Trafik Ekle", `admin_add_traffic_${user.username}`).row()
                         .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${user.username}`).row()
-                        .text("🔙 Kullanıcı Listesi", "admin_users");
+                        .text("🔙 Kullanıcı Listesi", "users");
                     yield ctx.reply(message, { parse_mode: "Markdown", reply_markup: keyboard });
                 }
                 else {
@@ -186,7 +227,7 @@ exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, 
                         const status = user.status === 'ACTIVE' ? '🟢' :
                             user.status === 'LIMITED' ? '🟡' :
                                 user.status === 'EXPIRED' ? '🔴' : '⚫';
-                        keyboard.text(`${status} ${user.username}`, `user_detail_${user.username}`).row();
+                        keyboard.text(`${status} ${user.username}`, `u_d_${user.username}`).row();
                     });
                     keyboard.text("🔙 İptal", "admin_user_ops");
                     yield ctx.reply(message, { parse_mode: "Markdown", reply_markup: keyboard });
@@ -315,6 +356,7 @@ const startKeyboard = new grammy_1.InlineKeyboard()
     .text("💳 Satın Al", "buy_subscription")
     .row()
     .text("👤 Hesabım", "my_account")
+    .text("🛠 Destek", "menu_support")
     .webApp("📱 Mini App", miniAppUrl); // Doğrudan webApp butonu kullan
 // /start komutuna yanıt ver
 exports.bot.command("start", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
@@ -435,6 +477,7 @@ exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function
         }
         const keyboard = new grammy_1.InlineKeyboard()
             .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+            .text("🎫 Destek Talepleri", "admin_tickets").row()
             .text("📢 Toplu Bildirim", "admin_broadcast").row()
             .text("📊 İstatistikler", "admin_stats")
             .text("📝 Sistem Logları", "admin_logs").row()
@@ -452,7 +495,7 @@ exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function
     }
 }));
 // Admin Panel - Kullanıcı Listesi
-exports.bot.callbackQuery(/^admin_users(_page_(\d+))?(_sort_(\w+))?(_filter_(\w+))?$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+exports.bot.callbackQuery(/^users(_p_(\d+))?(_s_(\w+))?(_f_(\w+))?$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     const page = ctx.match && ctx.match[2] ? parseInt(ctx.match[2]) : 1;
     const sort = (ctx.match && ctx.match[4] ? ctx.match[4] : undefined);
@@ -469,19 +512,19 @@ exports.bot.callbackQuery(/^admin_users(_page_(\d+))?(_sort_(\w+))?(_filter_(\w+
         const filterLabel = filter !== 'ALL' ? ` [${filter}]` : '';
         const message = `👥 *Kullanıcı Listesi*${sortLabel}${filterLabel} (Sayfa ${page}/${totalPages})`;
         const keyboard = new grammy_1.InlineKeyboard();
-        const sortParam = sort ? `_sort_${sort}` : '';
-        const filterParam = filter ? `_filter_${filter}` : '';
+        const sortParam = sort ? `_s_${sort}` : '';
+        const filterParam = filter ? `_f_${filter}` : '';
         // Filtreleme Butonları
         keyboard
-            .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `admin_users_page_1${sortParam}_filter_ALL`)
-            .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `admin_users_page_1${sortParam}_filter_ACTIVE`)
-            .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `admin_users_page_1${sortParam}_filter_EXPIRED`)
+            .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `users_p_1${sortParam}_f_ALL`)
+            .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `users_p_1${sortParam}_f_ACTIVE`)
+            .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `users_p_1${sortParam}_f_EXPIRED`)
             .row();
         // Sıralama Butonları
         keyboard
-            .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `admin_users_page_1_sort_traffic${filterParam}`)
-            .text(sort === 'date' ? "✅ Tarih" : "Tarih", `admin_users_page_1_sort_date${filterParam}`)
-            .text(sort === 'status' ? "✅ Durum" : "Durum", `admin_users_page_1_sort_status${filterParam}`)
+            .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `users_p_1_s_traffic${filterParam}`)
+            .text(sort === 'date' ? "✅ Tarih" : "Tarih", `users_p_1_s_date${filterParam}`)
+            .text(sort === 'status' ? "✅ Durum" : "Durum", `users_p_1_s_status${filterParam}`)
             .row();
         if (users.length === 0) {
             keyboard.row().text("⚠️ Bu filtrede kullanıcı yok", "noop");
@@ -493,16 +536,16 @@ exports.bot.callbackQuery(/^admin_users(_page_(\d+))?(_sort_(\w+))?(_filter_(\w+
                         user.status === 'EXPIRED' ? '🔴' : '⚫';
                 const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(1);
                 const limitGB = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
-                keyboard.text(`${status} ${user.username} | ${usedGB}/${limitGB} GB`, `user_detail_${user.username}`).row();
+                keyboard.text(`${status} ${user.username} | ${usedGB}/${limitGB} GB`, `u_d_${user.username}`).row();
             });
         }
         // Pagination buttons
         const paginationRow = [];
         if (page > 1) {
-            paginationRow.push({ text: "⬅️ Önceki", callback_data: `admin_users_page_${page - 1}${sortParam}${filterParam}` });
+            paginationRow.push({ text: "⬅️ Önceki", callback_data: `users_p_${page - 1}${sortParam}${filterParam}` });
         }
         if (page < totalPages) {
-            paginationRow.push({ text: "Sonraki ➡️", callback_data: `admin_users_page_${page + 1}${sortParam}${filterParam}` });
+            paginationRow.push({ text: "Sonraki ➡️", callback_data: `users_p_${page + 1}${sortParam}${filterParam}` });
         }
         if (paginationRow.length > 0) {
             keyboard.row(...paginationRow);
@@ -534,11 +577,17 @@ exports.bot.callbackQuery("admin_search", (ctx) => __awaiter(void 0, void 0, voi
     });
 }));
 // Admin Panel - Kullanıcı Detayı (tıklanabilir listeden)
-exports.bot.callbackQuery(/^user_detail_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+exports.bot.callbackQuery(/^u_d_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     const match = ctx.match;
     if (!match)
         return;
+    // Aktif session varsa temizle (örn: süre uzatma veya trafik ekleme iptali)
+    const adminId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
+    if (adminId && session_middleware_1.sessionManager.has(adminId)) {
+        session_middleware_1.sessionManager.delete(adminId);
+    }
     const username = match[1];
     try {
         const message = yield user_service_1.userService.getUserDetailsMessage(username);
@@ -546,7 +595,7 @@ exports.bot.callbackQuery(/^user_detail_(.+)$/, (ctx) => __awaiter(void 0, void 
             .text("⏰ Süre Uzat", `admin_extend_${username}`)
             .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
             .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
-            .text("🔙 Kullanıcı Listesi", "admin_users");
+            .text("🔙 Kullanıcı Listesi", "users");
         yield (0, error_middleware_1.safeEditMessageText)(ctx, message, {
             parse_mode: "Markdown",
             reply_markup: keyboard
@@ -568,7 +617,7 @@ exports.bot.callbackQuery(/^admin_extend_(.+)$/, (ctx) => __awaiter(void 0, void
         session_middleware_1.sessionManager.set(adminId, { action: 'extend_days', targetUser: username });
     }
     const keyboard = new grammy_1.InlineKeyboard()
-        .text("🔙 İptal", `user_detail_${username}`);
+        .text("🔙 İptal", `u_d_${username}`);
     yield (0, error_middleware_1.safeEditMessageText)(ctx, `⏰ *Süre Uzatma: ${username}*\n\nKaç gün eklemek istiyorsunuz? (Örn: 30)\n\n_İptal için aşağıdaki butona tıklayın_`, { parse_mode: "Markdown", reply_markup: keyboard });
 }));
 // Admin Panel - Trafik Ekle (Seçim)
@@ -583,7 +632,7 @@ exports.bot.callbackQuery(/^admin_add_traffic_(.+)$/, (ctx) => __awaiter(void 0,
         session_middleware_1.sessionManager.set(adminId, { action: 'add_traffic', targetUser: username });
     }
     const keyboard = new grammy_1.InlineKeyboard()
-        .text("🔙 İptal", `user_detail_${username}`);
+        .text("🔙 İptal", `u_d_${username}`);
     yield (0, error_middleware_1.safeEditMessageText)(ctx, `📊 *Trafik Ekleme: ${username}*\n\nKaç GB eklemek istiyorsunuz? (Örn: 10)\n\n_İptal için aşağıdaki butona tıklayın_`, { parse_mode: "Markdown", reply_markup: keyboard });
 }));
 // Admin Panel - Cihaz Sıfırla (İşlem)
@@ -602,7 +651,7 @@ exports.bot.callbackQuery(/^admin_reset_devices_(.+)$/, (ctx) => __awaiter(void 
                 .text("⏰ Süre Uzat", `admin_extend_${username}`)
                 .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
                 .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
-                .text("🔙 Kullanıcı Listesi", "admin_users");
+                .text("🔙 Kullanıcı Listesi", "users");
             yield (0, error_middleware_1.safeEditMessageText)(ctx, message, {
                 parse_mode: "Markdown",
                 reply_markup: keyboard
@@ -658,7 +707,7 @@ exports.bot.callbackQuery("admin_user_ops", (ctx) => __awaiter(void 0, void 0, v
         session_middleware_1.sessionManager.delete(adminId);
     }
     const keyboard = new grammy_1.InlineKeyboard()
-        .text("👥 Kullanıcı Listesi", "admin_users")
+        .text("👥 Kullanıcı Listesi", "users")
         .text("🔍 Kullanıcı Ara", "admin_search").row()
         .text("🔙 Geri", "admin_back");
     yield (0, error_middleware_1.safeEditMessageText)(ctx, "⚙️ *Kullanıcı İşlemleri*\n\nİşlem seçin:", { reply_markup: keyboard, parse_mode: "Markdown" });
@@ -694,11 +743,122 @@ exports.bot.callbackQuery("admin_logs", (ctx) => __awaiter(void 0, void 0, void 
         `• Docker: \`docker logs -f container_name\``;
     yield (0, error_middleware_1.safeEditMessageText)(ctx, message, { parse_mode: "Markdown" });
 }));
+// Admin Panel - Destek Talepleri Listesi
+exports.bot.callbackQuery(/^admin_tickets(_p_(\d+))?$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
+    const page = ctx.match && ctx.match[2] ? parseInt(ctx.match[2]) : 1;
+    const limit = 5;
+    const statuses = [ticket_service_1.TicketStatus.OPEN, ticket_service_1.TicketStatus.ANSWERED, ticket_service_1.TicketStatus.PENDING];
+    try {
+        const tickets = yield ticket_service_1.ticketService.getTickets(statuses, page, limit);
+        const total = yield ticket_service_1.ticketService.countTickets(statuses);
+        const totalPages = Math.ceil(total / limit);
+        const keyboard = new grammy_1.InlineKeyboard();
+        if (tickets.length === 0) {
+            keyboard.text("✅ Bekleyen talep yok", "noop").row();
+        }
+        else {
+            tickets.forEach(t => {
+                const emoji = t.status === ticket_service_1.TicketStatus.OPEN ? '🔴' : '🟡';
+                keyboard.text(`${emoji} #${t.id} ${t.title}`, `admin_view_ticket_${t.id}`).row();
+            });
+        }
+        // Pagination
+        const navRow = [];
+        if (page > 1)
+            navRow.push({ text: "⬅️", callback_data: `admin_tickets_p_${page - 1}` });
+        if (page < totalPages)
+            navRow.push({ text: "➡️", callback_data: `admin_tickets_p_${page + 1}` });
+        if (navRow.length > 0)
+            keyboard.row(...navRow);
+        keyboard.row().text("🔙 Admin Paneli", "admin_back");
+        yield (0, error_middleware_1.safeEditMessageText)(ctx, `🎫 **Destek Talepleri** (Sayfa ${page}/${totalPages || 1})`, {
+            parse_mode: "Markdown",
+            reply_markup: keyboard
+        });
+    }
+    catch (e) {
+        yield (0, error_middleware_1.safeEditMessageText)(ctx, `❌ Hata: ${e.message}`);
+    }
+}));
+// Admin Panel - Ticket Görüntüle
+exports.bot.callbackQuery(/^admin_view_ticket_(\d+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
+    const ticketId = parseInt(ctx.match[1]);
+    const ticket = yield ticket_service_1.ticketService.getTicketById(ticketId);
+    if (!ticket) {
+        yield ctx.reply("❌ Ticket bulunamadı.");
+        return;
+    }
+    // Kullanıcı adını bulmaya çalış
+    let username = "Bilinmiyor";
+    try {
+        const user = yield (0, api_1.getUserByTelegramId)(Number(ticket.userId));
+        if (user)
+            username = user.username;
+    }
+    catch (e) { }
+    let message = `🎫 **Ticket #${ticket.id}**\n`;
+    message += `👤 **Kullanıcı:** ${username} (ID: ${ticket.userId})\n`;
+    message += `📝 **Başlık:** ${ticket.title}\n`;
+    message += `📊 **Durum:** ${ticket.status}\n`;
+    message += `📅 **Tarih:** ${ticket.createdAt.toLocaleDateString()}\n\n`;
+    ticket.messages.forEach(msg => {
+        const sender = msg.isUserMessage ? `👤 ${username}` : "🛠 Admin";
+        message += `**${sender}:**\n${msg.messageText}\n\n`;
+    });
+    const keyboard = new grammy_1.InlineKeyboard();
+    if (ticket.status !== ticket_service_1.TicketStatus.CLOSED) {
+        keyboard.text("💬 Yanıtla", `admin_reply_ticket_${ticket.id}`).text("🔒 Kapat", `admin_close_ticket_${ticket.id}`).row();
+    }
+    keyboard.text("🔙 Listeye Dön", "admin_tickets");
+    yield (0, error_middleware_1.safeEditMessageText)(ctx, message, {
+        parse_mode: "Markdown",
+        reply_markup: keyboard
+    });
+}));
+// Admin Panel - Ticket Yanıtla
+exports.bot.callbackQuery(/^admin_reply_ticket_(\d+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
+    const ticketId = parseInt(ctx.match[1]);
+    const userId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
+    if (!userId)
+        return;
+    session_middleware_1.sessionManager.set(userId, {
+        action: 'admin_ticket_reply',
+        ticketData: { ticketId }
+    });
+    const keyboard = new grammy_1.InlineKeyboard().text("🔙 İptal", `admin_view_ticket_${ticketId}`);
+    yield (0, error_middleware_1.safeEditMessageText)(ctx, "💬 **Yanıt Yazın**\n\nLütfen yanıtınızı girin:", {
+        parse_mode: "Markdown",
+        reply_markup: keyboard
+    });
+}));
+// Admin Panel - Ticket Kapat
+exports.bot.callbackQuery(/^admin_close_ticket_(\d+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
+    const ticketId = parseInt(ctx.match[1]);
+    yield ticket_service_1.ticketService.closeTicket(ticketId);
+    yield ctx.reply("✅ Ticket kapatıldı.");
+    // Kullanıcıya bildir
+    const ticket = yield ticket_service_1.ticketService.getTicketById(ticketId);
+    if (ticket) {
+        try {
+            yield ctx.api.sendMessage(Number(ticket.userId), `🔒 **Ticket #${ticketId} kapatıldı.**\n\nSorununuz çözüldüyse ne mutlu bize!`, { parse_mode: "Markdown" });
+        }
+        catch (e) { }
+    }
+    // Listeye dön
+    const keyboard = new grammy_1.InlineKeyboard().text("🔙 Listeye Dön", "admin_tickets");
+    yield ctx.reply("Ticket kapatıldı.", { reply_markup: keyboard });
+}));
 // Admin Panel - Geri butonu
 exports.bot.callbackQuery("admin_back", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     const keyboard = new grammy_1.InlineKeyboard()
         .text("⚙️ Kullanıcı İşlemleri", "admin_user_ops")
+        .text("🎫 Destek Talepleri", "admin_tickets").row()
         .text("📢 Toplu Bildirim", "admin_broadcast").row()
         .text("📊 İstatistikler", "admin_stats")
         .text("📝 Sistem Logları", "admin_logs").row()
