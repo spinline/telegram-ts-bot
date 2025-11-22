@@ -239,18 +239,31 @@ exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, 
                 console.log('Admin: Toplu bildirim başlatılıyor');
                 const users = yield (0, api_1.getAllUsers)(1, 1000); // Tüm kullanıcılar
                 console.log(`Admin: ${users.length} kullanıcı bulundu`);
-                const usersWithTelegram = users.filter((u) => u.telegramId);
+                // Debug: İlk kullanıcının tüm field'larını göster
+                if (users.length > 0) {
+                    console.log('Admin: İlk kullanıcı örneği:', JSON.stringify(users[0], null, 2));
+                }
+                // telegramId veya telegram_id olabilir - her ikisini kontrol et
+                const usersWithTelegram = users.filter((u) => {
+                    const hasId = u.telegramId || u.telegram_id || u.tId;
+                    if (hasId) {
+                        console.log(`User ${u.username}: telegramId=${u.telegramId}, telegram_id=${u.telegram_id}, tId=${u.tId}`);
+                    }
+                    return hasId;
+                });
                 console.log(`Admin: ${usersWithTelegram.length} kullanıcının Telegram ID'si var`);
                 let sent = 0;
                 let failed = 0;
                 for (const user of usersWithTelegram) {
                     try {
-                        yield exports.bot.api.sendMessage(user.telegramId, message);
+                        const telegramId = user.telegramId || user.telegram_id || user.tId;
+                        console.log(`Admin: Mesaj gönderiliyor -> ${user.username} (${telegramId})`);
+                        yield exports.bot.api.sendMessage(telegramId, message);
                         sent++;
                         yield new Promise(resolve => setTimeout(resolve, 100)); // Rate limit
                     }
                     catch (e) {
-                        console.warn(`Broadcast failed for user ${user.username}:`, e);
+                        console.warn(`Broadcast failed for user ${user.username}:`, (e === null || e === void 0 ? void 0 : e.message) || e);
                         failed++;
                     }
                 }

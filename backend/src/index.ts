@@ -239,7 +239,19 @@ bot.on("message:text", async (ctx, next) => {
         const users = await getAllUsers(1, 1000); // Tüm kullanıcılar
         console.log(`Admin: ${users.length} kullanıcı bulundu`);
 
-        const usersWithTelegram = users.filter((u: any) => u.telegramId);
+        // Debug: İlk kullanıcının tüm field'larını göster
+        if (users.length > 0) {
+          console.log('Admin: İlk kullanıcı örneği:', JSON.stringify(users[0], null, 2));
+        }
+
+        // telegramId veya telegram_id olabilir - her ikisini kontrol et
+        const usersWithTelegram = users.filter((u: any) => {
+          const hasId = u.telegramId || u.telegram_id || u.tId;
+          if (hasId) {
+            console.log(`User ${u.username}: telegramId=${u.telegramId}, telegram_id=${u.telegram_id}, tId=${u.tId}`);
+          }
+          return hasId;
+        });
         console.log(`Admin: ${usersWithTelegram.length} kullanıcının Telegram ID'si var`);
 
         let sent = 0;
@@ -247,11 +259,13 @@ bot.on("message:text", async (ctx, next) => {
 
         for (const user of usersWithTelegram) {
           try {
-            await bot.api.sendMessage(user.telegramId, message);
+            const telegramId = user.telegramId || user.telegram_id || user.tId;
+            console.log(`Admin: Mesaj gönderiliyor -> ${user.username} (${telegramId})`);
+            await bot.api.sendMessage(telegramId, message);
             sent++;
             await new Promise(resolve => setTimeout(resolve, 100)); // Rate limit
-          } catch (e) {
-            console.warn(`Broadcast failed for user ${user.username}:`, e);
+          } catch (e: any) {
+            console.warn(`Broadcast failed for user ${user.username}:`, e?.message || e);
             failed++;
           }
         }
