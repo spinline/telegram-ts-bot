@@ -306,18 +306,16 @@ exports.bot.command("app", (ctx) => __awaiter(void 0, void 0, void 0, function* 
     });
 }));
 // Mini App'ten gelen verileri dinlemek için daha güvenli bir yöntem
-exports.bot.on("message", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    // Mesajın bir "web_app_data" içerip içermediğini kontrol et
-    if (ctx.message && "web_app_data" in ctx.message && ctx.message.web_app_data) {
-        try {
-            const data = JSON.parse(ctx.message.web_app_data.data);
-            if (data.command === 'try_free') {
-                yield handleTryFree(ctx);
-            }
+// NOT: Bu handler tüm mesajları yakalamamalı, sadece web_app_data olanları
+exports.bot.on("message:web_app_data", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const data = JSON.parse(ctx.message.web_app_data.data);
+        if (data.command === 'try_free') {
+            yield handleTryFree(ctx);
         }
-        catch (error) {
-            console.error("Error processing web_app_data", error);
-        }
+    }
+    catch (error) {
+        console.error("Error processing web_app_data", error);
     }
 }));
 exports.bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
