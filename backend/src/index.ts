@@ -144,6 +144,12 @@ bot.on("message:text", async (ctx, next) => {
 
   // Admin session varsa işle
   try {
+    // Eğer kullanıcı bir komut girdiyse (/app, /start vb.), session'ı iptal et ve devam et
+    if (text.startsWith('/')) {
+      sessionManager.delete(userId);
+      return next();
+    }
+
     if (session.action === 'search') {
       const query = text.trim();
 
@@ -585,6 +591,12 @@ bot.callbackQuery(/^user_detail_(.+)$/, async (ctx) => {
 
   const match = ctx.match;
   if (!match) return;
+
+  // Aktif session varsa temizle (örn: süre uzatma veya trafik ekleme iptali)
+  const adminId = ctx.from?.id;
+  if (adminId && sessionManager.has(adminId)) {
+    sessionManager.delete(adminId);
+  }
 
   const username = match[1];
 
