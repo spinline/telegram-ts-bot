@@ -590,11 +590,26 @@ exports.bot.callbackQuery(/^ud(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0,
     }
     const username = match[1];
     try {
+        const user = yield user_service_1.userService.getUserByUsername(username);
+        if (!user) {
+            yield (0, error_middleware_1.safeEditMessageText)(ctx, "❌ Kullanıcı bulunamadı.");
+            return;
+        }
         const message = yield user_service_1.userService.getUserDetailsMessage(username);
         const keyboard = new grammy_1.InlineKeyboard()
             .text("⏰ Süre Uzat", `admin_extend_${username}`)
             .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
-            .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
+            .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`);
+        // Duruma göre Engelle/Aktif Et butonu
+        if (user.status === 'DISABLED' || user.status === 'BLOCKED') {
+            keyboard.text("✅ Aktif Et", `admin_unblock_${username}`);
+        }
+        else {
+            keyboard.text("🚫 Engelle", `admin_block_${username}`);
+        }
+        keyboard.row()
+            .text("🗑️ Sil", `admin_delete_${username}`)
+            .row()
             .text("🔙 Kullanıcı Listesi", "ls");
         yield (0, error_middleware_1.safeEditMessageText)(ctx, message, {
             parse_mode: "Markdown",
@@ -852,6 +867,71 @@ exports.bot.callbackQuery(/^admin_close_ticket_(\d+)$/, (ctx) => __awaiter(void 
     // Listeye dön
     const keyboard = new grammy_1.InlineKeyboard().text("🔙 Listeye Dön", "admin_tickets");
     yield ctx.reply("Ticket kapatıldı.", { reply_markup: keyboard });
+}));
+// Admin Panel - Kullanıcı Engelle
+exports.bot.callbackQuery(/^admin_block_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    const username = ctx.match ? ctx.match[1] : null;
+    if (!username)
+        return;
+    try {
+        yield (0, error_middleware_1.safeAnswerCallback)(ctx, "Kullanıcı engelleniyor...");
+        yield user_service_1.userService.blockUser(username);
+        yield ctx.reply(`🚫 *${username}* kullanıcısı engellendi!`, { parse_mode: "Markdown" });
+        // Listeye dön
+        const keyboard = new grammy_1.InlineKeyboard().text("🔙 Kullanıcıya Dön", `ud${username}`);
+        yield ctx.reply("İşlem tamamlandı.", { reply_markup: keyboard });
+    }
+    catch (e) {
+        logger_1.logger.error(`Block user error for ${username}:`, e.message);
+        yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Kullanıcı engellenemedi'}`);
+    }
+}));
+// Admin Panel - Kullanıcı Aktif Et
+exports.bot.callbackQuery(/^admin_unblock_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    const username = ctx.match ? ctx.match[1] : null;
+    if (!username)
+        return;
+    try {
+        yield (0, error_middleware_1.safeAnswerCallback)(ctx, "Kullanıcı aktif ediliyor...");
+        yield user_service_1.userService.unblockUser(username);
+        yield ctx.reply(`✅ *${username}* kullanıcısı aktif edildi!`, { parse_mode: "Markdown" });
+        // Listeye dön
+        const keyboard = new grammy_1.InlineKeyboard().text("🔙 Kullanıcıya Dön", `ud${username}`);
+        yield ctx.reply("İşlem tamamlandı.", { reply_markup: keyboard });
+    }
+    catch (e) {
+        logger_1.logger.error(`Unblock user error for ${username}:`, e.message);
+        yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Kullanıcı aktif edilemedi'}`);
+    }
+}));
+// Admin Panel - Kullanıcı Sil (Onay)
+exports.bot.callbackQuery(/^admin_delete_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, error_middleware_1.safeAnswerCallback)(ctx);
+    const username = ctx.match ? ctx.match[1] : null;
+    if (!username)
+        return;
+    const keyboard = new grammy_1.InlineKeyboard()
+        .text("🗑️ Evet, Sil", `admin_confirm_delete_${username}`).row()
+        .text("🔙 İptal", `ud${username}`);
+    yield (0, error_middleware_1.safeEditMessageText)(ctx, `⚠️ *DİKKAT!* ⚠️\n\n*${username}* kullanıcısını silmek üzeresiniz.\nBu işlem geri alınamaz!\n\nOnaylıyor musunuz?`, { parse_mode: "Markdown", reply_markup: keyboard });
+}));
+// Admin Panel - Kullanıcı Sil (Kesin İşlem)
+exports.bot.callbackQuery(/^admin_confirm_delete_(.+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    const username = ctx.match ? ctx.match[1] : null;
+    if (!username)
+        return;
+    try {
+        yield (0, error_middleware_1.safeAnswerCallback)(ctx, "Kullanıcı siliniyor...");
+        yield user_service_1.userService.deleteUser(username);
+        yield (0, error_middleware_1.safeEditMessageText)(ctx, `✅ *${username}* kullanıcısı başarıyla silindi!`, { parse_mode: "Markdown" });
+        // Listeye dön
+        const keyboard = new grammy_1.InlineKeyboard().text("🔙 Kullanıcı Listesi", "ls");
+        yield ctx.reply("Kullanıcı listesine dönebilirsiniz.", { reply_markup: keyboard });
+    }
+    catch (e) {
+        logger_1.logger.error(`Delete user error for ${username}:`, e.message);
+        yield ctx.reply(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Kullanıcı silinemedi'}`);
+    }
 }));
 // Admin Panel - Geri butonu
 exports.bot.callbackQuery("admin_back", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1118,7 +1198,6 @@ app.post('/endpoint', (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.status(500).json({ error: 'Internal server error' });
     }
 }));
-// ...existing code...
 function startApp() {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, _b;

@@ -1,4 +1,4 @@
-import { getAllUsers, getUserByUsername, getUserByTelegramId, updateUser, resetAllUserDevices, getUserHwidDevices } from "../api";
+import { getAllUsers, getUserByUsername, getUserByTelegramId, updateUser, resetAllUserDevices, getUserHwidDevices, deleteUser, enableUser, disableUser } from "../api";
 
 /**
  * User Service
@@ -225,6 +225,36 @@ class UserService {
     if (!user) throw new Error("Kullanıcı bulunamadı");
 
     return await resetAllUserDevices(user.uuid);
+  }
+
+  /**
+   * Block (disable) a user
+   */
+  async blockUser(username: string) {
+    const user = await this.getUserByUsername(username);
+    if (!user) throw new Error("Kullanıcı bulunamadı");
+
+    return await disableUser(user.uuid);
+  }
+
+  /**
+   * Unblock (enable) a user
+   */
+  async unblockUser(username: string) {
+    const user = await this.getUserByUsername(username);
+    if (!user) throw new Error("Kullanıcı bulunamadı");
+
+    return await enableUser(user.uuid);
+  }
+
+  /**
+   * Delete a user permanently
+   */
+  async deleteUser(username: string) {
+    const user = await this.getUserByUsername(username);
+    if (!user) throw new Error("Kullanıcı bulunamadı");
+
+    return await deleteUser(user.uuid);
   }
 }
 

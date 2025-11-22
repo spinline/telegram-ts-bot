@@ -161,6 +161,39 @@ export async function updateUser(uuid: string, userData: any) {
   }
 }
 
+export async function deleteUser(uuid: string) {
+  try {
+    const response = await apiClient.delete(`/api/users/${uuid}`);
+    const data: any = response.data;
+    return data.response?.isDeleted;
+  } catch (error: any) {
+    console.error(`Failed to delete user ${uuid}:`, error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Kullanıcı silinemedi.");
+  }
+}
+
+export async function enableUser(uuid: string) {
+  try {
+    const response = await apiClient.post(`/api/users/${uuid}/actions/enable`);
+    const data: any = response.data;
+    return data.response;
+  } catch (error: any) {
+    console.error(`Failed to enable user ${uuid}:`, error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Kullanıcı aktif edilemedi.");
+  }
+}
+
+export async function disableUser(uuid: string) {
+  try {
+    const response = await apiClient.post(`/api/users/${uuid}/actions/disable`);
+    const data: any = response.data;
+    return data.response;
+  } catch (error: any) {
+    console.error(`Failed to disable user ${uuid}:`, error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Kullanıcı devre dışı bırakılamadı.");
+  }
+}
+
 export async function resetAllUserDevices(userUuid: string) {
   try {
     // 1. Mevcut cihazları çek

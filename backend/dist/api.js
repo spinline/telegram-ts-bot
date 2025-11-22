@@ -31,6 +31,9 @@ exports.getUserHwidDevices = getUserHwidDevices;
 exports.deleteUserHwidDevice = deleteUserHwidDevice;
 exports.createUser = createUser;
 exports.updateUser = updateUser;
+exports.deleteUser = deleteUser;
+exports.enableUser = enableUser;
+exports.disableUser = disableUser;
 exports.resetAllUserDevices = resetAllUserDevices;
 const axios_1 = __importDefault(require("axios"));
 require("dotenv/config");
@@ -206,6 +209,48 @@ function updateUser(uuid, userData) {
         catch (error) {
             console.error(`Failed to update user ${uuid}:`, ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
             throw new Error(((_c = (_b = error.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.message) || "Kullanıcı güncellenemedi.");
+        }
+    });
+}
+function deleteUser(uuid) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c, _d;
+        try {
+            const response = yield apiClient.delete(`/api/users/${uuid}`);
+            const data = response.data;
+            return (_a = data.response) === null || _a === void 0 ? void 0 : _a.isDeleted;
+        }
+        catch (error) {
+            console.error(`Failed to delete user ${uuid}:`, ((_b = error.response) === null || _b === void 0 ? void 0 : _b.data) || error.message);
+            throw new Error(((_d = (_c = error.response) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.message) || "Kullanıcı silinemedi.");
+        }
+    });
+}
+function enableUser(uuid) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c;
+        try {
+            const response = yield apiClient.post(`/api/users/${uuid}/actions/enable`);
+            const data = response.data;
+            return data.response;
+        }
+        catch (error) {
+            console.error(`Failed to enable user ${uuid}:`, ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
+            throw new Error(((_c = (_b = error.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.message) || "Kullanıcı aktif edilemedi.");
+        }
+    });
+}
+function disableUser(uuid) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c;
+        try {
+            const response = yield apiClient.post(`/api/users/${uuid}/actions/disable`);
+            const data = response.data;
+            return data.response;
+        }
+        catch (error) {
+            console.error(`Failed to disable user ${uuid}:`, ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
+            throw new Error(((_c = (_b = error.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.message) || "Kullanıcı devre dışı bırakılamadı.");
         }
     });
 }

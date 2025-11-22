@@ -643,12 +643,29 @@ bot.callbackQuery(/^ud(.+)$/, async (ctx) => {
   const username = match[1];
 
   try {
+    const user = await userService.getUserByUsername(username);
+    if (!user) {
+      await safeEditMessageText(ctx, "❌ Kullanıcı bulunamadı.");
+      return;
+    }
+
     const message = await userService.getUserDetailsMessage(username);
 
     const keyboard = new InlineKeyboard()
       .text("⏰ Süre Uzat", `admin_extend_${username}`)
       .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
-      .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
+      .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`);
+
+    // Duruma göre Engelle/Aktif Et butonu
+    if (user.status === 'DISABLED' || user.status === 'BLOCKED') {
+      keyboard.text("✅ Aktif Et", `admin_unblock_${username}`);
+    } else {
+      keyboard.text("🚫 Engelle", `admin_block_${username}`);
+    }
+    
+    keyboard.row()
+      .text("🗑️ Sil", `admin_delete_${username}`)
+      .row()
       .text("🔙 Kullanıcı Listesi", "ls");
 
     await safeEditMessageText(ctx, message, {
@@ -957,6 +974,80 @@ bot.callbackQuery(/^admin_close_ticket_(\d+)$/, async (ctx) => {
   await ctx.reply("Ticket kapatıldı.", { reply_markup: keyboard });
 });
 
+// Admin Panel - Kullanıcı Engelle
+bot.callbackQuery(/^admin_block_(.+)$/, async (ctx) => {
+  const username = ctx.match ? ctx.match[1] : null;
+  if (!username) return;
+
+  try {
+    await safeAnswerCallback(ctx, "Kullanıcı engelleniyor...");
+    await userService.blockUser(username);
+    await ctx.reply(`🚫 *${username}* kullanıcısı engellendi!`, { parse_mode: "Markdown" });
+    
+    // Listeye dön
+    const keyboard = new InlineKeyboard().text("🔙 Kullanıcıya Dön", `ud${username}`);
+    await ctx.reply("İşlem tamamlandı.", { reply_markup: keyboard });
+  } catch (e: any) {
+    logger.error(`Block user error for ${username}:`, e.message);
+    await ctx.reply(`❌ Hata: ${e?.message || 'Kullanıcı engellenemedi'}`);
+  }
+});
+
+// Admin Panel - Kullanıcı Aktif Et
+bot.callbackQuery(/^admin_unblock_(.+)$/, async (ctx) => {
+  const username = ctx.match ? ctx.match[1] : null;
+  if (!username) return;
+
+  try {
+    await safeAnswerCallback(ctx, "Kullanıcı aktif ediliyor...");
+    await userService.unblockUser(username);
+    await ctx.reply(`✅ *${username}* kullanıcısı aktif edildi!`, { parse_mode: "Markdown" });
+    
+    // Listeye dön
+    const keyboard = new InlineKeyboard().text("🔙 Kullanıcıya Dön", `ud${username}`);
+    await ctx.reply("İşlem tamamlandı.", { reply_markup: keyboard });
+  } catch (e: any) {
+    logger.error(`Unblock user error for ${username}:`, e.message);
+    await ctx.reply(`❌ Hata: ${e?.message || 'Kullanıcı aktif edilemedi'}`);
+  }
+});
+
+// Admin Panel - Kullanıcı Sil (Onay)
+bot.callbackQuery(/^admin_delete_(.+)$/, async (ctx) => {
+  await safeAnswerCallback(ctx);
+  const username = ctx.match ? ctx.match[1] : null;
+  if (!username) return;
+
+  const keyboard = new InlineKeyboard()
+    .text("🗑️ Evet, Sil", `admin_confirm_delete_${username}`).row()
+    .text("🔙 İptal", `ud${username}`);
+
+  await safeEditMessageText(ctx,
+    `⚠️ *DİKKAT!* ⚠️\n\n*${username}* kullanıcısını silmek üzeresiniz.\nBu işlem geri alınamaz!\n\nOnaylıyor musunuz?`,
+    { parse_mode: "Markdown", reply_markup: keyboard }
+  );
+});
+
+// Admin Panel - Kullanıcı Sil (Kesin İşlem)
+bot.callbackQuery(/^admin_confirm_delete_(.+)$/, async (ctx) => {
+  const username = ctx.match ? ctx.match[1] : null;
+  if (!username) return;
+
+  try {
+    await safeAnswerCallback(ctx, "Kullanıcı siliniyor...");
+    await userService.deleteUser(username);
+    
+    await safeEditMessageText(ctx, `✅ *${username}* kullanıcısı başarıyla silindi!`, { parse_mode: "Markdown" });
+    
+    // Listeye dön
+    const keyboard = new InlineKeyboard().text("🔙 Kullanıcı Listesi", "ls");
+    await ctx.reply("Kullanıcı listesine dönebilirsiniz.", { reply_markup: keyboard });
+  } catch (e: any) {
+    logger.error(`Delete user error for ${username}:`, e.message);
+    await ctx.reply(`❌ Hata: ${e?.message || 'Kullanıcı silinemedi'}`);
+  }
+});
+
 // Admin Panel - Geri butonu
 bot.callbackQuery("admin_back", async (ctx) => {
   await safeAnswerCallback(ctx);
@@ -1254,8 +1345,6 @@ app.post('/endpoint', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-// ...existing code...
 
 async function startApp() {
   // Start the Express server
