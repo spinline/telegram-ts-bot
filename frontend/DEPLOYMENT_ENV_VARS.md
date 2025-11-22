@@ -1,47 +1,78 @@
-# Frontend Deployment Environment Variables
+# Frontend Deployment Guide
 
-## ⚠️ Önemli: Node.js Versiyon Sorunu
+Bu frontend uygulaması şu anda **Railpack** ile build ediliyor ve `serve` ile statik olarak sunuluyor.
 
-Vite **Node.js 22.12+** gerektiriyor ancak Nixpacks varsayılan olarak `nodejs_22` paketini kullanıyor ve bu **22.11.0** versionunu sağlıyor.
+## Ortam Özeti
 
-### 🎯 Çözüm: Dokploy'da Environment Variable Ekle
+- Builder: **Railpack (railpack-frontend)**
+- Node.js: **22.13.0** (`.nvmrc` ile uyumlu)
+- Install: `npm ci`
+- Build: `npm run build`
+- Start: `npm start` → `serve -s dist -l ${PORT:-3000}`
 
-Dokploy Dashboard'da frontend servisiniz için şu environment variable'ı ekleyin:
+## Dokploy Ayarları
 
-```
-Key: NIXPACKS_NODE_VERSION
-Value: 22.13.0
-```
+### 1. Build
 
-### 📝 Adım Adım:
+- Build Type / Builder: **Railpack**
+- Repository: `spinline/telegram-ts-bot`
+- Branch: `main` (veya kullandığınız branch)
+- Context Path: `frontend`
+- Railpack config: **Gerekli değil** (Railpack Node projesini otomatik algılıyor)
 
-1. **Dokploy Dashboard'a gidin**
-2. **Frontend servisinizi seçin**
-3. **Environment Variables** bölümüne gidin
-4. **Yeni variable ekleyin:**
-   - Key: `NIXPACKS_NODE_VERSION`
-   - Value: `22.13.0`
-5. **Save/Apply** edin
-6. **Redeploy** edin
+### 2. Runtime / Port
 
-### ✅ Sonuç:
+`package.json` içindeki start script'i:
 
-Build log'unda şunu göreceksiniz:
-```
-✅ node --version
-✅ v22.13.0  (22.11.0 değil!)
-✅ No Vite warning!
+```json
+"start": "serve -s dist -l ${PORT:-3000}"
 ```
 
-### 🔧 Diğer Environment Variables:
+Dokploy tarafında:
 
-```
+- Internal Port: **3000**
+- External Port / Domain: Dokploy panelinden istediğiniz domain veya port ile eşleyin.
+
+### 3. Environment Variables
+
+Önerilen environment variable'lar:
+
+```env
+NODE_ENV=production
 PORT=3000
-NIXPACKS_NODE_VERSION=22.13.0
 ```
 
-### 📚 Referanslar:
+Ek olarak, Vite tarafında kullanılan `VITE_...` değişkenleriniz varsa (örn. API URL):
 
-- Nixpacks Node.js Provider: https://nixpacks.com/docs/providers/node
-- Vite Node.js Requirements: https://vitejs.dev/guide/#scaffolding-your-first-vite-project
+```env
+VITE_API_BASE_URL=https://api.example.com
+# vb.
+```
 
+## Artık Kullanılmayanlar
+
+- `frontend/nixpacks.toml` (silindi)
+- `NIXPACKS_NODE_VERSION` gibi Nixpacks'e özel env değişkenlerine gerek yok.
+
+Railpack build log'unda aşağıya benzer satırlar görmeniz yeterlidir:
+
+```txt
+↳ Detected Node
+node  │  22.13.0  │  .nvmrc (22.13.0)
+...
+$ npm ci
+$ npm run build
+$ npm run start
+```
+
+Ve uygulama loglarında:
+
+```txt
+> frontend@0.0.0 start
+> serve -s dist -l ${PORT:-3000}
+INFO  Accepting connections at http://localhost:3000
+HTTP ... GET /
+HTTP ... Returned 200 in XX ms
+```
+
+Bu durumda frontend başarıyla deploy edilmiş ve çalışıyor demektir.
