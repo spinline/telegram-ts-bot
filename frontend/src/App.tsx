@@ -244,6 +244,8 @@ function App() {
                 onSupport={handleSupport}
                 onlineStatus={onlineStatus}
                 expireAt={accountData?.expireAt}
+                isRegistered={!!accountData && !accountError}
+                loading={accountLoading}
               />
             )}
             {currentScreen === 'account' && (

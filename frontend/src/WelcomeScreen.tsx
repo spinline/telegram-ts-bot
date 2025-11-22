@@ -1,5 +1,5 @@
-import { Button, Group, Stack, Text, Title, ThemeIcon, Badge } from '@mantine/core';
-import { IconShield, IconShoppingCart, IconSettings, IconUser, IconHeadset } from '@tabler/icons-react';
+import { Button, Group, Stack, Text, Title, ThemeIcon, Badge, Loader } from '@mantine/core';
+import { IconShield, IconShoppingCart, IconSettings, IconUser, IconHeadset, IconRocket } from '@tabler/icons-react';
 import { useEffect, useMemo } from 'react';
 
 interface WelcomeScreenProps {
@@ -9,9 +9,20 @@ interface WelcomeScreenProps {
   onSupport: () => void;
   onlineStatus?: 'online' | 'offline' | null;
   expireAt?: string;
+  isRegistered: boolean;
+  loading: boolean;
 }
 
-function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSupport, onlineStatus, expireAt }: WelcomeScreenProps) {
+function WelcomeScreen({
+  onViewAccount,
+  onBuySubscription,
+  onInstallSetup,
+  onSupport,
+  onlineStatus,
+  expireAt,
+  isRegistered,
+  loading
+}: WelcomeScreenProps) {
   // Telegram WebApp ve kullanıcıyı al
   const webApp = (window as any)?.Telegram?.WebApp;
 
@@ -87,6 +98,164 @@ function WelcomeScreen({ onViewAccount, onBuySubscription, onInstallSetup, onSup
     return expireDate < now;
   }, [expireAt]);
 
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100dvh',
+        gap: '20px'
+      }}>
+        <Loader size="lg" color="teal" />
+        <Text c="dimmed">Hesap bilgileriniz yükleniyor...</Text>
+      </div>
+    );
+  }
+
+  // Kayıtsız kullanıcı için landing page
+  if (!isRegistered) {
+    return (
+      <div style={{
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        marginTop: '120px',
+        width: '100%',
+        padding: '0 20px'
+      }}>
+        {/* Kalkan animasyonu */}
+        <div
+          className="shield-ripple"
+          style={{
+            position: 'absolute',
+            top: -100,
+            zIndex: 3,
+            ['--signal-color' as any]: 'rgba(20, 184, 166, 0.55)',
+          }}
+        >
+          <div className="ripple ripple-1" />
+          <div className="ripple ripple-2" />
+          <div className="ripple ripple-3" />
+          <ThemeIcon variant="filled" size={120} radius="xl" color="teal" className="shield-core">
+            <IconShield style={{ width: '70%', height: '70%' }} stroke={1.6} />
+          </ThemeIcon>
+        </div>
+
+        {/* Landing page içeriği */}
+        <div
+          style={{
+            display: 'flex',
+            width: '100%',
+            backgroundColor: '#0006',
+            overflow: 'auto',
+            zIndex: 2,
+            position: 'relative',
+            padding: 30,
+            paddingTop: 80,
+            flexDirection: 'column',
+            borderRadius: '1rem',
+            maxHeight: '90%',
+            boxShadow: 'none',
+            border: 'none',
+          }}
+        >
+          <Stack align="center" gap="xl">
+            <Stack align="center" gap="md">
+              <Title order={1} style={{ color: '#fff', textAlign: 'center' }}>
+                Hoş Geldiniz!
+              </Title>
+              <Text size="lg" c="dimmed" ta="center">
+                Güvenli ve hızlı VPN hizmetimizle tanışın
+              </Text>
+            </Stack>
+
+            <Stack w="100%" gap="lg" mt="md">
+              <div style={{
+                padding: '20px',
+                borderRadius: '12px',
+                background: 'rgba(20, 184, 166, 0.1)',
+                border: '1px solid rgba(20, 184, 166, 0.3)'
+              }}>
+                <Stack gap="sm">
+                  <Text size="md" fw={600} style={{ color: '#14b8a6' }}>
+                    ✨ Neden Aeron VPN?
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    • Yüksek hız ve güvenlik
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    • Sınırsız bant genişliği
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    • 7/24 müşteri desteği
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    • Kolay kurulum
+                  </Text>
+                </Stack>
+              </div>
+
+              <Stack gap="sm">
+                <Text size="sm" c="dimmed" ta="center">
+                  Şu anda kayıtlı bir hesabınız bulunmuyor.
+                </Text>
+                <Text size="sm" c="dimmed" ta="center">
+                  Başlamak için telegram botumuzdan <strong style={{ color: '#14b8a6' }}>"Try for Free"</strong> butonuna tıklayarak ücretsiz deneme hesabı oluşturun!
+                </Text>
+              </Stack>
+
+              <Button
+                leftSection={<IconRocket size={20} />}
+                color="teal"
+                size="lg"
+                radius="md"
+                fullWidth
+                onClick={() => {
+                  triggerHaptic();
+                  // Telegram botuna yönlendir
+                  const webApp = (window as any)?.Telegram?.WebApp;
+                  webApp?.close();
+                }}
+              >
+                Telegram Bot'a Git
+              </Button>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: '14px',
+                  borderRadius: '8px',
+                  background: 'rgba(255, 255, 255, 0.07)',
+                  transition: 'all .2s ease-in-out',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
+                }}
+                onClick={handleSupport}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <IconHeadset size={20} style={{ color: '#fff' }} />
+                  <Text size="md" fw={500} style={{ color: '#fff' }}>Destek</Text>
+                </div>
+              </div>
+            </Stack>
+          </Stack>
+        </div>
+      </div>
+    );
+  }
+
+  // Kayıtlı kullanıcı için mevcut UI
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '180px', width: '100%' }}>
       {/* Kalkan iç çerçevenin dışında */}
