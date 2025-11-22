@@ -312,9 +312,15 @@ exports.bot.on("message", (ctx) => __awaiter(void 0, void 0, void 0, function* (
     }
 }));
 exports.bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
+// Test komutu - bot mesaj alıyor mu kontrol için
+exports.bot.command("ping", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('🏓 /ping komutu alındı!');
+    yield ctx.reply("🏓 Pong! Bot çalışıyor.");
+}));
 // Admin Panel Komutları
 exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
+    console.log('🔴 /admin komutu tetiklendi - EN BAŞTA');
     try {
         const telegramId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
         console.log('🔍 /admin komutu çalıştırıldı');

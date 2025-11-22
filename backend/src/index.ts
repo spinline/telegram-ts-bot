@@ -301,8 +301,16 @@ bot.on("message", async (ctx) => {
 
 bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
 
+// Test komutu - bot mesaj alıyor mu kontrol için
+bot.command("ping", async (ctx) => {
+  console.log('🏓 /ping komutu alındı!');
+  await ctx.reply("🏓 Pong! Bot çalışıyor.");
+});
+
 // Admin Panel Komutları
 bot.command("admin", async (ctx) => {
+  console.log('🔴 /admin komutu tetiklendi - EN BAŞTA');
+
   try {
     const telegramId = ctx.from?.id;
 
