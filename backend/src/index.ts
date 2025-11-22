@@ -813,13 +813,30 @@ async function startApp() {
     await bot.start({
       onStart: (botInfo) => {
         console.log(`✅ Bot @${botInfo.username} is running!`);
-        console.log(`📱 Commands: /start, /admin, /help, /app`);
+        console.log(`📱 Commands: /start, /admin, /help, /app, /ping`);
         console.log(`⚡ RemnaWave webhook: POST /endpoint`);
-      }
+        console.log(`🔍 Long polling aktif - mesajları dinliyorum...`);
+      },
+      drop_pending_updates: true, // Eski mesajları atla
+      allowed_updates: ["message", "callback_query"] // Sadece mesaj ve callback al
     });
   } catch (error: any) {
-    console.error("❌ Failed to start bot:", error?.message);
-    console.error("Check if BOT_TOKEN is correct in .env");
+    console.error("❌ FATAL: Bot başlatılamadı!");
+    console.error("Hata:", error?.message);
+    console.error("Stack:", error?.stack);
+
+    // 409 hatası özel kontrolü
+    if (error?.message?.includes("409") || error?.message?.includes("Conflict")) {
+      console.error("");
+      console.error("🚨 409 CONFLICT HATASI TESPİT EDİLDİ!");
+      console.error("Sorun: Başka bir bot instance'ı çalışıyor!");
+      console.error("Çözüm 1: Dokploy'da sadece 1 instance çalıştığından emin olun");
+      console.error("Çözüm 2: Local geliştirme ortamında bot çalışıyorsa durdurun");
+      console.error("Çözüm 3: Başka bir sunucuda bot çalışıyorsa durdurun");
+      console.error("");
+    }
+
+    console.error("Bot çalışmıyor ama API sunucusu çalışmaya devam ediyor...");
   }
 
   // Handle graceful shutdown

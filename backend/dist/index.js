@@ -731,6 +731,7 @@ app.post('/endpoint', (req, res) => __awaiter(void 0, void 0, void 0, function* 
 // ...existing code...
 function startApp() {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
         // Start the Express server
         app.listen(port, () => {
             console.log(`API server listening on port ${port}`);
@@ -745,14 +746,29 @@ function startApp() {
             yield exports.bot.start({
                 onStart: (botInfo) => {
                     console.log(`✅ Bot @${botInfo.username} is running!`);
-                    console.log(`📱 Commands: /start, /admin, /help, /app`);
+                    console.log(`📱 Commands: /start, /admin, /help, /app, /ping`);
                     console.log(`⚡ RemnaWave webhook: POST /endpoint`);
-                }
+                    console.log(`🔍 Long polling aktif - mesajları dinliyorum...`);
+                },
+                drop_pending_updates: true, // Eski mesajları atla
+                allowed_updates: ["message", "callback_query"] // Sadece mesaj ve callback al
             });
         }
         catch (error) {
-            console.error("❌ Failed to start bot:", error === null || error === void 0 ? void 0 : error.message);
-            console.error("Check if BOT_TOKEN is correct in .env");
+            console.error("❌ FATAL: Bot başlatılamadı!");
+            console.error("Hata:", error === null || error === void 0 ? void 0 : error.message);
+            console.error("Stack:", error === null || error === void 0 ? void 0 : error.stack);
+            // 409 hatası özel kontrolü
+            if (((_a = error === null || error === void 0 ? void 0 : error.message) === null || _a === void 0 ? void 0 : _a.includes("409")) || ((_b = error === null || error === void 0 ? void 0 : error.message) === null || _b === void 0 ? void 0 : _b.includes("Conflict"))) {
+                console.error("");
+                console.error("🚨 409 CONFLICT HATASI TESPİT EDİLDİ!");
+                console.error("Sorun: Başka bir bot instance'ı çalışıyor!");
+                console.error("Çözüm 1: Dokploy'da sadece 1 instance çalıştığından emin olun");
+                console.error("Çözüm 2: Local geliştirme ortamında bot çalışıyorsa durdurun");
+                console.error("Çözüm 3: Başka bir sunucuda bot çalışıyorsa durdurun");
+                console.error("");
+            }
+            console.error("Bot çalışmıyor ama API sunucusu çalışmaya devam ediyor...");
         }
         // Handle graceful shutdown
         const shutdown = () => __awaiter(this, void 0, void 0, function* () {
