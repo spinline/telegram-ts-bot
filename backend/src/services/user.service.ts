@@ -8,9 +8,14 @@ class UserService {
   /**
    * Get all users with pagination and sorting
    */
-  async getUsers(page: number = 1, take: number = 100, sortBy?: 'traffic' | 'date' | 'status') {
+  async getUsers(page: number = 1, take: number = 100, sortBy?: 'traffic' | 'date' | 'status', filterStatus?: string) {
     const result = await getAllUsers(1, 1000); // Sıralama için daha fazla veri çekiyoruz (API desteği sınırlıysa)
     let users = result.users || [];
+
+    // Filtreleme
+    if (filterStatus && filterStatus !== 'ALL') {
+      users = users.filter((u: any) => u.status === filterStatus);
+    }
 
     // Sıralama Mantığı
     if (sortBy === 'traffic') {
@@ -51,6 +56,39 @@ class UserService {
   async getUsersWithTelegramId() {
     const { users } = await this.getUsers(1, 1000);
     return users.filter((u: any) => u.telegramId || u.telegram_id || u.tId);
+  }
+
+  /**
+   * Search users by multiple criteria
+   */
+  async searchUsers(query: string, status?: string) {
+    // 1. Get all users (fetch enough to cover most cases)
+    const { users } = await this.getUsers(1, 2000);
+
+    if (!users) return [];
+
+    const lowerQuery = query.toLowerCase().trim();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lowerQuery);
+    const isNumeric = /^\d+$/.test(lowerQuery);
+
+    return users.filter((user: any) => {
+      // Status filter
+      if (status && user.status !== status) return false;
+
+      // If query is empty but status is provided, return all matching status
+      if (!lowerQuery && status) return true;
+      if (!lowerQuery) return true;
+
+      // Search criteria
+      if (isUuid && user.uuid === lowerQuery) return true;
+      if (isNumeric && (String(user.telegramId) === lowerQuery || String(user.telegram_id) === lowerQuery)) return true;
+      
+      // Text search (Username, Tag)
+      if (user.username?.toLowerCase().includes(lowerQuery)) return true;
+      if (user.tag?.toLowerCase().includes(lowerQuery)) return true;
+      
+      return false;
+    });
   }
 
   /**

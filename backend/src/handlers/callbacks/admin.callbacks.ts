@@ -136,6 +136,9 @@ export async function adminUserDetailHandler(ctx: Context, username: string) {
     const message = userService.formatUserDetails(user);
 
     const keyboard = new InlineKeyboard()
+      .text("⏰ Süre Uzat", `admin_extend_${username}`)
+      .text("📊 Trafik Ekle", `admin_add_traffic_${username}`).row()
+      .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
       .text("🔙 Kullanıcı Listesi", "admin_users");
 
     await safeEditMessageText(ctx, message, {

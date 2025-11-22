@@ -145,16 +145,46 @@ bot.on("message:text", async (ctx, next) => {
   // Admin session varsa işle
   try {
     if (session.action === 'search') {
-      const username = text.trim();
+      const query = text.trim();
 
       try {
-        const message = await userService.getUserDetailsMessage(username);
+        const results = await userService.searchUsers(query);
 
-        // Kullanıcı detayına gitmek için buton ekle
-        const keyboard = new InlineKeyboard()
-          .text("📋 Detayları Görüntüle", `user_detail_${username}`);
+        if (results.length === 0) {
+          await ctx.reply(`❌ Kullanıcı bulunamadı: ${query}`);
+          sessionManager.delete(userId);
+          return;
+        }
 
-        await ctx.reply(message, { parse_mode: "Markdown", reply_markup: keyboard });
+        if (results.length === 1) {
+          const user = results[0];
+          const message = await userService.getUserDetailsMessage(user.username);
+
+          // Kullanıcı detayına gitmek için buton ekle
+          const keyboard = new InlineKeyboard()
+            .text("⏰ Süre Uzat", `admin_extend_${user.username}`)
+            .text("📊 Trafik Ekle", `admin_add_traffic_${user.username}`).row()
+            .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${user.username}`).row()
+            .text("🔙 Kullanıcı Listesi", "admin_users");
+
+          await ctx.reply(message, { parse_mode: "Markdown", reply_markup: keyboard });
+        } else {
+          // Birden fazla sonuç varsa listele
+          const message = `🔍 *Arama Sonuçları* (${results.length})\n\nLütfen bir kullanıcı seçin:`;
+          const keyboard = new InlineKeyboard();
+
+          results.slice(0, 10).forEach((user: any) => {
+            const status = user.status === 'ACTIVE' ? '🟢' :
+                           user.status === 'LIMITED' ? '🟡' :
+                           user.status === 'EXPIRED' ? '🔴' : '⚫';
+            keyboard.text(`${status} ${user.username}`, `user_detail_${user.username}`).row();
+          });
+
+          keyboard.text("🔙 İptal", "admin_user_ops");
+
+          await ctx.reply(message, { parse_mode: "Markdown", reply_markup: keyboard });
+        }
+        
         sessionManager.delete(userId);
 
       } catch (e: any) {
@@ -446,55 +476,70 @@ bot.command("admin", async (ctx) => {
 });
 
 // Admin Panel - Kullanıcı Listesi
-bot.callbackQuery(/^admin_users(_page_(\d+))?(_sort_(\w+))?$/, async (ctx) => {
+bot.callbackQuery(/^admin_users(_page_(\d+))?(_sort_(\w+))?(_filter_(\w+))?$/, async (ctx) => {
   await safeAnswerCallback(ctx);
 
   const page = ctx.match && ctx.match[2] ? parseInt(ctx.match[2]) : 1;
   const sort = (ctx.match && ctx.match[4] ? ctx.match[4] : undefined) as 'traffic' | 'date' | 'status' | undefined;
+  const filter = (ctx.match && ctx.match[6] ? ctx.match[6] : 'ALL');
   const limit = 10;
 
   try {
-    const { users, total } = await userService.getUsers(page, limit, sort);
+    const { users, total } = await userService.getUsers(page, limit, sort, filter);
 
-    if (!users || users.length === 0) {
+    if (!users || (users.length === 0 && filter === 'ALL')) {
       await safeEditMessageText(ctx, "ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
       return;
     }
 
     const totalPages = Math.ceil(total / limit);
     const sortLabel = sort === 'traffic' ? ' (Trafik)' : sort === 'date' ? ' (Tarih)' : sort === 'status' ? ' (Durum)' : '';
-    const message = `👥 *Kullanıcı Listesi*${sortLabel} (Sayfa ${page}/${totalPages})`;
+    const filterLabel = filter !== 'ALL' ? ` [${filter}]` : '';
+    const message = `👥 *Kullanıcı Listesi*${sortLabel}${filterLabel} (Sayfa ${page}/${totalPages})`;
 
     const keyboard = new InlineKeyboard();
 
+    const sortParam = sort ? `_sort_${sort}` : '';
+    const filterParam = filter ? `_filter_${filter}` : '';
+
     // Filtreleme Butonları
     keyboard
-      .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `admin_users_page_1_sort_traffic`)
-      .text(sort === 'date' ? "✅ Tarih" : "Tarih", `admin_users_page_1_sort_date`)
-      .text(sort === 'status' ? "✅ Durum" : "Durum", `admin_users_page_1_sort_status`)
+      .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `admin_users_page_1${sortParam}_filter_ALL`)
+      .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `admin_users_page_1${sortParam}_filter_ACTIVE`)
+      .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `admin_users_page_1${sortParam}_filter_EXPIRED`)
       .row();
 
-    users.forEach((user: any) => {
-      const status = user.status === 'ACTIVE' ? '🟢' :
-                     user.status === 'LIMITED' ? '🟡' :
-                     user.status === 'EXPIRED' ? '🔴' : '⚫';
-      const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(1);
-      const limitGB = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
+    // Sıralama Butonları
+    keyboard
+      .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `admin_users_page_1_sort_traffic${filterParam}`)
+      .text(sort === 'date' ? "✅ Tarih" : "Tarih", `admin_users_page_1_sort_date${filterParam}`)
+      .text(sort === 'status' ? "✅ Durum" : "Durum", `admin_users_page_1_sort_status${filterParam}`)
+      .row();
 
-      keyboard.text(
-        `${status} ${user.username} | ${usedGB}/${limitGB} GB`, 
-        `user_detail_${user.username}`
-      ).row();
-    });
+    if (users.length === 0) {
+       keyboard.row().text("⚠️ Bu filtrede kullanıcı yok", "noop");
+    } else {
+      users.forEach((user: any) => {
+        const status = user.status === 'ACTIVE' ? '🟢' :
+                       user.status === 'LIMITED' ? '🟡' :
+                       user.status === 'EXPIRED' ? '🔴' : '⚫';
+        const usedGB = (user.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(1);
+        const limitGB = (user.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0);
+
+        keyboard.text(
+          `${status} ${user.username} | ${usedGB}/${limitGB} GB`, 
+          `user_detail_${user.username}`
+        ).row();
+      });
+    }
 
     // Pagination buttons
     const paginationRow = [];
-    const sortParam = sort ? `_sort_${sort}` : '';
     if (page > 1) {
-      paginationRow.push({ text: "⬅️ Önceki", callback_data: `admin_users_page_${page - 1}${sortParam}` });
+      paginationRow.push({ text: "⬅️ Önceki", callback_data: `admin_users_page_${page - 1}${sortParam}${filterParam}` });
     }
     if (page < totalPages) {
-      paginationRow.push({ text: "Sonraki ➡️", callback_data: `admin_users_page_${page + 1}${sortParam}` });
+      paginationRow.push({ text: "Sonraki ➡️", callback_data: `admin_users_page_${page + 1}${sortParam}${filterParam}` });
     }
     
     if (paginationRow.length > 0) {

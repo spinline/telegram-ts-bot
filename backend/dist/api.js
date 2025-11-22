@@ -198,7 +198,8 @@ function updateUser(uuid, userData) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, _b, _c;
         try {
-            const response = yield apiClient.patch(`/api/users/${uuid}`, userData);
+            // API expects PATCH /api/users with uuid in body
+            const response = yield apiClient.patch(`/api/users`, Object.assign({ uuid }, userData));
             const data = response.data;
             return data.response;
         }
