@@ -51,3 +51,19 @@ export async function safeAnswerCallback(ctx: any, text?: string) {
   }
 }
 
+/**
+ * Safe edit message text
+ * Ignores "message is not modified" errors
+ */
+export async function safeEditMessageText(ctx: any, text: string, extra?: any) {
+  try {
+    await ctx.editMessageText(text, extra);
+  } catch (e: any) {
+    if (e.message?.includes("message is not modified")) {
+      // Ignore this error
+      return;
+    }
+    throw e;
+  }
+}
+

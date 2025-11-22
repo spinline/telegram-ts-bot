@@ -1,5 +1,5 @@
 import { Context, InlineKeyboard } from "grammy";
-import { safeAnswerCallback } from "../../middlewares/error.middleware";
+import { safeAnswerCallback, safeEditMessageText } from "../../middlewares/error.middleware";
 import { sessionManager } from "../../middlewares/session.middleware";
 import { userService } from "../../services/user.service";
 import { logger } from "../../utils/logger";
@@ -49,7 +49,7 @@ export async function adminUserOpsHandler(ctx: Context) {
     .text("📊 Trafik Ekle", "admin_add_traffic").row()
     .text("🔙 Geri", "admin_back");
 
-  await ctx.editMessageText(
+  await safeEditMessageText(ctx,
     "⚙️ *Kullanıcı İşlemleri*\n\nİşlem seçin:",
     { reply_markup: keyboard, parse_mode: "Markdown" }
   );
@@ -70,7 +70,7 @@ export async function adminUsersHandler(ctx: Context) {
     const { users, total } = await userService.getUsers(page, limit);
 
     if (!users || users.length === 0) {
-      await ctx.editMessageText("ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
+      await safeEditMessageText(ctx, "ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
       return;
     }
 
@@ -109,13 +109,13 @@ export async function adminUsersHandler(ctx: Context) {
 
     keyboard.row().text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
 
-    await ctx.editMessageText(message, {
+    await safeEditMessageText(ctx, message, {
       reply_markup: keyboard,
       parse_mode: "Markdown"
     });
   } catch (e: any) {
     logger.error('Admin panel error (users):', e.message);
-    await ctx.editMessageText(`❌ Hata: ${e?.message || 'Kullanıcı listesi alınamadı'}`);
+    await safeEditMessageText(ctx, `❌ Hata: ${e?.message || 'Kullanıcı listesi alınamadı'}`);
   }
 }
 
@@ -129,7 +129,7 @@ export async function adminUserDetailHandler(ctx: Context, username: string) {
     const user = await userService.getUserByUsername(username);
 
     if (!user) {
-      await ctx.editMessageText(`❌ Kullanıcı bulunamadı: ${username}`);
+      await safeEditMessageText(ctx, `❌ Kullanıcı bulunamadı: ${username}`);
       return;
     }
 
@@ -138,12 +138,12 @@ export async function adminUserDetailHandler(ctx: Context, username: string) {
     const keyboard = new InlineKeyboard()
       .text("🔙 Kullanıcı Listesi", "admin_users");
 
-    await ctx.editMessageText(message, {
+    await safeEditMessageText(ctx, message, {
       parse_mode: "Markdown",
       reply_markup: keyboard
     });
   } catch (e: any) {
-    await ctx.editMessageText(`❌ Hata: ${e?.message || 'Kullanıcı bilgisi alınamadı'}`);
+    await safeEditMessageText(ctx, `❌ Hata: ${e?.message || 'Kullanıcı bilgisi alınamadı'}`);
   }
 }
 
@@ -161,7 +161,7 @@ export async function adminSearchHandler(ctx: Context) {
   const keyboard = new InlineKeyboard()
     .text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
 
-  await ctx.editMessageText(
+  await safeEditMessageText(ctx,
     "🔍 *Kullanıcı Arama*\n\nKullanıcı adını yazın:\n\n_İptal için /cancel veya aşağıdaki butona tıklayın_",
     {
       parse_mode: "Markdown",
@@ -181,7 +181,7 @@ export async function adminBroadcastHandler(ctx: Context) {
     sessionManager.set(adminId, { action: 'broadcast' });
   }
 
-  await ctx.editMessageText(
+  await safeEditMessageText(ctx,
     "📢 *Toplu Bildirim*\n\nGöndermek istediğiniz mesajı yazın:\n\n_İptal için /cancel yazın_",
     { parse_mode: "Markdown" }
   );
@@ -204,10 +204,10 @@ export async function adminStatsHandler(ctx: Context) {
       `📈 Toplam Trafik: ${(stats.totalTraffic / 1024 / 1024 / 1024).toFixed(2)} GB\n` +
       `📊 Ortalama Trafik: ${(stats.avgTraffic / 1024 / 1024 / 1024).toFixed(2)} GB/kullanıcı`;
 
-    await ctx.editMessageText(message, { parse_mode: "Markdown" });
+    await safeEditMessageText(ctx, message, { parse_mode: "Markdown" });
   } catch (e: any) {
     logger.error('Admin panel error (stats):', e.message);
-    await ctx.editMessageText(`❌ Hata: ${e?.message || 'İstatistikler alınamadı'}`);
+    await safeEditMessageText(ctx, `❌ Hata: ${e?.message || 'İstatistikler alınamadı'}`);
   }
 }
 
@@ -224,7 +224,7 @@ export async function adminLogsHandler(ctx: Context) {
     `• PM2: \`pm2 logs telegram-bot\`\n` +
     `• Docker: \`docker logs -f container_name\``;
 
-  await ctx.editMessageText(message, { parse_mode: "Markdown" });
+  await safeEditMessageText(ctx, message, { parse_mode: "Markdown" });
 }
 
 /**
@@ -249,7 +249,7 @@ export async function adminStatusHandler(ctx: Context) {
     `🔗 Webhook: Aktif ✅\n` +
     `📡 RemnaWave API: Bağlı ✅`;
 
-  await ctx.editMessageText(message, { parse_mode: "Markdown" });
+  await safeEditMessageText(ctx, message, { parse_mode: "Markdown" });
 }
 
 /**
@@ -265,7 +265,7 @@ export async function adminBackHandler(ctx: Context) {
     .text("📝 Sistem Logları", "admin_logs").row()
     .text("💾 Sistem Durumu", "admin_status");
 
-  await ctx.editMessageText(
+  await safeEditMessageText(ctx,
     "👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:",
     { reply_markup: keyboard, parse_mode: "Markdown" }
   );

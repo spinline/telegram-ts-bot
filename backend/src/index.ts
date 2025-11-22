@@ -9,7 +9,7 @@ import crypto from 'crypto';
 
 // 🎯 NEW: Import modern architecture layers
 import { env } from './config/env';
-import { errorHandler, safeAnswerCallback } from './middlewares/error.middleware';
+import { errorHandler, safeAnswerCallback, safeEditMessageText } from './middlewares/error.middleware';
 import { sessionManager } from './middlewares/session.middleware';
 import { adminAuthMiddleware, isAdmin } from './middlewares/auth.middleware';
 import { userService } from './services/user.service';
@@ -457,7 +457,7 @@ bot.callbackQuery(/^admin_users(_page_(\d+))?(_sort_(\w+))?$/, async (ctx) => {
     const { users, total } = await userService.getUsers(page, limit, sort);
 
     if (!users || users.length === 0) {
-      await ctx.editMessageText("ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
+      await safeEditMessageText(ctx, "ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
       return;
     }
 
@@ -503,13 +503,13 @@ bot.callbackQuery(/^admin_users(_page_(\d+))?(_sort_(\w+))?$/, async (ctx) => {
 
     keyboard.row().text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
 
-    await ctx.editMessageText(message, {
+    await safeEditMessageText(ctx, message, {
       reply_markup: keyboard,
       parse_mode: "Markdown"
     });
   } catch (e: any) {
     logger.error('Admin panel error (users):', e.message);
-    await ctx.editMessageText(`❌ Hata: ${e?.message || 'Kullanıcı listesi alınamadı'}`);
+    await safeEditMessageText(ctx, `❌ Hata: ${e?.message || 'Kullanıcı listesi alınamadı'}`);
   }
 });
 
@@ -525,7 +525,7 @@ bot.callbackQuery("admin_search", async (ctx) => {
   const keyboard = new InlineKeyboard()
     .text("🔙 Kullanıcı İşlemleri", "admin_user_ops");
 
-  await ctx.editMessageText(
+  await safeEditMessageText(ctx,
     "🔍 *Kullanıcı Arama*\n\nKullanıcı adını yazın:\n\n_İptal için /cancel veya aşağıdaki butona tıklayın_",
     {
       parse_mode: "Markdown",
@@ -552,12 +552,12 @@ bot.callbackQuery(/^user_detail_(.+)$/, async (ctx) => {
       .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
       .text("🔙 Kullanıcı Listesi", "admin_users");
 
-    await ctx.editMessageText(message, {
+    await safeEditMessageText(ctx, message, {
       parse_mode: "Markdown",
       reply_markup: keyboard
     });
   } catch (e: any) {
-    await ctx.editMessageText(`❌ Hata: ${e?.message || 'Kullanıcı bilgisi alınamadı'}`);
+    await safeEditMessageText(ctx, `❌ Hata: ${e?.message || 'Kullanıcı bilgisi alınamadı'}`);
   }
 });
 
@@ -575,7 +575,7 @@ bot.callbackQuery(/^admin_extend_(.+)$/, async (ctx) => {
   const keyboard = new InlineKeyboard()
     .text("🔙 İptal", `user_detail_${username}`);
 
-  await ctx.editMessageText(
+  await safeEditMessageText(ctx,
     `⏰ *Süre Uzatma: ${username}*\n\nKaç gün eklemek istiyorsunuz? (Örn: 30)\n\n_İptal için aşağıdaki butona tıklayın_`,
     { parse_mode: "Markdown", reply_markup: keyboard }
   );
@@ -595,7 +595,7 @@ bot.callbackQuery(/^admin_add_traffic_(.+)$/, async (ctx) => {
   const keyboard = new InlineKeyboard()
     .text("🔙 İptal", `user_detail_${username}`);
 
-  await ctx.editMessageText(
+  await safeEditMessageText(ctx,
     `📊 *Trafik Ekleme: ${username}*\n\nKaç GB eklemek istiyorsunuz? (Örn: 10)\n\n_İptal için aşağıdaki butona tıklayın_`,
     { parse_mode: "Markdown", reply_markup: keyboard }
   );
@@ -622,7 +622,7 @@ bot.callbackQuery(/^admin_reset_devices_(.+)$/, async (ctx) => {
         .text("🔄 Cihaz Sıfırla", `admin_reset_devices_${username}`).row()
         .text("🔙 Kullanıcı Listesi", "admin_users");
         
-      await ctx.editMessageText(message, {
+      await safeEditMessageText(ctx, message, {
         parse_mode: "Markdown",
         reply_markup: keyboard
       });
@@ -644,7 +644,7 @@ bot.callbackQuery("admin_broadcast", async (ctx) => {
     sessionManager.set(adminId, { action: 'broadcast' });
   }
 
-  await ctx.editMessageText(
+  await safeEditMessageText(ctx,
     "📢 *Toplu Bildirim*\n\nGöndermek istediğiniz mesajı yazın:\n\n_İptal için /cancel yazın_",
     { parse_mode: "Markdown" }
   );
@@ -666,11 +666,11 @@ bot.callbackQuery("admin_stats", async (ctx) => {
       `📈 Toplam Trafik: ${(stats.totalTraffic / 1024 / 1024 / 1024).toFixed(2)} GB\n` +
       `📊 Ortalama Trafik: ${(stats.avgTraffic / 1024 / 1024 / 1024).toFixed(2)} GB/kullanıcı`;
 
-    await ctx.editMessageText(message, { parse_mode: "Markdown" });
+    await safeEditMessageText(ctx, message, { parse_mode: "Markdown" });
   } catch (e: any) {
     // 🎯 NEW: Use logger
     logger.error('Admin panel error (stats):', e.message);
-    await ctx.editMessageText(`❌ Hata: ${e?.message || 'İstatistikler alınamadı'}`);
+    await safeEditMessageText(ctx, `❌ Hata: ${e?.message || 'İstatistikler alınamadı'}`);
   }
 });
 
@@ -689,7 +689,7 @@ bot.callbackQuery("admin_user_ops", async (ctx) => {
     .text("🔍 Kullanıcı Ara", "admin_search").row()
     .text("🔙 Geri", "admin_back");
 
-  await ctx.editMessageText(
+  await safeEditMessageText(ctx,
     "⚙️ *Kullanıcı İşlemleri*\n\nİşlem seçin:",
     { reply_markup: keyboard, parse_mode: "Markdown" }
   );
@@ -715,7 +715,7 @@ bot.callbackQuery("admin_status", async (ctx) => {
     `🔗 Webhook: Aktif ✅\n` +
     `📡 RemnaWave API: Bağlı ✅`;
 
-  await ctx.editMessageText(message, { parse_mode: "Markdown" });
+  await safeEditMessageText(ctx, message, { parse_mode: "Markdown" });
 });
 
 // Admin Panel - Sistem Logları
@@ -731,7 +731,7 @@ bot.callbackQuery("admin_logs", async (ctx) => {
     `• PM2: \`pm2 logs telegram-bot\`\n` +
     `• Docker: \`docker logs -f container_name\``;
 
-  await ctx.editMessageText(message, { parse_mode: "Markdown" });
+  await safeEditMessageText(ctx, message, { parse_mode: "Markdown" });
 });
 
 // Admin Panel - Geri butonu
@@ -745,7 +745,7 @@ bot.callbackQuery("admin_back", async (ctx) => {
     .text("📝 Sistem Logları", "admin_logs").row()
     .text("💾 Sistem Durumu", "admin_status");
 
-  await ctx.editMessageText(
+  await safeEditMessageText(ctx,
     "👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:",
     { reply_markup: keyboard, parse_mode: "Markdown" }
   );

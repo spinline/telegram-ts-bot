@@ -148,7 +148,11 @@ export async function createUser(userData: any) {
 
 export async function updateUser(uuid: string, userData: any) {
   try {
-    const response = await apiClient.patch(`/api/users/${uuid}`, userData);
+    // API expects PATCH /api/users with uuid in body
+    const response = await apiClient.patch(`/api/users`, {
+      uuid,
+      ...userData
+    });
     const data: any = response.data;
     return data.response;
   } catch (error: any) {
