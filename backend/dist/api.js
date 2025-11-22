@@ -90,14 +90,25 @@ function getAllUsers() {
             });
             const data = response.data;
             console.log('getAllUsers response:', JSON.stringify(data).substring(0, 200));
-            // RemnaWave API response format: { response: [...] } veya { data: [...] }
-            if (data.response && Array.isArray(data.response)) {
+            // RemnaWave API response formats:
+            // Format 1: { response: { users: [...], total: X } }
+            if (data.response && data.response.users && Array.isArray(data.response.users)) {
+                console.log(`getAllUsers: Found ${data.response.users.length} users (total: ${data.response.total})`);
+                return data.response.users;
+            }
+            // Format 2: { response: [...] }
+            else if (data.response && Array.isArray(data.response)) {
+                console.log(`getAllUsers: Found ${data.response.length} users (array format)`);
                 return data.response;
             }
+            // Format 3: { data: [...] }
             else if (data.data && Array.isArray(data.data)) {
+                console.log(`getAllUsers: Found ${data.data.length} users (data format)`);
                 return data.data;
             }
+            // Format 4: Direct array
             else if (Array.isArray(data)) {
+                console.log(`getAllUsers: Found ${data.length} users (direct array)`);
                 return data;
             }
             console.error('Unexpected API response format:', data);
