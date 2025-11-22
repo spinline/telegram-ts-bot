@@ -1,5 +1,5 @@
 # Frontend Nixpacks Configuration
-# Using Node.js 22.x (Nixpacks will provide latest available)
+# Using Node.js 22.13+ (Vite requirement: 22.12+)
 
 [phases.setup]
 nixPkgs = ["nodejs_22"]
@@ -20,5 +20,8 @@ cmd = "npm start"
 
 [variables]
 PORT = "3000"
-NIXPACKS_NODE_VERSION = "22.13"
+
+# Build-time Node.js version override
+# Note: This sets the environment variable but Nixpacks may still use nodejs_22 from nixpkgs
+# For guaranteed version control, set NIXPACKS_NODE_VERSION in Dokploy's Environment Variables UI
 
