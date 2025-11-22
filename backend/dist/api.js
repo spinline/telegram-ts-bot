@@ -89,33 +89,28 @@ function getAllUsers() {
                 params: { page, take }
             });
             const data = response.data;
-            console.log('getAllUsers response:', JSON.stringify(data).substring(0, 200));
             // RemnaWave API response formats:
             // Format 1: { response: { users: [...], total: X } }
             if (data.response && data.response.users && Array.isArray(data.response.users)) {
-                console.log(`getAllUsers: Found ${data.response.users.length} users (total: ${data.response.total})`);
                 return data.response.users;
             }
             // Format 2: { response: [...] }
             else if (data.response && Array.isArray(data.response)) {
-                console.log(`getAllUsers: Found ${data.response.length} users (array format)`);
                 return data.response;
             }
             // Format 3: { data: [...] }
             else if (data.data && Array.isArray(data.data)) {
-                console.log(`getAllUsers: Found ${data.data.length} users (data format)`);
                 return data.data;
             }
             // Format 4: Direct array
             else if (Array.isArray(data)) {
-                console.log(`getAllUsers: Found ${data.length} users (direct array)`);
                 return data;
             }
-            console.error('Unexpected API response format:', data);
+            console.error('⚠️ Unexpected API response format:', JSON.stringify(data).substring(0, 100));
             return [];
         }
         catch (error) {
-            console.error('Failed to get users:', ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
+            console.error('❌ Failed to get users:', ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
             throw new Error(((_c = (_b = error.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.message) || "Kullanıcı listesi alınamadı.");
         }
     });

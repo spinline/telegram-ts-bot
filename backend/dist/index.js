@@ -163,17 +163,13 @@ function safeAnswerCallback(ctx, text) {
         }
     });
 }
-// Middleware: Tüm gelen mesajları logla (DEBUG)
+// Middleware: Sadece hata durumlarını logla
 exports.bot.use((ctx, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
-    if ((_a = ctx.message) === null || _a === void 0 ? void 0 : _a.text) {
-        console.log(`📥 Mesaj alındı: "${ctx.message.text}" (user: ${(_b = ctx.from) === null || _b === void 0 ? void 0 : _b.id})`);
-    }
     yield next();
 }));
 // Admin mesaj handler - session tabanlı işlemler
 exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     const userId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
     const text = ctx.message.text;
     if (!userId || !text) {
@@ -236,37 +232,28 @@ exports.bot.on("message:text", (ctx, next) => __awaiter(void 0, void 0, void 0, 
             const message = text;
             yield ctx.reply("📤 Toplu bildirim gönderiliyor...");
             try {
-                console.log('Admin: Toplu bildirim başlatılıyor');
                 const users = yield (0, api_1.getAllUsers)(1, 1000); // Tüm kullanıcılar
-                console.log(`Admin: ${users.length} kullanıcı bulundu`);
-                // Debug: İlk kullanıcının tüm field'larını göster
-                if (users.length > 0) {
-                    console.log('Admin: İlk kullanıcı örneği:', JSON.stringify(users[0], null, 2));
-                }
-                // telegramId veya telegram_id olabilir - her ikisini kontrol et
-                const usersWithTelegram = users.filter((u) => {
-                    const hasId = u.telegramId || u.telegram_id || u.tId;
-                    if (hasId) {
-                        console.log(`User ${u.username}: telegramId=${u.telegramId}, telegram_id=${u.telegram_id}, tId=${u.tId}`);
-                    }
-                    return hasId;
-                });
-                console.log(`Admin: ${usersWithTelegram.length} kullanıcının Telegram ID'si var`);
+                // telegramId veya telegram_id veya tId field'ını kontrol et
+                const usersWithTelegram = users.filter((u) => u.telegramId || u.telegram_id || u.tId);
+                console.log(`📢 Broadcast: ${users.length} toplam kullanıcı, ${usersWithTelegram.length} Telegram ID'li`);
                 let sent = 0;
                 let failed = 0;
                 for (const user of usersWithTelegram) {
                     try {
                         const telegramId = user.telegramId || user.telegram_id || user.tId;
-                        console.log(`Admin: Mesaj gönderiliyor -> ${user.username} (${telegramId})`);
                         yield exports.bot.api.sendMessage(telegramId, message);
                         sent++;
                         yield new Promise(resolve => setTimeout(resolve, 100)); // Rate limit
                     }
                     catch (e) {
-                        console.warn(`Broadcast failed for user ${user.username}:`, (e === null || e === void 0 ? void 0 : e.message) || e);
+                        // Sadece kritik hataları logla
+                        if (!((_b = e === null || e === void 0 ? void 0 : e.message) === null || _b === void 0 ? void 0 : _b.includes('chat not found'))) {
+                            console.warn(`⚠️ Broadcast error for ${user.username}:`, e === null || e === void 0 ? void 0 : e.message);
+                        }
                         failed++;
                     }
                 }
+                console.log(`✅ Broadcast tamamlandı: ${sent} başarılı, ${failed} başarısız`);
                 yield ctx.reply(`✅ Toplu bildirim tamamlandı!\n\n` +
                     `📤 Gönderilen: ${sent}\n` +
                     `❌ Başarısız: ${failed}\n` +
@@ -333,7 +320,6 @@ const startKeyboard = new grammy_1.InlineKeyboard()
     .webApp("📱 Mini App", miniAppUrl); // Doğrudan webApp butonu kullan
 // /start komutuna yanıt ver
 exports.bot.command("start", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log('✅ /start komutu alındı - çalışıyor!');
     const welcomeMessage = `
 Hoş geldiniz! Bu bot ile VPN hizmetinize erişebilirsiniz.
 
@@ -433,43 +419,22 @@ exports.bot.on("message:web_app_data", (ctx) => __awaiter(void 0, void 0, void 0
     }
 }));
 exports.bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
-// Test komutu - bot mesaj alıyor mu kontrol için
-exports.bot.command("ping", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log('🏓 /ping komutu alındı!');
-    yield ctx.reply("🏓 Pong! Bot çalışıyor.");
-}));
 // Admin Panel Komutları
 exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
-    console.log('🔴 /admin komutu tetiklendi - EN BAŞTA');
+    var _a;
     try {
         const telegramId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
-        console.log('🔍 /admin komutu çalıştırıldı');
-        console.log('   Telegram ID:', telegramId);
-        console.log('   Username:', (_b = ctx.from) === null || _b === void 0 ? void 0 : _b.username);
-        console.log('   First name:', (_c = ctx.from) === null || _c === void 0 ? void 0 : _c.first_name);
-        const envValue = process.env.ADMIN_TELEGRAM_IDS;
-        console.log('   ADMIN_TELEGRAM_IDS env RAW:', envValue);
-        console.log('   ADMIN_TELEGRAM_IDS type:', typeof envValue);
-        // Basit kontrol - direkt string olarak karşılaştır
-        const adminIdsString = envValue || '';
+        // Admin kontrolü
+        const adminIdsString = process.env.ADMIN_TELEGRAM_IDS || '';
         const adminIdsArray = adminIdsString.split(',').map(id => id.trim());
         const telegramIdString = String(telegramId);
-        console.log('   Admin IDs (string array):', adminIdsArray);
-        console.log('   User Telegram ID (string):', telegramIdString);
-        console.log('   Array includes check:', adminIdsArray.includes(telegramIdString));
-        // Hem string hem number kontrolü
-        const isAdminString = adminIdsArray.includes(telegramIdString);
-        const isAdminNumber = adminIdsArray.map(id => parseInt(id)).includes(telegramId || 0);
-        console.log('   Is admin (string check)?', isAdminString);
-        console.log('   Is admin (number check)?', isAdminNumber);
-        const isAdmin = isAdminString || isAdminNumber;
+        // String ve number kontrolü
+        const isAdmin = adminIdsArray.includes(telegramIdString) ||
+            adminIdsArray.map(id => parseInt(id)).includes(telegramId || 0);
         if (!isAdmin) {
-            console.log('   ❌ Yetki yok - mesaj gönderiliyor');
             yield ctx.reply("⛔ Bu komutu kullanma yetkiniz yok.");
             return;
         }
-        console.log('   ✅ Admin yetkisi var - panel açılıyor');
         const keyboard = new grammy_1.InlineKeyboard()
             .text("👥 Kullanıcı Listesi", "admin_users")
             .text("🔍 Kullanıcı Ara", "admin_search").row()
@@ -479,16 +444,14 @@ exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function
             .text("📝 Sistem Logları", "admin_logs").row()
             .text("💾 Sistem Durumu", "admin_status");
         yield ctx.reply("👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:", { reply_markup: keyboard, parse_mode: "Markdown" });
-        console.log('   ✅ Admin paneli mesajı gönderildi');
     }
     catch (error) {
-        console.error('❌ /admin komutunda HATA:', error.message);
-        console.error('   Stack:', error.stack);
+        console.error('❌ /admin error:', error.message);
         try {
             yield ctx.reply(`❌ Hata oluştu: ${error.message}`);
         }
         catch (e) {
-            console.error('   Hata mesajı da gönderilemedi:', e);
+            console.error('Failed to send error message:', e);
         }
     }
 }));
@@ -496,9 +459,7 @@ exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function
 exports.bot.callbackQuery("admin_users", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield safeAnswerCallback(ctx);
     try {
-        console.log('Admin: Kullanıcı listesi istendi');
         const users = yield (0, api_1.getAllUsers)(1, 10);
-        console.log(`Admin: ${users.length} kullanıcı bulundu`);
         if (!users || users.length === 0) {
             yield ctx.editMessageText("ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
             return;
@@ -516,7 +477,7 @@ exports.bot.callbackQuery("admin_users", (ctx) => __awaiter(void 0, void 0, void
         yield ctx.editMessageText(message, { parse_mode: "Markdown" });
     }
     catch (e) {
-        console.error('Admin: Kullanıcı listesi hatası:', e.message);
+        console.error('❌ Admin panel error (users):', e.message);
         yield ctx.editMessageText(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'Kullanıcı listesi alınamadı'}`);
     }
 }));
@@ -544,9 +505,7 @@ exports.bot.callbackQuery("admin_broadcast", (ctx) => __awaiter(void 0, void 0, 
 exports.bot.callbackQuery("admin_stats", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield safeAnswerCallback(ctx);
     try {
-        console.log('Admin: İstatistikler istendi');
         const users = yield (0, api_1.getAllUsers)(1, 1000); // Tüm kullanıcılar
-        console.log(`Admin: ${users.length} kullanıcı için istatistik hesaplanıyor`);
         const total = users.length;
         const active = users.filter((u) => u.status === 'ACTIVE').length;
         const limited = users.filter((u) => u.status === 'LIMITED').length;
@@ -563,7 +522,7 @@ exports.bot.callbackQuery("admin_stats", (ctx) => __awaiter(void 0, void 0, void
         yield ctx.editMessageText(message, { parse_mode: "Markdown" });
     }
     catch (e) {
-        console.error('Admin: İstatistik hatası:', e.message);
+        console.error('❌ Admin panel error (stats):', e.message);
         yield ctx.editMessageText(`❌ Hata: ${(e === null || e === void 0 ? void 0 : e.message) || 'İstatistikler alınamadı'}`);
     }
 }));

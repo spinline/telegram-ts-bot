@@ -149,11 +149,8 @@ async function safeAnswerCallback(ctx: any, text?: string) {
   }
 }
 
-// Middleware: Tüm gelen mesajları logla (DEBUG)
+// Middleware: Sadece hata durumlarını logla
 bot.use(async (ctx, next) => {
-  if (ctx.message?.text) {
-    console.log(`📥 Mesaj alındı: "${ctx.message.text}" (user: ${ctx.from?.id})`);
-  }
   await next();
 });
 
@@ -235,24 +232,12 @@ bot.on("message:text", async (ctx, next) => {
       await ctx.reply("📤 Toplu bildirim gönderiliyor...");
 
       try {
-        console.log('Admin: Toplu bildirim başlatılıyor');
         const users = await getAllUsers(1, 1000); // Tüm kullanıcılar
-        console.log(`Admin: ${users.length} kullanıcı bulundu`);
 
-        // Debug: İlk kullanıcının tüm field'larını göster
-        if (users.length > 0) {
-          console.log('Admin: İlk kullanıcı örneği:', JSON.stringify(users[0], null, 2));
-        }
+        // telegramId veya telegram_id veya tId field'ını kontrol et
+        const usersWithTelegram = users.filter((u: any) => u.telegramId || u.telegram_id || u.tId);
 
-        // telegramId veya telegram_id olabilir - her ikisini kontrol et
-        const usersWithTelegram = users.filter((u: any) => {
-          const hasId = u.telegramId || u.telegram_id || u.tId;
-          if (hasId) {
-            console.log(`User ${u.username}: telegramId=${u.telegramId}, telegram_id=${u.telegram_id}, tId=${u.tId}`);
-          }
-          return hasId;
-        });
-        console.log(`Admin: ${usersWithTelegram.length} kullanıcının Telegram ID'si var`);
+        console.log(`📢 Broadcast: ${users.length} toplam kullanıcı, ${usersWithTelegram.length} Telegram ID'li`);
 
         let sent = 0;
         let failed = 0;
@@ -260,15 +245,19 @@ bot.on("message:text", async (ctx, next) => {
         for (const user of usersWithTelegram) {
           try {
             const telegramId = user.telegramId || user.telegram_id || user.tId;
-            console.log(`Admin: Mesaj gönderiliyor -> ${user.username} (${telegramId})`);
             await bot.api.sendMessage(telegramId, message);
             sent++;
             await new Promise(resolve => setTimeout(resolve, 100)); // Rate limit
           } catch (e: any) {
-            console.warn(`Broadcast failed for user ${user.username}:`, e?.message || e);
+            // Sadece kritik hataları logla
+            if (!e?.message?.includes('chat not found')) {
+              console.warn(`⚠️ Broadcast error for ${user.username}:`, e?.message);
+            }
             failed++;
           }
         }
+
+        console.log(`✅ Broadcast tamamlandı: ${sent} başarılı, ${failed} başarısız`);
 
         await ctx.reply(
           `✅ Toplu bildirim tamamlandı!\n\n` +
@@ -340,7 +329,6 @@ const startKeyboard = new InlineKeyboard()
 
 // /start komutuna yanıt ver
 bot.command("start", async (ctx) => {
-  console.log('✅ /start komutu alındı - çalışıyor!');
   const welcomeMessage = `
 Hoş geldiniz! Bu bot ile VPN hizmetinize erişebilirsiniz.
 
@@ -450,53 +438,24 @@ bot.on("message:web_app_data", async (ctx) => {
 
 bot.command("help", (ctx) => ctx.reply("Size nasıl yardımcı olabilirim?"));
 
-// Test komutu - bot mesaj alıyor mu kontrol için
-bot.command("ping", async (ctx) => {
-  console.log('🏓 /ping komutu alındı!');
-  await ctx.reply("🏓 Pong! Bot çalışıyor.");
-});
-
 // Admin Panel Komutları
 bot.command("admin", async (ctx) => {
-  console.log('🔴 /admin komutu tetiklendi - EN BAŞTA');
-
   try {
     const telegramId = ctx.from?.id;
 
-    console.log('🔍 /admin komutu çalıştırıldı');
-    console.log('   Telegram ID:', telegramId);
-    console.log('   Username:', ctx.from?.username);
-    console.log('   First name:', ctx.from?.first_name);
-
-    const envValue = process.env.ADMIN_TELEGRAM_IDS;
-    console.log('   ADMIN_TELEGRAM_IDS env RAW:', envValue);
-    console.log('   ADMIN_TELEGRAM_IDS type:', typeof envValue);
-
-    // Basit kontrol - direkt string olarak karşılaştır
-    const adminIdsString = envValue || '';
+    // Admin kontrolü
+    const adminIdsString = process.env.ADMIN_TELEGRAM_IDS || '';
     const adminIdsArray = adminIdsString.split(',').map(id => id.trim());
     const telegramIdString = String(telegramId);
 
-    console.log('   Admin IDs (string array):', adminIdsArray);
-    console.log('   User Telegram ID (string):', telegramIdString);
-    console.log('   Array includes check:', adminIdsArray.includes(telegramIdString));
-
-    // Hem string hem number kontrolü
-    const isAdminString = adminIdsArray.includes(telegramIdString);
-    const isAdminNumber = adminIdsArray.map(id => parseInt(id)).includes(telegramId || 0);
-
-    console.log('   Is admin (string check)?', isAdminString);
-    console.log('   Is admin (number check)?', isAdminNumber);
-
-    const isAdmin = isAdminString || isAdminNumber;
+    // String ve number kontrolü
+    const isAdmin = adminIdsArray.includes(telegramIdString) ||
+                    adminIdsArray.map(id => parseInt(id)).includes(telegramId || 0);
 
     if (!isAdmin) {
-      console.log('   ❌ Yetki yok - mesaj gönderiliyor');
       await ctx.reply("⛔ Bu komutu kullanma yetkiniz yok.");
       return;
     }
-
-    console.log('   ✅ Admin yetkisi var - panel açılıyor');
 
     const keyboard = new InlineKeyboard()
       .text("👥 Kullanıcı Listesi", "admin_users")
@@ -511,15 +470,12 @@ bot.command("admin", async (ctx) => {
       "👨‍💼 *Admin Paneli*\n\nYönetim fonksiyonlarını seçin:",
       { reply_markup: keyboard, parse_mode: "Markdown" }
     );
-
-    console.log('   ✅ Admin paneli mesajı gönderildi');
   } catch (error: any) {
-    console.error('❌ /admin komutunda HATA:', error.message);
-    console.error('   Stack:', error.stack);
+    console.error('❌ /admin error:', error.message);
     try {
       await ctx.reply(`❌ Hata oluştu: ${error.message}`);
     } catch (e) {
-      console.error('   Hata mesajı da gönderilemedi:', e);
+      console.error('Failed to send error message:', e);
     }
   }
 });
@@ -529,9 +485,7 @@ bot.callbackQuery("admin_users", async (ctx) => {
   await safeAnswerCallback(ctx);
 
   try {
-    console.log('Admin: Kullanıcı listesi istendi');
     const users = await getAllUsers(1, 10);
-    console.log(`Admin: ${users.length} kullanıcı bulundu`);
 
     if (!users || users.length === 0) {
       await ctx.editMessageText("ℹ️ Sistemde henüz kullanıcı bulunmuyor.");
@@ -552,7 +506,7 @@ bot.callbackQuery("admin_users", async (ctx) => {
 
     await ctx.editMessageText(message, { parse_mode: "Markdown" });
   } catch (e: any) {
-    console.error('Admin: Kullanıcı listesi hatası:', e.message);
+    console.error('❌ Admin panel error (users):', e.message);
     await ctx.editMessageText(`❌ Hata: ${e?.message || 'Kullanıcı listesi alınamadı'}`);
   }
 });
@@ -592,9 +546,7 @@ bot.callbackQuery("admin_stats", async (ctx) => {
   await safeAnswerCallback(ctx);
 
   try {
-    console.log('Admin: İstatistikler istendi');
     const users = await getAllUsers(1, 1000); // Tüm kullanıcılar
-    console.log(`Admin: ${users.length} kullanıcı için istatistik hesaplanıyor`);
 
     const total = users.length;
     const active = users.filter((u: any) => u.status === 'ACTIVE').length;
@@ -614,7 +566,7 @@ bot.callbackQuery("admin_stats", async (ctx) => {
 
     await ctx.editMessageText(message, { parse_mode: "Markdown" });
   } catch (e: any) {
-    console.error('Admin: İstatistik hatası:', e.message);
+    console.error('❌ Admin panel error (stats):', e.message);
     await ctx.editMessageText(`❌ Hata: ${e?.message || 'İstatistikler alınamadı'}`);
   }
 });
