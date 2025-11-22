@@ -226,31 +226,6 @@ function WelcomeScreen({
               >
                 Telegram Bot'a Git
               </Button>
-
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  padding: '14px',
-                  borderRadius: '8px',
-                  background: 'rgba(255, 255, 255, 0.07)',
-                  transition: 'all .2s ease-in-out',
-                  cursor: 'pointer',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
-                }}
-                onClick={handleSupport}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <IconHeadset size={20} style={{ color: '#fff' }} />
-                  <Text size="md" fw={500} style={{ color: '#fff' }}>Destek</Text>
-                </div>
-              </div>
             </Stack>
           </Stack>
         </div>
