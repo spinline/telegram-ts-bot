@@ -524,7 +524,7 @@ bot.command("admin", async (ctx) => {
 });
 
 // Admin Panel - Kullanıcı Listesi
-bot.callbackQuery(/^ls(p(\d+))?(s(\w+))?(f(\w+))?$/, async (ctx) => {
+bot.callbackQuery(/^ls(-p(\d+))?(-s(\w+))?(-f(\w+))?$/, async (ctx) => {
   await safeAnswerCallback(ctx);
 
   const page = ctx.match && ctx.match[2] ? parseInt(ctx.match[2]) : 1;
@@ -547,21 +547,21 @@ bot.callbackQuery(/^ls(p(\d+))?(s(\w+))?(f(\w+))?$/, async (ctx) => {
 
     const keyboard = new InlineKeyboard();
 
-    const sortParam = sort ? `s${sort}` : '';
-    const filterParam = filter ? `f${filter}` : '';
+    const sortParam = sort ? `-s${sort}` : '';
+    const filterParam = filter ? `-f${filter}` : '';
 
     // Filtreleme Butonları
     keyboard
-      .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `lsp1${sortParam}fALL`)
-      .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `lsp1${sortParam}fACTIVE`)
-      .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `lsp1${sortParam}fEXPIRED`)
+      .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `ls-p1${sortParam}-fALL`)
+      .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `ls-p1${sortParam}-fACTIVE`)
+      .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `ls-p1${sortParam}-fEXPIRED`)
       .row();
 
     // Sıralama Butonları
     keyboard
-      .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `lsp1straffic${filterParam}`)
-      .text(sort === 'date' ? "✅ Tarih" : "Tarih", `lsp1sdate${filterParam}`)
-      .text(sort === 'status' ? "✅ Durum" : "Durum", `lsp1sstatus${filterParam}`)
+      .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `ls-p1-straffic${filterParam}`)
+      .text(sort === 'date' ? "✅ Tarih" : "Tarih", `ls-p1-sdate${filterParam}`)
+      .text(sort === 'status' ? "✅ Durum" : "Durum", `ls-p1-sstatus${filterParam}`)
       .row();
 
     if (users.length === 0) {
@@ -584,10 +584,10 @@ bot.callbackQuery(/^ls(p(\d+))?(s(\w+))?(f(\w+))?$/, async (ctx) => {
     // Pagination buttons
     const paginationRow = [];
     if (page > 1) {
-      paginationRow.push({ text: "⬅️ Önceki", callback_data: `lsp${page - 1}${sortParam}${filterParam}` });
+      paginationRow.push({ text: "⬅️ Önceki", callback_data: `ls-p${page - 1}${sortParam}${filterParam}` });
     }
     if (page < totalPages) {
-      paginationRow.push({ text: "Sonraki ➡️", callback_data: `lsp${page + 1}${sortParam}${filterParam}` });
+      paginationRow.push({ text: "Sonraki ➡️", callback_data: `ls-p${page + 1}${sortParam}${filterParam}` });
     }
     
     if (paginationRow.length > 0) {

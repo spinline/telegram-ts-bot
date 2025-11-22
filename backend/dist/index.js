@@ -495,7 +495,7 @@ exports.bot.command("admin", (ctx) => __awaiter(void 0, void 0, void 0, function
     }
 }));
 // Admin Panel - Kullanıcı Listesi
-exports.bot.callbackQuery(/^ls(p(\d+))?(s(\w+))?(f(\w+))?$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+exports.bot.callbackQuery(/^ls(-p(\d+))?(-s(\w+))?(-f(\w+))?$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, error_middleware_1.safeAnswerCallback)(ctx);
     const page = ctx.match && ctx.match[2] ? parseInt(ctx.match[2]) : 1;
     const sort = (ctx.match && ctx.match[4] ? ctx.match[4] : undefined);
@@ -512,19 +512,19 @@ exports.bot.callbackQuery(/^ls(p(\d+))?(s(\w+))?(f(\w+))?$/, (ctx) => __awaiter(
         const filterLabel = filter !== 'ALL' ? ` [${filter}]` : '';
         const message = `👥 *Kullanıcı Listesi*${sortLabel}${filterLabel} (Sayfa ${page}/${totalPages})`;
         const keyboard = new grammy_1.InlineKeyboard();
-        const sortParam = sort ? `s${sort}` : '';
-        const filterParam = filter ? `f${filter}` : '';
+        const sortParam = sort ? `-s${sort}` : '';
+        const filterParam = filter ? `-f${filter}` : '';
         // Filtreleme Butonları
         keyboard
-            .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `lsp1${sortParam}fALL`)
-            .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `lsp1${sortParam}fACTIVE`)
-            .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `lsp1${sortParam}fEXPIRED`)
+            .text(filter === 'ALL' ? "✅ Tümü" : "Tümü", `ls-p1${sortParam}-fALL`)
+            .text(filter === 'ACTIVE' ? "✅ Aktif" : "Aktif", `ls-p1${sortParam}-fACTIVE`)
+            .text(filter === 'EXPIRED' ? "✅ Bitti" : "Bitti", `ls-p1${sortParam}-fEXPIRED`)
             .row();
         // Sıralama Butonları
         keyboard
-            .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `lsp1straffic${filterParam}`)
-            .text(sort === 'date' ? "✅ Tarih" : "Tarih", `lsp1sdate${filterParam}`)
-            .text(sort === 'status' ? "✅ Durum" : "Durum", `lsp1sstatus${filterParam}`)
+            .text(sort === 'traffic' ? "✅ Trafik" : "Trafik", `ls-p1-straffic${filterParam}`)
+            .text(sort === 'date' ? "✅ Tarih" : "Tarih", `ls-p1-sdate${filterParam}`)
+            .text(sort === 'status' ? "✅ Durum" : "Durum", `ls-p1-sstatus${filterParam}`)
             .row();
         if (users.length === 0) {
             keyboard.row().text("⚠️ Bu filtrede kullanıcı yok", "noop");
@@ -542,10 +542,10 @@ exports.bot.callbackQuery(/^ls(p(\d+))?(s(\w+))?(f(\w+))?$/, (ctx) => __awaiter(
         // Pagination buttons
         const paginationRow = [];
         if (page > 1) {
-            paginationRow.push({ text: "⬅️ Önceki", callback_data: `lsp${page - 1}${sortParam}${filterParam}` });
+            paginationRow.push({ text: "⬅️ Önceki", callback_data: `ls-p${page - 1}${sortParam}${filterParam}` });
         }
         if (page < totalPages) {
-            paginationRow.push({ text: "Sonraki ➡️", callback_data: `lsp${page + 1}${sortParam}${filterParam}` });
+            paginationRow.push({ text: "Sonraki ➡️", callback_data: `ls-p${page + 1}${sortParam}${filterParam}` });
         }
         if (paginationRow.length > 0) {
             keyboard.row(...paginationRow);
