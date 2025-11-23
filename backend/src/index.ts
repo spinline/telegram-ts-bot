@@ -894,6 +894,13 @@ bot.callbackQuery(/^admin_tickets(_p_(\d+))?$/, async (ctx) => {
 // Admin Panel - Ticket Görüntüle
 bot.callbackQuery(/^admin_view_ticket_(\d+)$/, async (ctx) => {
   await safeAnswerCallback(ctx);
+
+  // 🎯 FIX: Clear any active session (like reply mode) when viewing a ticket
+  const userId = ctx.from?.id;
+  if (userId && sessionManager.has(userId)) {
+    sessionManager.delete(userId);
+  }
+
   const ticketId = parseInt(ctx.match[1]);
   const ticket = await ticketService.getTicketById(ticketId);
 
