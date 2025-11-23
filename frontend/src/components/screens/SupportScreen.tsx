@@ -110,7 +110,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
     }
 
     return (
-      <div style={{ paddingTop: 20, paddingBottom: 40 }}>
+      <div style={{ paddingTop: 20, paddingBottom: 300 }}>
         <Stack gap="lg">
           <Group>
             <Button 
@@ -161,6 +161,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
               loading={submitting}
               disabled={!newTicketTitle || !newTicketMessage}
               mt="md"
+              mb="xl"
             >
               Talebi Gönder
             </Button>
