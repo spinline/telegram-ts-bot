@@ -131,7 +131,7 @@ export class TicketService {
       }
     });
 
-    return await prisma.ticketMessage.create({
+    const message = await prisma.ticketMessage.create({
       data: {
         ticketId,
         userId: BigInt(userId),
@@ -141,13 +141,24 @@ export class TicketService {
         mediaFileId
       }
     });
+
+    return {
+      ...message,
+      userId: Number(message.userId),
+      ticketId: Number(message.ticketId)
+    };
   }
 
   async closeTicket(ticketId: number) {
-    return await prisma.ticket.update({
+    const ticket = await prisma.ticket.update({
       where: { id: ticketId },
       data: { status: TicketStatus.CLOSED }
     });
+    
+    return {
+      ...ticket,
+      userId: Number(ticket.userId)
+    };
   }
 
   async hasActiveTicket(userId: number) {
