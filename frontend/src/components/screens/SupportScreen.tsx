@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Stack, Title, Text, Button, Group, Card, Badge, Drawer, TextInput, Textarea, Loader } from '@mantine/core';
+import { Stack, Title, Text, Button, Group, Card, Badge, Modal, TextInput, Textarea, Loader } from '@mantine/core';
 import { IconPlus, IconMessage } from '@tabler/icons-react';
 import { ticketService } from '../../services/ticket.service';
 import type { Ticket } from '../../services/ticket.service';
@@ -121,17 +121,16 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
         )}
       </Stack>
 
-      <Drawer 
+      <Modal 
         opened={opened} 
         onClose={close} 
         title="Yeni Destek Talebi"
-        position="bottom"
-        size="auto"
-        radius="md"
+        centered
+        zIndex={10000}
         styles={{
-          content: { backgroundColor: '#1A1B1E', color: 'white' },
+          content: { backgroundColor: '#1A1B1E', color: 'white', border: '1px solid rgba(255,255,255,0.1)' },
           header: { backgroundColor: '#1A1B1E', color: 'white' },
-          body: { backgroundColor: '#1A1B1E', color: 'white', paddingBottom: 40 }
+          body: { backgroundColor: '#1A1B1E', color: 'white' }
         }}
       >
         <Stack>
@@ -166,7 +165,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
             Gönder
           </Button>
         </Stack>
-      </Drawer>
+      </Modal>
     </div>
   );
 }
