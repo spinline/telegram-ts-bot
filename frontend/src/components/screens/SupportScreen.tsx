@@ -135,7 +135,21 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
     }
 
     return (
-      <div style={{ paddingTop: 20, paddingBottom: 300 }}>
+      <div 
+        style={{ paddingTop: 20, paddingBottom: 300 }}
+        onClick={(e) => {
+          // Close keyboard when clicking outside input fields
+          const target = e.target as HTMLElement;
+          if (!target.closest('input') && !target.closest('textarea') && !target.closest('button')) {
+            // Force blur all active inputs
+            document.querySelectorAll('input, textarea').forEach(el => {
+              if (el === document.activeElement) {
+                (el as HTMLElement).blur();
+              }
+            });
+          }
+        }}
+      >
         <Stack gap="lg">
           <Group>
             <Button 
@@ -162,7 +176,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
           
           <Stack gap="md">
             <TextInput
-              label="Konu"
+              label="Başlık"
               placeholder="Örn: Bağlantı sorunu"
               value={newTicketTitle}
               onChange={(e) => setNewTicketTitle(e.currentTarget.value)}
@@ -173,7 +187,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
               }}
             />
             <Textarea
-              label="Mesajınız"
+              label="Açıklama"
               placeholder="Sorununuzu buraya yazın..."
               minRows={8}
               value={newTicketMessage}
