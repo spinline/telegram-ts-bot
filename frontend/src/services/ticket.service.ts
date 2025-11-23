@@ -55,5 +55,10 @@ export const ticketService = {
   replyTicket: async (id: number, message: string) => {
     const response = await api.post(`/api/tickets/${id}/reply`, { message });
     return response.data;
+  },
+
+  closeTicket: async (id: number) => {
+    const response = await api.post(`/api/tickets/${id}/close`);
+    return response.data;
   }
 };

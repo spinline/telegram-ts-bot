@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Stack, Title, Text, Button, Group, Card, Badge, Textarea, Loader, ScrollArea } from '@mantine/core';
-import { IconSend, IconUser, IconHeadset } from '@tabler/icons-react';
+import { IconSend, IconUser, IconHeadset, IconLock } from '@tabler/icons-react';
 import { ticketService } from '../../services/ticket.service';
 import type { Ticket } from '../../services/ticket.service';
 
@@ -13,6 +13,7 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
   const [loading, setLoading] = useState(true);
   const [replyMessage, setReplyMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [closing, setClosing] = useState(false);
   const viewport = useRef<HTMLDivElement>(null);
 
   const fetchTicket = async () => {
@@ -56,6 +57,21 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
     }
   };
 
+  const handleClose = async () => {
+    if (!confirm('Bu destek talebini kapatmak istediğinizden emin misiniz?')) return;
+
+    try {
+      setClosing(true);
+      await ticketService.closeTicket(ticketId);
+      fetchTicket();
+    } catch (error) {
+      console.error('Failed to close ticket', error);
+      alert('Talep kapatılamadı. Lütfen tekrar deneyin.');
+    } finally {
+      setClosing(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'OPEN': return 'blue';
@@ -83,7 +99,21 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
       <Stack gap="xs" mb="md">
         <Group justify="space-between">
           <Title order={3} style={{ color: '#fff' }}>#{ticket.id} {ticket.title}</Title>
-          <Badge color={getStatusColor(ticket.status)}>{ticket.status}</Badge>
+          <Group gap="xs">
+            {ticket.status !== 'CLOSED' && (
+              <Button 
+                size="xs" 
+                color="red" 
+                variant="light"
+                leftSection={<IconLock size={14} />}
+                onClick={handleClose}
+                loading={closing}
+              >
+                Kapat
+              </Button>
+            )}
+            <Badge color={getStatusColor(ticket.status)}>{ticket.status}</Badge>
+          </Group>
         </Group>
         <Text size="xs" c="dimmed">
           {new Date(ticket.createdAt).toLocaleString('tr-TR')}

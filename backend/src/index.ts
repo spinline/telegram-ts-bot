@@ -599,6 +599,28 @@ app.post('/api/tickets/:id/reply', verifyTelegramWebAppData, async (req: Request
   }
 });
 
+// Close Ticket
+app.post('/api/tickets/:id/close', verifyTelegramWebAppData, async (req: Request, res: Response) => {
+  try {
+    const telegramUser = (req as any).telegramUser;
+    const userId = telegramUser?.id;
+    const ticketId = parseInt(req.params.id);
+
+    if (!userId) return res.status(400).json({ error: 'User ID not found' });
+
+    const ticket = await ticketService.getTicketById(ticketId);
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    if (ticket.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
+
+    const closedTicket = await ticketService.closeTicket(ticketId);
+
+    res.json(closedTicket);
+  } catch (error: any) {
+    console.error('Failed to close ticket:', error);
+    res.status(500).json({ error: 'Failed to close ticket' });
+  }
+});
+
 // Mini App'i açacak komut
 bot.command("app", async (ctx) => {
   const miniAppUrl = process.env.MINI_APP_URL;
