@@ -383,6 +383,19 @@ Lütfen aşağıdaki seçeneklerden birini seçin:
   });
 });
 
+// "Back" button handler to return to main menu
+bot.callbackQuery("start", async (ctx) => {
+  await safeAnswerCallback(ctx);
+  const welcomeMessage = `
+Hoş geldiniz! Bu bot ile VPN hizmetinize erişebilirsiniz.
+
+Lütfen aşağıdaki seçeneklerden birini seçin:
+`;
+  await safeEditMessageText(ctx, welcomeMessage, {
+    reply_markup: startKeyboard,
+  });
+});
+
 // Basit deeplink redirect sayfası (https -> happ://)
 app.get('/redirect', (req: Request, res: Response) => {
   const to = req.query.to as string | undefined;
