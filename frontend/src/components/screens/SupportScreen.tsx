@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Stack, Title, Text, Button, Group, Card, Badge, Modal, TextInput, Textarea, Loader } from '@mantine/core';
+import { Stack, Title, Text, Button, Group, Card, Badge, Drawer, TextInput, Textarea, Loader } from '@mantine/core';
 import { IconPlus, IconMessage } from '@tabler/icons-react';
 import { ticketService } from '../../services/ticket.service';
 import type { Ticket } from '../../services/ticket.service';
@@ -121,12 +121,18 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
         )}
       </Stack>
 
-      <Modal 
+      <Drawer 
         opened={opened} 
         onClose={close} 
         title="Yeni Destek Talebi"
-        centered
-        zIndex={10000}
+        position="bottom"
+        size="auto"
+        radius="md"
+        styles={{
+          content: { backgroundColor: '#1A1B1E', color: 'white' },
+          header: { backgroundColor: '#1A1B1E', color: 'white' },
+          body: { backgroundColor: '#1A1B1E', color: 'white', paddingBottom: 40 }
+        }}
       >
         <Stack>
           <TextInput
@@ -134,6 +140,10 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
             placeholder="Örn: Bağlantı sorunu"
             value={newTicketTitle}
             onChange={(e) => setNewTicketTitle(e.currentTarget.value)}
+            styles={{ 
+              input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
+              label: { color: '#fff' }
+            }}
           />
           <Textarea
             label="Mesajınız"
@@ -141,6 +151,10 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
             minRows={4}
             value={newTicketMessage}
             onChange={(e) => setNewTicketMessage(e.currentTarget.value)}
+            styles={{ 
+              input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
+              label: { color: '#fff' }
+            }}
           />
           <Button 
             color="teal" 
@@ -152,7 +166,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
             Gönder
           </Button>
         </Stack>
-      </Modal>
+      </Drawer>
     </div>
   );
 }
