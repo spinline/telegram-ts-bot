@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Stack, Title, Text, Button, Group, Card, Badge, TextInput, Textarea, Loader, Fieldset } from '@mantine/core';
-import { IconPlus, IconMessage, IconArrowLeft } from '@tabler/icons-react';
+import { Stack, Title, Text, Button, Group, Card, Badge, TextInput, Textarea, Loader } from '@mantine/core';
+import { IconPlus, IconMessage, IconArrowLeft, IconCheck } from '@tabler/icons-react';
 import { ticketService } from '../../services/ticket.service';
 import type { Ticket } from '../../services/ticket.service';
 
@@ -15,6 +15,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
   const [newTicketTitle, setNewTicketTitle] = useState('');
   const [newTicketMessage, setNewTicketMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const fetchTickets = async () => {
     try {
@@ -42,17 +43,25 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
     
     try {
       setSubmitting(true);
+      console.log('Creating ticket:', { title: newTicketTitle, message: newTicketMessage });
       await ticketService.createTicket(newTicketTitle, newTicketMessage);
-      setShowForm(false);
+      console.log('Ticket created successfully');
+      
+      setSuccess(true);
       setNewTicketTitle('');
       setNewTicketMessage('');
       fetchTickets();
     } catch (error) {
       console.error('Failed to create ticket', error);
-      alert('Failed to create ticket. You might already have an active ticket.');
+      alert('Talep oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleBackToList = () => {
+    setSuccess(false);
+    setShowForm(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -66,6 +75,40 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
   };
 
   if (showForm) {
+    if (success) {
+      return (
+        <div style={{ paddingTop: 40, paddingBottom: 40 }}>
+          <Stack align="center" gap="xl">
+            <div style={{ 
+              backgroundColor: 'rgba(46, 204, 113, 0.1)', 
+              borderRadius: '50%', 
+              padding: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <IconCheck size={60} color="#2ecc71" />
+            </div>
+            <Stack gap="xs" align="center">
+              <Title order={2} style={{ color: '#fff' }}>Talep Oluşturuldu!</Title>
+              <Text c="dimmed" ta="center" size="lg">
+                Destek talebiniz başarıyla iletildi.<br/>En kısa sürede yanıt verilecektir.
+              </Text>
+            </Stack>
+            <Button 
+              onClick={handleBackToList} 
+              color="teal" 
+              size="lg"
+              fullWidth
+              mt="xl"
+            >
+              Listeye Dön
+            </Button>
+          </Stack>
+        </div>
+      );
+    }
+
     return (
       <div style={{ paddingTop: 20, paddingBottom: 40 }}>
         <Stack gap="lg">
@@ -75,49 +118,53 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
               color="gray" 
               onClick={() => setShowForm(false)} 
               leftSection={<IconArrowLeft size={18} />}
-              style={{ color: '#fff' }}
+              style={{ color: '#fff', paddingLeft: 0 }}
             >
               Geri Dön
             </Button>
           </Group>
           
-          <Title order={2} style={{ color: '#fff' }}>Yeni Destek Talebi</Title>
+          <Stack gap="xs">
+            <Title order={2} style={{ color: '#fff' }}>Yeni Destek Talebi</Title>
+            <Text c="dimmed">Sorununuzu detaylı bir şekilde açıklayın.</Text>
+          </Stack>
           
-          <Fieldset legend="Talep Detayları" style={{ borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-            <Stack>
-              <TextInput
-                label="Konu"
-                placeholder="Örn: Bağlantı sorunu"
-                value={newTicketTitle}
-                onChange={(e) => setNewTicketTitle(e.currentTarget.value)}
-                styles={{ 
-                  input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
-                  label: { color: '#fff' }
-                }}
-              />
-              <Textarea
-                label="Mesajınız"
-                placeholder="Sorununuzu detaylı bir şekilde açıklayın..."
-                minRows={6}
-                value={newTicketMessage}
-                onChange={(e) => setNewTicketMessage(e.currentTarget.value)}
-                styles={{ 
-                  input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
-                  label: { color: '#fff' }
-                }}
-              />
-              <Button 
-                color="teal" 
-                fullWidth 
-                onClick={handleCreateTicket} 
-                loading={submitting}
-                disabled={!newTicketTitle || !newTicketMessage}
-                mt="md"
-              >
-                Gönder
-              </Button>
-            </Stack>
-          </Fieldset>
+          <Stack gap="md">
+            <TextInput
+              label="Konu"
+              placeholder="Örn: Bağlantı sorunu"
+              value={newTicketTitle}
+              onChange={(e) => setNewTicketTitle(e.currentTarget.value)}
+              size="md"
+              styles={{ 
+                input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
+                label: { color: '#fff', marginBottom: 8, fontWeight: 500 }
+              }}
+            />
+            <Textarea
+              label="Mesajınız"
+              placeholder="Sorununuzu buraya yazın..."
+              minRows={8}
+              value={newTicketMessage}
+              onChange={(e) => setNewTicketMessage(e.currentTarget.value)}
+              size="md"
+              styles={{ 
+                input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
+                label: { color: '#fff', marginBottom: 8, fontWeight: 500 }
+              }}
+            />
+            <Button 
+              color="teal" 
+              size="lg"
+              fullWidth 
+              onClick={handleCreateTicket} 
+              loading={submitting}
+              disabled={!newTicketTitle || !newTicketMessage}
+              mt="md"
+            >
+              Talebi Gönder
+            </Button>
+          </Stack>
         </Stack>
       </div>
     );
