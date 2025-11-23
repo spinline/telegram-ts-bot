@@ -39,6 +39,16 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
     fetchTickets();
   }, []);
 
+  const handleNewTicket = async () => {
+    // Check if user has an active ticket
+    const activeTicket = tickets.find(t => t.status !== 'CLOSED');
+    if (activeTicket) {
+      setError(`Zaten açık bir talebiniz var (#${activeTicket.id}). Yeni talep oluşturmak için önce mevcut talebinizi kapatmanız gerekiyor.`);
+      return;
+    }
+    setShowForm(true);
+  };
+
   const handleCreateTicket = async () => {
     if (!newTicketTitle || !newTicketMessage) {
       setError('Lütfen tüm alanları doldurun.');
@@ -67,7 +77,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
       
       const errorMessage = err.response?.data?.error || err.message || 'Talep oluşturulurken bir hata oluştu.';
       setError(errorMessage);
-      setSuccess(false); // Hata durumunda success'i false yap
+      setSuccess(false);
     } finally {
       setSubmitting(false);
     }
@@ -201,11 +211,17 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
             leftSection={<IconPlus size={18} />} 
             color="teal" 
             variant="light"
-            onClick={() => setShowForm(true)}
+            onClick={handleNewTicket}
           >
             Yeni Talep
           </Button>
         </Group>
+
+        {error && !showForm && (
+          <Alert icon={<IconAlertCircle size={16} />} title="Uyarı" color="orange" variant="filled" onClose={() => setError(null)} withCloseButton>
+            {error}
+          </Alert>
+        )}
 
         {loading ? (
           <Group justify="center" mt="xl">
@@ -216,7 +232,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
             <Stack align="center" gap="md">
               <IconMessage size={48} style={{ opacity: 0.5, color: '#fff' }} />
               <Text c="dimmed" ta="center">Henüz bir destek talebiniz bulunmuyor.</Text>
-              <Button color="teal" onClick={() => setShowForm(true)}>İlk Talebini Oluştur</Button>
+              <Button color="teal" onClick={handleNewTicket}>İlk Talebini Oluştur</Button>
             </Stack>
           </Card>
         ) : (
