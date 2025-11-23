@@ -124,8 +124,13 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
       <Modal 
         opened={opened} 
         onClose={close} 
-        title="Yeni Destek Talebi"
+        title={<Text c="white" fw={500}>Yeni Destek Talebi</Text>}
         centered
+        zIndex={10000}
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
         styles={{
           header: { backgroundColor: '#1A1B1E', color: '#fff' },
           body: { backgroundColor: '#1A1B1E' },
