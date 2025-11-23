@@ -21,9 +21,14 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
     try {
       setLoading(true);
       const data: any = await ticketService.getTickets('ALL');
-      setTickets(data.tickets);
+      if (data && Array.isArray(data.tickets)) {
+        setTickets(data.tickets);
+      } else {
+        setTickets([]);
+      }
     } catch (error) {
       console.error('Failed to fetch tickets', error);
+      setTickets([]);
     } finally {
       setLoading(false);
     }
