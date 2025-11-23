@@ -12,22 +12,33 @@ export enum TicketStatus {
 export class TicketService {
   
   async createTicket(userId: number, title: string, message: string, mediaType?: string, mediaFileId?: string) {
-    return await prisma.ticket.create({
-      data: {
-        userId: BigInt(userId),
-        title,
-        status: TicketStatus.OPEN,
-        messages: {
-          create: {
-            userId: BigInt(userId),
-            messageText: message,
-            isUserMessage: true,
-            mediaType,
-            mediaFileId
+    try {
+      console.log('Creating ticket in DB:', { userId, title, messageLength: message.length });
+      const ticket = await prisma.ticket.create({
+        data: {
+          userId: BigInt(userId),
+          title,
+          status: TicketStatus.OPEN,
+          messages: {
+            create: {
+              userId: BigInt(userId),
+              messageText: message,
+              isUserMessage: true,
+              mediaType,
+              mediaFileId
+            }
           }
         }
-      }
-    });
+      });
+      console.log('Ticket created successfully:', ticket.id);
+      return {
+        ...ticket,
+        userId: Number(ticket.userId)
+      };
+    } catch (error: any) {
+      console.error('Database error in createTicket:', error);
+      throw error;
+    }
   }
 
   async getUserTickets(userId: number, statuses: string[], page: number = 1, limit: number = 10) {

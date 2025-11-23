@@ -533,10 +533,14 @@ app.post('/api/tickets', verifyTelegramWebAppData, async (req: Request, res: Res
     const userId = telegramUser?.id;
     const { title, message } = req.body;
 
+    console.log('📝 Create ticket request:', { userId, title, messageLength: message?.length });
+
     if (!userId) return res.status(400).json({ error: 'User ID not found' });
     if (!title || !message) return res.status(400).json({ error: 'Title and message are required' });
 
+    console.log('Checking for active tickets...');
     if (await ticketService.hasActiveTicket(userId)) {
+      console.log('User already has an active ticket');
       return res.status(400).json({ error: 'You already have an active ticket. Please close it first.' });
     }
 
@@ -554,8 +558,10 @@ app.post('/api/tickets', verifyTelegramWebAppData, async (req: Request, res: Res
 
     res.json(ticket);
   } catch (error: any) {
-    console.error('Failed to create ticket:', error);
-    res.status(500).json({ error: 'Failed to create ticket' });
+    console.error('❌ Failed to create ticket:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', { message: error.message, code: error.code });
+    res.status(500).json({ error: error.message || 'Failed to create ticket' });
   }
 });
 
