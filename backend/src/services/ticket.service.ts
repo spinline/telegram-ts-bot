@@ -28,12 +28,20 @@ export class TicketService {
               mediaFileId
             }
           }
+        },
+        include: {
+          messages: true
         }
       });
       console.log('Ticket created successfully:', ticket.id);
       return {
         ...ticket,
-        userId: Number(ticket.userId)
+        userId: Number(ticket.userId),
+        messages: ticket.messages?.map(m => ({
+          ...m,
+          userId: Number(m.userId),
+          ticketId: Number(m.ticketId)
+        }))
       };
     } catch (error: any) {
       console.error('Database error in createTicket:', error);
