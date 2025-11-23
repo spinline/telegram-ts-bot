@@ -40,23 +40,34 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
   }, []);
 
   const handleCreateTicket = async () => {
-    if (!newTicketTitle || !newTicketMessage) return;
+    if (!newTicketTitle || !newTicketMessage) {
+      setError('Lütfen tüm alanları doldurun.');
+      return;
+    }
     
     try {
       setSubmitting(true);
       setError(null);
-      console.log('Creating ticket:', { title: newTicketTitle, message: newTicketMessage });
-      await ticketService.createTicket(newTicketTitle, newTicketMessage);
-      console.log('Ticket created successfully');
+      console.log('🎫 Creating ticket:', { title: newTicketTitle, message: newTicketMessage });
+      
+      const result = await ticketService.createTicket(newTicketTitle, newTicketMessage);
+      console.log('✅ Ticket created successfully:', result);
       
       setSuccess(true);
       setNewTicketTitle('');
       setNewTicketMessage('');
-      fetchTickets();
+      await fetchTickets();
     } catch (err: any) {
-      console.error('Failed to create ticket', err);
+      console.error('❌ Failed to create ticket:', err);
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      
       const errorMessage = err.response?.data?.error || err.message || 'Talep oluşturulurken bir hata oluştu.';
       setError(errorMessage);
+      setSuccess(false); // Hata durumunda success'i false yap
     } finally {
       setSubmitting(false);
     }
