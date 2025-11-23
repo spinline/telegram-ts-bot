@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Stack, Title, Text, Button, Group, Card, Badge, TextInput, Textarea, Loader } from '@mantine/core';
-import { IconPlus, IconMessage, IconArrowLeft, IconCheck } from '@tabler/icons-react';
+import { Stack, Title, Text, Button, Group, Card, Badge, TextInput, Textarea, Loader, Alert } from '@mantine/core';
+import { IconPlus, IconMessage, IconArrowLeft, IconCheck, IconAlertCircle } from '@tabler/icons-react';
 import { ticketService } from '../../services/ticket.service';
 import type { Ticket } from '../../services/ticket.service';
 
@@ -16,6 +16,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
   const [newTicketMessage, setNewTicketMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchTickets = async () => {
     try {
@@ -43,6 +44,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
     
     try {
       setSubmitting(true);
+      setError(null);
       console.log('Creating ticket:', { title: newTicketTitle, message: newTicketMessage });
       await ticketService.createTicket(newTicketTitle, newTicketMessage);
       console.log('Ticket created successfully');
@@ -51,9 +53,10 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
       setNewTicketTitle('');
       setNewTicketMessage('');
       fetchTickets();
-    } catch (error) {
-      console.error('Failed to create ticket', error);
-      alert('Talep oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+    } catch (err: any) {
+      console.error('Failed to create ticket', err);
+      const errorMessage = err.response?.data?.error || err.message || 'Talep oluşturulurken bir hata oluştu.';
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -62,6 +65,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
   const handleBackToList = () => {
     setSuccess(false);
     setShowForm(false);
+    setError(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -128,6 +132,12 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
             <Title order={2} style={{ color: '#fff' }}>Yeni Destek Talebi</Title>
             <Text c="dimmed">Sorununuzu detaylı bir şekilde açıklayın.</Text>
           </Stack>
+          
+          {error && (
+            <Alert icon={<IconAlertCircle size={16} />} title="Hata" color="red" variant="filled">
+              {error}
+            </Alert>
+          )}
           
           <Stack gap="md">
             <TextInput
