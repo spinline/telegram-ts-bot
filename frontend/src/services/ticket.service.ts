@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { InternalAxiosRequestConfig } from 'axios';
 import { telegramService } from './telegram';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) || 'https://api.happproxy.com';
@@ -7,11 +7,11 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const initData = telegramService.getInitData();
   if (initData) {
     config.headers = config.headers || {};
-    config.headers['x-telegram-init-data'] = initData;
+    config.headers.set('x-telegram-init-data', initData);
   }
   return config;
 });
