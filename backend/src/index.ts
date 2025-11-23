@@ -456,6 +456,130 @@ app.delete('/api/hwid/device', verifyTelegramWebAppData, async (req: Request, re
   }
 });
 
+// --- TICKET API ENDPOINTS ---
+
+// Get User Tickets
+app.get('/api/tickets', verifyTelegramWebAppData, async (req: Request, res: Response) => {
+  try {
+    const telegramUser = (req as any).telegramUser;
+    const userId = telegramUser?.id;
+    if (!userId) return res.status(400).json({ error: 'User ID not found' });
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const status = req.query.status as string; // 'OPEN', 'CLOSED', etc.
+
+    let statuses = [TicketStatus.OPEN, TicketStatus.ANSWERED, TicketStatus.PENDING];
+    if (status === 'CLOSED') {
+      statuses = [TicketStatus.CLOSED];
+    } else if (status === 'ALL') {
+      statuses = [TicketStatus.OPEN, TicketStatus.ANSWERED, TicketStatus.PENDING, TicketStatus.CLOSED];
+    }
+
+    const tickets = await ticketService.getUserTickets(userId, statuses, page, limit);
+    const total = await ticketService.countUserTickets(userId, statuses);
+
+    res.json({ tickets, total, page, limit });
+  } catch (error: any) {
+    console.error('Failed to get tickets:', error);
+    res.status(500).json({ error: 'Failed to get tickets' });
+  }
+});
+
+// Get Single Ticket
+app.get('/api/tickets/:id', verifyTelegramWebAppData, async (req: Request, res: Response) => {
+  try {
+    const telegramUser = (req as any).telegramUser;
+    const userId = telegramUser?.id;
+    const ticketId = parseInt(req.params.id);
+
+    if (!userId) return res.status(400).json({ error: 'User ID not found' });
+
+    const ticket = await ticketService.getTicketById(ticketId);
+
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
+    // Security check: Ensure ticket belongs to user
+    if (ticket.userId !== userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    res.json(ticket);
+  } catch (error: any) {
+    console.error('Failed to get ticket:', error);
+    res.status(500).json({ error: 'Failed to get ticket' });
+  }
+});
+
+// Create Ticket
+app.post('/api/tickets', verifyTelegramWebAppData, async (req: Request, res: Response) => {
+  try {
+    const telegramUser = (req as any).telegramUser;
+    const userId = telegramUser?.id;
+    const { title, message } = req.body;
+
+    if (!userId) return res.status(400).json({ error: 'User ID not found' });
+    if (!title || !message) return res.status(400).json({ error: 'Title and message are required' });
+
+    if (await ticketService.hasActiveTicket(userId)) {
+      return res.status(400).json({ error: 'You already have an active ticket. Please close it first.' });
+    }
+
+    const ticket = await ticketService.createTicket(userId, title, message);
+
+    // Notify Admins
+    const adminIds = (process.env.ADMIN_TELEGRAM_IDS || "").split(",").map(id => id.trim()).filter(id => id);
+    for (const adminId of adminIds) {
+      try {
+        await bot.api.sendMessage(adminId, `🎫 **Yeni Destek Talebi (Mini App)**\n\n**Ticket #${ticket.id}**\n👤 Kullanıcı: ${telegramUser.username || userId}\n📝 Başlık: ${title}\n💬 Mesaj: ${message}`, { parse_mode: "Markdown" });
+      } catch (e) {
+        console.error(`Failed to notify admin ${adminId}:`, e);
+      }
+    }
+
+    res.json(ticket);
+  } catch (error: any) {
+    console.error('Failed to create ticket:', error);
+    res.status(500).json({ error: 'Failed to create ticket' });
+  }
+});
+
+// Reply to Ticket
+app.post('/api/tickets/:id/reply', verifyTelegramWebAppData, async (req: Request, res: Response) => {
+  try {
+    const telegramUser = (req as any).telegramUser;
+    const userId = telegramUser?.id;
+    const ticketId = parseInt(req.params.id);
+    const { message } = req.body;
+
+    if (!userId) return res.status(400).json({ error: 'User ID not found' });
+    if (!message) return res.status(400).json({ error: 'Message is required' });
+
+    const ticket = await ticketService.getTicketById(ticketId);
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    if (ticket.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
+
+    const newMessage = await ticketService.addMessage(ticketId, userId, message, true);
+
+    // Notify Admins
+    const adminIds = (process.env.ADMIN_TELEGRAM_IDS || "").split(",").map(id => id.trim()).filter(id => id);
+    for (const adminId of adminIds) {
+      try {
+        await bot.api.sendMessage(adminId, `💬 **Yeni Yanıt (Mini App)**\n\n**Ticket #${ticketId}**\n👤 Kullanıcı: ${telegramUser.username || userId}\n💬 Mesaj: ${message}`, { parse_mode: "Markdown" });
+      } catch (e) {
+        console.error(`Failed to notify admin ${adminId}:`, e);
+      }
+    }
+
+    res.json(newMessage);
+  } catch (error: any) {
+    console.error('Failed to reply to ticket:', error);
+    res.status(500).json({ error: 'Failed to reply to ticket' });
+  }
+});
+
 // Mini App'i açacak komut
 bot.command("app", async (ctx) => {
   const miniAppUrl = process.env.MINI_APP_URL;

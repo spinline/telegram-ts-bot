@@ -3,7 +3,7 @@
  * Uses custom hooks for clean separation of concerns
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { MantineProvider, AppShell } from '@mantine/core';
 import { useColorScheme } from '@mantine/hooks';
 import '@mantine/core/styles.css';
@@ -16,6 +16,8 @@ import InstallOnThisDevice from './components/screens/InstallOnThisDevice';
 import AddSubscription from './components/screens/AddSubscription';
 import Congratulations from './components/screens/Congratulations';
 import AccountPage from './components/screens/AccountPage';
+import SupportScreen from './components/screens/SupportScreen';
+import TicketDetailScreen from './components/screens/TicketDetailScreen';
 
 // Custom Hooks - Using barrel exports
 import { useTelegram, useAccount, useNavigation } from './hooks';
@@ -28,6 +30,7 @@ import { COLORS } from './utils';
 
 function App() {
   const preferredColorScheme = useColorScheme();
+  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
 
   // 🎯 Modern Hooks
   const { setHeaderColor, setBackgroundColor } = useTelegram();
@@ -56,8 +59,11 @@ function App() {
   const handleInstallOnThisDeviceNext = () => navigateTo('addSubscription');
   const handleAddSubscriptionNext = () => navigateTo('congratulations');
   const handleCongratulationsFinish = () => resetNavigation();
-  const handleSupport = () => {
-    console.log('Destek');
+  const handleSupport = () => navigateTo('support');
+  
+  const handleTicketClick = (ticketId: number) => {
+    setSelectedTicketId(ticketId);
+    navigateTo('ticketDetail');
   };
 
   return (
@@ -111,6 +117,12 @@ function App() {
               )}
               {currentScreen === 'congratulations' && (
                 <Congratulations onFinish={handleCongratulationsFinish} />
+              )}
+              {currentScreen === 'support' && (
+                <SupportScreen onTicketClick={handleTicketClick} />
+              )}
+              {currentScreen === 'ticketDetail' && selectedTicketId && (
+                <TicketDetailScreen ticketId={selectedTicketId} />
               )}
             </div>
           </AppShell.Main>

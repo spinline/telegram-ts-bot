@@ -8,6 +8,13 @@ export function registerTicketHandlers(bot: Bot<Context>) {
   // Menu: Support
   bot.callbackQuery("menu_support", async (ctx) => {
     await safeAnswerCallback(ctx);
+    
+    // Clear any active session (e.g. if cancelling ticket creation)
+    const userId = ctx.from?.id;
+    if (userId && sessionManager.has(userId)) {
+      sessionManager.delete(userId);
+    }
+
     const keyboard = new InlineKeyboard()
       .text("🎫 Create Ticket", "create_ticket").row()
       .text("📂 My Tickets", "my_tickets").row()
@@ -118,6 +125,13 @@ export function registerTicketHandlers(bot: Bot<Context>) {
   // View Ticket
   bot.callbackQuery(/^view_ticket_(\d+)$/, async (ctx) => {
     await safeAnswerCallback(ctx);
+    
+    // Clear any active session (e.g. if cancelling reply)
+    const userId = ctx.from?.id;
+    if (userId && sessionManager.has(userId)) {
+      sessionManager.delete(userId);
+    }
+
     const ticketId = parseInt(ctx.match[1]);
     const ticket = await ticketService.getTicketById(ticketId);
 

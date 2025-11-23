@@ -9,7 +9,9 @@ export type Screen =
   | 'installSetup'
   | 'installOnThisDevice'
   | 'addSubscription'
-  | 'congratulations';
+  | 'congratulations'
+  | 'support'
+  | 'ticketDetail';
 
 export type ScreenHistory = Screen[];
 

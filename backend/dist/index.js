@@ -798,7 +798,13 @@ exports.bot.callbackQuery(/^admin_tickets(_p_(\d+))?$/, (ctx) => __awaiter(void 
 }));
 // Admin Panel - Ticket Görüntüle
 exports.bot.callbackQuery(/^admin_view_ticket_(\d+)$/, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     yield (0, error_middleware_1.safeAnswerCallback)(ctx);
+    // 🎯 FIX: Clear any active session (like reply mode) when viewing a ticket
+    const userId = (_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id;
+    if (userId && session_middleware_1.sessionManager.has(userId)) {
+        session_middleware_1.sessionManager.delete(userId);
+    }
     const ticketId = parseInt(ctx.match[1]);
     const ticket = yield ticket_service_1.ticketService.getTicketById(ticketId);
     if (!ticket) {
