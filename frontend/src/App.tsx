@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { MantineProvider, AppShell } from '@mantine/core';
-import { useColorScheme } from '@mantine/hooks';
+
 import '@mantine/core/styles.css';
 
 // Screens
@@ -29,7 +29,6 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { COLORS } from './utils';
 
 function App() {
-  const preferredColorScheme = useColorScheme();
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
 
   // 🎯 Modern Hooks
@@ -70,7 +69,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <MantineProvider defaultColorScheme={preferredColorScheme}>
+      <MantineProvider defaultColorScheme="dark">
         <AppShell padding="md">
           <AppShell.Main style={{
             overflowY: 'auto',
