@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Check, Zap } from "lucide-react"
+import { Check, Zap, ArrowLeft } from "lucide-react"
+import { useTelegram } from "@/hooks/useTelegram"
 
 interface Plan {
     id: number
@@ -12,11 +13,16 @@ interface Plan {
     popular?: boolean
 }
 
-import { useTelegram } from "@/hooks/useTelegram"
-
 function BuySubscription({ onBack }: { onBack: () => void }) {
-    const [selectedPlan, setSelectedPlan] = useState<number>(2)
-    const { haptic } = useTelegram()
+    const { haptic, showBackButton, hideBackButton } = useTelegram()
+    const [selectedPlan, setSelectedPlan] = useState<number | null>(null)
+
+    useEffect(() => {
+        showBackButton(onBack)
+        return () => {
+            hideBackButton()
+        }
+    }, [onBack])
 
     const plans: Plan[] = [
         { id: 1, duration: "1 Ay", price: "₺99", devices: 3 },

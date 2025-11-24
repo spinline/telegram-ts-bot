@@ -18,16 +18,18 @@ interface Message {
     timestamp: string
 }
 
-interface TicketDetailProps {
-    ticketId: number
-    onBack: () => void
-}
-
-function TicketDetailScreen({ ticketId, onBack }: TicketDetailProps) {
+function TicketDetailScreen({ ticketId, onBack }: { ticketId: number, onBack: () => void }) {
     const [replyText, setReplyText] = useState("")
     const scrollRef = useRef<HTMLDivElement>(null)
     const queryClient = useQueryClient()
-    const { haptic } = useTelegram()
+    const { haptic, showBackButton, hideBackButton } = useTelegram()
+
+    useEffect(() => {
+        showBackButton(onBack)
+        return () => {
+            hideBackButton()
+        }
+    }, [onBack])
 
     const { data: ticket, isLoading } = useQuery({
         queryKey: ['ticket', ticketId],

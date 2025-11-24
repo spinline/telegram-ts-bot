@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,7 +9,14 @@ import { AccountSkeleton } from "@/components/skeletons/AccountSkeleton"
 import { useTelegram } from "@/hooks/useTelegram"
 
 function AccountPage({ onBack }: { onBack: () => void }) {
-    const { user, haptic } = useTelegram()
+    const { user, haptic, showBackButton, hideBackButton } = useTelegram()
+
+    useEffect(() => {
+        showBackButton(onBack)
+        return () => {
+            hideBackButton()
+        }
+    }, [onBack])
 
     const { data: account, isLoading, error: accountError } = useQuery({
         queryKey: ['account'],
