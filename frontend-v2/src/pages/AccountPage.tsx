@@ -10,10 +10,10 @@ import { useTelegram } from "@/hooks/useTelegram"
 function AccountPage({ onBack }: { onBack: () => void }) {
     const { user, haptic } = useTelegram()
 
-    const { data: account, isLoading } = useQuery({
+    const { data: account, isLoading, error: accountError } = useQuery({
         queryKey: ['account'],
         queryFn: accountService.getAccount,
-        retry: false
+        retry: 1
     })
 
     if (isLoading) {
@@ -48,6 +48,13 @@ function AccountPage({ onBack }: { onBack: () => void }) {
                     </Button>
                     <h1 className="text-2xl font-bold text-white">Hesabım</h1>
                 </div>
+
+                {accountError && (
+                    <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-sm text-red-200 flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                        Bağlantı hatası: Veriler güncel olmayabilir (Demo Modu)
+                    </div>
+                )}
 
                 {/* Profile Card */}
                 <Card className="bg-slate-900/50 border-teal-800/30 backdrop-blur">

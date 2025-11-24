@@ -14,9 +14,30 @@ export const api = axios.create({
 // Add Telegram InitData to headers
 api.interceptors.request.use((config) => {
   const initData = (window as any).Telegram?.WebApp?.initData;
-  console.log('API Request Interceptor:', { url: config.url, initDataPresent: !!initData });
+  console.log('API Request Interceptor:', {
+    url: config.url, initDataPreview: initData ? `${initData.substring(0, 20)}...` : 'N/A'
+  });
+
   if (initData) {
-    config.headers['X-Telegram-Init-Data'] = initData;
+    // Debug: Check auth_date
+    try {
+      const params = new URLSearchParams(initData);
+      const authDate = params.get('auth_date');
+      if (authDate) {
+        const date = new Date(parseInt(authDate) * 1000);
+        console.log('InitData Auth Date:', date.toLocaleString(), 'Timestamp:', authDate);
+
+        // Check if expired (Telegram allows 24h usually, but good to know)
+        const now = Date.now() / 1000;
+        const diff = now - parseInt(authDate);
+        console.log('Auth Date Age (seconds):', diff);
+      }
+    } catch (e) {
+      console.error('Error parsing initData for debug:', e);
+    }
+
+    // Use lowercase header to match original implementation exactly
+    config.headers['x-telegram-init-data'] = initData;
   }
   return config;
 });
@@ -35,7 +56,8 @@ export const accountService = {
 export const ticketService = {
   getTickets: async () => {
     const { data } = await api.get('/tickets');
-    return data;
+    // Backend returns { tickets: [], total: number, ... }
+    return data.tickets;
   },
 
   createTicket: async (ticket: { title: string; message: string }) => {
