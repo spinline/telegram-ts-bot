@@ -27,8 +27,12 @@ function AccountPage({ onBack }: { onBack: () => void }) {
     // Fallback data if API fails or for demo
     const displayAccount = {
         username: account?.username || user?.username || "Demo User",
+        telegramId: account?.telegramId || user?.id?.toString() || "-",
+        tag: account?.tag || "-",
         subscriptionType: account?.status === 'ACTIVE' ? 'Premium' : 'Free',
-        expiryDate: account?.expireAt ? new Date(account.expireAt).toLocaleDateString() : "-",
+        expiryDate: account?.expireAt ? new Date(account.expireAt).toLocaleDateString('tr-TR') : "-",
+        usedTraffic: account?.usedTrafficBytes ? (account.usedTrafficBytes / 1024 / 1024 / 1024).toFixed(2) : "0",
+        trafficLimit: account?.trafficLimitBytes ? (account.trafficLimitBytes / 1024 / 1024 / 1024).toFixed(0) : "0",
         devicesUsed: account?.hwid?.total || 0,
         devicesLimit: account?.hwidDeviceLimit || 1,
         isOnline: !!account?.onlineAt
@@ -54,7 +58,15 @@ function AccountPage({ onBack }: { onBack: () => void }) {
                             </div>
                             <div className="flex-1">
                                 <CardTitle className="text-white">{displayAccount.username}</CardTitle>
-                                <div className="flex items-center gap-2 mt-1">
+                                <div className="flex items-center gap-2 mt-1 text-sm text-slate-400">
+                                    <span>ID: {displayAccount.telegramId}</span>
+                                    {displayAccount.tag !== "-" && (
+                                        <Badge variant="outline" className="border-teal-500/30 text-teal-400 text-xs">
+                                            {displayAccount.tag}
+                                        </Badge>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2 mt-2">
                                     <Badge variant={displayAccount.isOnline ? "default" : "secondary"} className="bg-teal-600">
                                         <Wifi className="h-3 w-3 mr-1" />
                                         {displayAccount.isOnline ? "Çevrimiçi" : "Çevrimdışı"}
@@ -85,20 +97,43 @@ function AccountPage({ onBack }: { onBack: () => void }) {
                             </span>
                             <span className="text-white font-medium">{displayAccount.expiryDate}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-slate-400 flex items-center gap-2">
-                                <HardDrive className="h-4 w-4" />
-                                Cihazlar
-                            </span>
-                            <span className="text-white font-medium">
-                                {displayAccount.devicesUsed} / {displayAccount.devicesLimit}
-                            </span>
+
+                        {/* Bandwidth Usage */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-400 flex items-center gap-2">
+                                    <Wifi className="h-4 w-4" />
+                                    Kullanım
+                                </span>
+                                <span className="text-white font-medium">
+                                    {displayAccount.usedTraffic} GB / {displayAccount.trafficLimit} GB
+                                </span>
+                            </div>
+                            <div className="w-full bg-slate-800 rounded-full h-2">
+                                <div
+                                    className="bg-teal-500 h-2 rounded-full transition-all duration-500"
+                                    style={{ width: `${Math.min((Number(displayAccount.usedTraffic) / Number(displayAccount.trafficLimit)) * 100, 100)}%` }}
+                                />
+                            </div>
                         </div>
-                        <div className="w-full bg-slate-800 rounded-full h-2 mt-2">
-                            <div
-                                className="bg-teal-600 h-2 rounded-full transition-all duration-500"
-                                style={{ width: `${(displayAccount.devicesUsed / displayAccount.devicesLimit) * 100}%` }}
-                            />
+
+                        {/* Device Usage */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-400 flex items-center gap-2">
+                                    <HardDrive className="h-4 w-4" />
+                                    Cihazlar
+                                </span>
+                                <span className="text-white font-medium">
+                                    {displayAccount.devicesUsed} / {displayAccount.devicesLimit}
+                                </span>
+                            </div>
+                            <div className="w-full bg-slate-800 rounded-full h-2">
+                                <div
+                                    className="bg-teal-600 h-2 rounded-full transition-all duration-500"
+                                    style={{ width: `${(displayAccount.devicesUsed / displayAccount.devicesLimit) * 100}%` }}
+                                />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
