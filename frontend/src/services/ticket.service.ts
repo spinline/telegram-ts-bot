@@ -36,28 +36,34 @@ export interface TicketMessage {
   createdAt: string;
 }
 
+export interface TicketsResponse {
+  tickets: Ticket[];
+  total?: number;
+  page?: number;
+}
+
 export const ticketService = {
-  getTickets: async (status: string = 'OPEN', page: number = 1) => {
+  getTickets: async (status: string = 'OPEN', page: number = 1): Promise<TicketsResponse> => {
     const response = await api.get(`/api/tickets?status=${status}&page=${page}`);
     return response.data;
   },
 
-  getTicketById: async (id: number) => {
+  getTicketById: async (id: number): Promise<Ticket> => {
     const response = await api.get(`/api/tickets/${id}`);
     return response.data;
   },
 
-  createTicket: async (title: string, message: string) => {
+  createTicket: async (title: string, message: string): Promise<Ticket> => {
     const response = await api.post('/api/tickets', { title, message });
     return response.data;
   },
 
-  replyTicket: async (id: number, message: string) => {
+  replyTicket: async (id: number, message: string): Promise<TicketMessage> => {
     const response = await api.post(`/api/tickets/${id}/reply`, { message });
     return response.data;
   },
 
-  closeTicket: async (id: number) => {
+  closeTicket: async (id: number): Promise<Ticket> => {
     const response = await api.post(`/api/tickets/${id}/close`);
     return response.data;
   }

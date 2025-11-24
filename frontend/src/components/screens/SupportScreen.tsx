@@ -21,8 +21,8 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const data: any = await ticketService.getTickets('ALL');
-      if (data && Array.isArray(data.tickets)) {
+      const data = await ticketService.getTickets('ALL');
+      if (data?.tickets && Array.isArray(data.tickets)) {
         setTickets(data.tickets);
       } else {
         setTickets([]);
@@ -39,7 +39,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
     fetchTickets();
   }, []);
 
-  const handleNewTicket = async () => {
+  const handleNewTicket = () => {
     // Check if user has an active ticket
     const activeTicket = tickets.find(t => t.status !== 'CLOSED');
     if (activeTicket) {
@@ -47,6 +47,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
       return;
     }
     setShowForm(true);
+    setError(null);
   };
 
   const handleCreateTicket = async () => {
@@ -67,15 +68,17 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
       setNewTicketTitle('');
       setNewTicketMessage('');
       await fetchTickets();
-    } catch (err: any) {
+    } catch (err) {
       console.error('❌ Failed to create ticket:', err);
       console.error('Error details:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status
+        message: err instanceof Error ? err.message : 'Unknown error',
+        response: (err as any)?.response?.data,
+        status: (err as any)?.response?.status
       });
       
-      const errorMessage = err.response?.data?.error || err.message || 'Talep oluşturulurken bir hata oluştu.';
+      const errorMessage = (err as any)?.response?.data?.error 
+        || (err instanceof Error ? err.message : null)
+        || 'Talep oluşturulurken bir hata oluştu.';
       setError(errorMessage);
       setSuccess(false);
     } finally {
@@ -116,7 +119,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
             </div>
             <Stack gap="xs" align="center">
               <Title order={2} style={{ color: '#fff' }}>Talep Oluşturuldu!</Title>
-              <Text c="dimmed" ta="center" size="lg">
+              <Text color="dimmed" style={{ textAlign: 'center' }} size="lg">
                 Destek talebiniz başarıyla iletildi.<br/>En kısa sürede yanıt verilecektir.
               </Text>
             </Stack>
@@ -165,7 +168,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
           
           <Stack gap="xs">
             <Title order={2} style={{ color: '#fff' }}>Yeni Destek Talebi</Title>
-            <Text c="dimmed">Sorununuzu detaylı bir şekilde açıklayın.</Text>
+            <Text color="dimmed">Sorununuzu detaylı bir şekilde açıklayın.</Text>
           </Stack>
           
           {error && (
@@ -178,9 +181,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
             <div>
               <Text 
                 size="sm" 
-                fw={600} 
-                mb={8}
-                style={{ color: '#fff' }}
+                style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}
               >
                 Başlık <span style={{ color: '#fa5252' }}>*</span>
               </Text>
@@ -202,9 +203,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
             <div>
               <Text 
                 size="sm" 
-                fw={600} 
-                mb={8}
-                style={{ color: '#fff' }}
+                style={{ color: '#fff', fontWeight: 600, marginBottom: 8 }}
               >
                 Açıklama <span style={{ color: '#fa5252' }}>*</span>
               </Text>
@@ -272,7 +271,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
           <Card padding="xl" radius="md" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
             <Stack align="center" gap="md">
               <IconMessage size={48} style={{ opacity: 0.5, color: '#fff' }} />
-              <Text c="dimmed" ta="center">Henüz bir destek talebiniz bulunmuyor.</Text>
+              <Text color="dimmed" style={{ textAlign: 'center' }}>Henüz bir destek talebiniz bulunmuyor.</Text>
               <Button color="teal" onClick={handleNewTicket}>İlk Talebini Oluştur</Button>
             </Stack>
           </Card>
@@ -291,11 +290,11 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
                 onClick={() => onTicketClick(ticket.id)}
                 className="ticket-card"
               >
-                <Group justify="space-between" mb="xs">
-                  <Text fw={500} style={{ color: '#fff' }}>#{ticket.id} {ticket.title}</Text>
+                <Group justify="space-between" style={{ marginBottom: 'var(--mantine-spacing-xs)' }}>
+                  <Text style={{ color: '#fff', fontWeight: 500 }}>#{ticket.id} {ticket.title}</Text>
                   <Badge color={getStatusColor(ticket.status)}>{ticket.status}</Badge>
                 </Group>
-                <Text size="sm" c="dimmed">
+                <Text size="sm" color="dimmed">
                   {new Date(ticket.createdAt).toLocaleDateString('tr-TR')}
                 </Text>
               </Card>
