@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import WelcomeScreen from './pages/WelcomeScreen'
 import AccountPage from './pages/AccountPage'
 import SupportScreen from './pages/SupportScreen'
@@ -7,6 +8,9 @@ import BuySubscription from './pages/BuySubscription'
 import './index.css'
 
 function App() {
+  useEffect(() => {
+    document.documentElement.classList.add('dark')
+  }, [])
   return (
     <BrowserRouter>
       <div className="dark min-h-screen">
