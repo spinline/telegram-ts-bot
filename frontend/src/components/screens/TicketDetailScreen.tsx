@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Stack, Title, Text, Button, Group, Card, Badge, Textarea, Loader, ScrollArea, Modal } from '@mantine/core';
+import { Stack, Title, Text, Button, Group, Card, Badge, Textarea, Loader, ScrollArea } from '@mantine/core';
 import { IconSend, IconUser, IconHeadset, IconX } from '@tabler/icons-react';
-import { useDisclosure } from '@mantine/hooks';
 import { ticketService } from '../../services/ticket.service';
 import type { Ticket } from '../../services/ticket.service';
 
@@ -14,8 +13,6 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
   const [loading, setLoading] = useState(true);
   const [replyMessage, setReplyMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const [closing, setClosing] = useState(false);
-  const [opened, { open, close }] = useDisclosure(false);
   const viewport = useRef<HTMLDivElement>(null);
 
   const fetchTicket = async () => {
@@ -61,17 +58,30 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
     }
   };
 
-  const handleCloseTicket = async () => {
+  const handleCloseTicket = () => {
+    const webApp = window.Telegram?.WebApp;
+    const confirmMessage = 'Bu destek talebini kapatmak istediğinize emin misiniz? Kapatılan talepler tekrar açılamaz.';
+
+    if (webApp?.showConfirm) {
+      webApp.showConfirm(confirmMessage, async (confirmed: boolean) => {
+        if (confirmed) {
+          await performCloseTicket();
+        }
+      });
+    } else {
+      if (window.confirm(confirmMessage)) {
+        performCloseTicket();
+      }
+    }
+  };
+
+  const performCloseTicket = async () => {
     try {
-      setClosing(true);
       await ticketService.closeTicket(ticketId);
-      close();
       fetchTicket();
     } catch (error) {
       console.error('Failed to close ticket', error);
       alert('Failed to close ticket.');
-    } finally {
-      setClosing(false);
     }
   };
 
@@ -111,7 +121,7 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
               variant="subtle"
               size="xs"
               leftSection={<IconX size={14} />}
-              onClick={open}
+              onClick={handleCloseTicket}
             >
               Kapat
             </Button>
@@ -122,8 +132,8 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
         </Text>
       </Stack>
 
-      <ScrollArea style={{ flex: 1, marginBottom: 20 }} viewportRef={viewport}>
-        <Stack gap="md">
+      <ScrollArea style={{ flex: 1, marginBottom: 20, marginLeft: -10, marginRight: -10 }} viewportRef={viewport}>
+        <Stack gap="md" px="xs">
           {ticket.messages?.map((msg) => (
             <Group
               key={msg.id}
@@ -191,13 +201,6 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
           <Text ta="center" c="dimmed" size="sm">Bu destek talebi kapatılmıştır.</Text>
         </Card>
       )}
-      <Modal opened={opened} onClose={close} title="Talebi Kapat" centered>
-        <Text size="sm" mb="lg">Bu destek talebini kapatmak istediğinize emin misiniz? Kapatılan talepler tekrar açılamaz.</Text>
-        <Group justify="flex-end">
-          <Button variant="default" onClick={close}>İptal</Button>
-          <Button color="red" onClick={handleCloseTicket} loading={closing}>Evet, Kapat</Button>
-        </Group>
-      </Modal>
     </div>
   );
 }
