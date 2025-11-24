@@ -179,7 +179,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
           
           <Stack gap="md">
             <TextInput
-              label={<Text size="sm" style={{ color: '#fff', fontWeight: 600 }}>Başlık <span style={{ color: '#fa5252' }}>*</span></Text>}
+              label="Başlık *"
               placeholder="Örn: Bağlantı sorunu"
               value={newTicketTitle}
               onChange={(e) => setNewTicketTitle(e.currentTarget.value)}
@@ -192,12 +192,15 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
                   fontSize: '16px'
                 },
                 label: {
-                  marginBottom: 8
+                  color: '#fff',
+                  fontWeight: 600,
+                  marginBottom: 8,
+                  fontSize: '14px'
                 }
               }}
             />
             <Textarea
-              label={<Text size="sm" style={{ color: '#fff', fontWeight: 600 }}>Açıklama <span style={{ color: '#fa5252' }}>*</span></Text>}
+              label="Açıklama *"
               placeholder="Sorununuzu detaylı bir şekilde açıklayın..."
               minRows={12}
               value={newTicketMessage}
@@ -212,7 +215,10 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
                   minHeight: '200px'
                 },
                 label: {
-                  marginBottom: 8
+                  color: '#fff',
+                  fontWeight: 600,
+                  marginBottom: 8,
+                  fontSize: '14px'
                 }
               }}
             />
