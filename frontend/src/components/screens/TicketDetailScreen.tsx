@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Stack, Title, Text, Button, Group, Card, Badge, Textarea, Loader, ScrollArea } from '@mantine/core';
-import { IconSend, IconUser, IconHeadset } from '@tabler/icons-react';
+import { Stack, Title, Text, Button, Group, Card, Badge, Textarea, Loader, ScrollArea, Modal } from '@mantine/core';
+import { IconSend, IconUser, IconHeadset, IconX } from '@tabler/icons-react';
+import { useDisclosure } from '@mantine/hooks';
 import { ticketService } from '../../services/ticket.service';
 import type { Ticket } from '../../services/ticket.service';
 
@@ -13,6 +14,8 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
   const [loading, setLoading] = useState(true);
   const [replyMessage, setReplyMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [opened, { open, close }] = useDisclosure(false);
   const viewport = useRef<HTMLDivElement>(null);
 
   const fetchTicket = async () => {
@@ -58,6 +61,20 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
     }
   };
 
+  const handleCloseTicket = async () => {
+    try {
+      setClosing(true);
+      await ticketService.closeTicket(ticketId);
+      close();
+      fetchTicket();
+    } catch (error) {
+      console.error('Failed to close ticket', error);
+      alert('Failed to close ticket.');
+    } finally {
+      setClosing(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'OPEN': return 'blue';
@@ -84,8 +101,21 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
     <div style={{ height: 'calc(100vh - 40px)', display: 'flex', flexDirection: 'column' }}>
       <Stack gap="xs" mb="md">
         <Group justify="space-between">
-          <Title order={3} style={{ color: '#fff' }}>#{ticket.id} {ticket.title}</Title>
-          <Badge color={getStatusColor(ticket.status)}>{ticket.status}</Badge>
+          <Group gap="xs">
+            <Title order={3} style={{ color: '#fff' }}>#{ticket.id} {ticket.title}</Title>
+            <Badge color={getStatusColor(ticket.status)}>{ticket.status}</Badge>
+          </Group>
+          {ticket.status !== 'CLOSED' && (
+            <Button
+              color="red"
+              variant="subtle"
+              size="xs"
+              leftSection={<IconX size={14} />}
+              onClick={open}
+            >
+              Kapat
+            </Button>
+          )}
         </Group>
         <Text size="xs" c="dimmed">
           {new Date(ticket.createdAt).toLocaleString('tr-TR')}
@@ -109,7 +139,7 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
                 padding="sm"
                 radius="md"
                 style={{
-                  maxWidth: '80%',
+                  maxWidth: '90%',
                   backgroundColor: msg.isUserMessage ? '#14b8a6' : 'rgba(255, 255, 255, 0.1)',
                   color: '#fff'
                 }}
@@ -129,7 +159,7 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
       </ScrollArea>
 
       {ticket.status !== 'CLOSED' ? (
-        <Group align="flex-end" gap="xs">
+        <Group align="flex-end" gap="xs" style={{ paddingBottom: 20 }}>
           <Textarea
             placeholder="Yanıtınız..."
             minRows={1}
@@ -161,6 +191,13 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
           <Text ta="center" c="dimmed" size="sm">Bu destek talebi kapatılmıştır.</Text>
         </Card>
       )}
+      <Modal opened={opened} onClose={close} title="Talebi Kapat" centered>
+        <Text size="sm" mb="lg">Bu destek talebini kapatmak istediğinize emin misiniz? Kapatılan talepler tekrar açılamaz.</Text>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={close}>İptal</Button>
+          <Button color="red" onClick={handleCloseTicket} loading={closing}>Evet, Kapat</Button>
+        </Group>
+      </Modal>
     </div>
   );
 }
