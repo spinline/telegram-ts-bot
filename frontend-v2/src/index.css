@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    * {
+        @apply border-gray-700;
+    }
+
+    body {
+        @apply bg-gradient-to-b from-teal-950 to-slate-950 text-white min-h-screen;
+        font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    /* Ensure dark mode colors */
+    .dark {
+        color-scheme: dark;
+    }
+}
