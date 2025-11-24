@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Stack, Title, Text, Button, Group, Card, Badge, Textarea, Loader, ScrollArea } from '@mantine/core';
-import { IconSend, IconUser, IconHeadset, IconX } from '@tabler/icons-react';
+import { Stack, Title, Text, Button, Group, Card, Badge, Textarea, Loader, ScrollArea, Menu, ActionIcon } from '@mantine/core';
+import { IconSend, IconUser, IconHeadset, IconDotsVertical, IconX } from '@tabler/icons-react';
 import { ticketService } from '../../services/ticket.service';
 import type { Ticket } from '../../services/ticket.service';
 
@@ -116,15 +116,22 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
             <Badge color={getStatusColor(ticket.status)}>{ticket.status}</Badge>
           </Group>
           {ticket.status !== 'CLOSED' && (
-            <Button
-              color="red"
-              variant="subtle"
-              size="xs"
-              leftSection={<IconX size={14} />}
-              onClick={handleCloseTicket}
-            >
-              Kapat
-            </Button>
+            <Menu shadow="md" width={200} position="bottom-end">
+              <Menu.Target>
+                <ActionIcon variant="subtle" color="gray" size="lg">
+                  <IconDotsVertical size={20} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item
+                  color="red"
+                  leftSection={<IconX size={16} />}
+                  onClick={handleCloseTicket}
+                >
+                  Talebi Kapat
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
           )}
         </Group>
         <Text size="xs" c="dimmed">
