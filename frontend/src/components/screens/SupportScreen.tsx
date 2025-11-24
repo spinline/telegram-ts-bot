@@ -175,54 +175,56 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
           )}
           
           <Stack gap="md">
-            <TextInput
-              label="Başlık"
-              placeholder="Örn: Bağlantı sorunu"
-              value={newTicketTitle}
-              onChange={(e) => setNewTicketTitle(e.currentTarget.value)}
-              size="md"
-              required
-              withAsterisk
-              styles={{ 
-                input: { 
-                  backgroundColor: 'rgba(255,255,255,0.05)', 
-                  color: '#fff', 
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  fontSize: '16px'
-                },
-                label: { 
-                  color: '#fff', 
-                  marginBottom: 10, 
-                  fontWeight: 600,
-                  fontSize: '15px'
-                }
-              }}
-            />
-            <Textarea
-              label="Açıklama"
-              placeholder="Sorununuzu detaylı bir şekilde açıklayın..."
-              minRows={12}
-              value={newTicketMessage}
-              onChange={(e) => setNewTicketMessage(e.currentTarget.value)}
-              size="md"
-              required
-              withAsterisk
-              styles={{ 
-                input: { 
-                  backgroundColor: 'rgba(255,255,255,0.05)', 
-                  color: '#fff', 
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  fontSize: '16px',
-                  minHeight: '200px'
-                },
-                label: { 
-                  color: '#fff', 
-                  marginBottom: 10, 
-                  fontWeight: 600,
-                  fontSize: '15px'
-                }
-              }}
-            />
+            <div>
+              <Text 
+                size="sm" 
+                fw={600} 
+                mb={8}
+                style={{ color: '#fff' }}
+              >
+                Başlık <span style={{ color: '#fa5252' }}>*</span>
+              </Text>
+              <TextInput
+                placeholder="Örn: Bağlantı sorunu"
+                value={newTicketTitle}
+                onChange={(e) => setNewTicketTitle(e.currentTarget.value)}
+                size="md"
+                styles={{ 
+                  input: { 
+                    backgroundColor: 'rgba(255,255,255,0.05)', 
+                    color: '#fff', 
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    fontSize: '16px'
+                  }
+                }}
+              />
+            </div>
+            <div>
+              <Text 
+                size="sm" 
+                fw={600} 
+                mb={8}
+                style={{ color: '#fff' }}
+              >
+                Açıklama <span style={{ color: '#fa5252' }}>*</span>
+              </Text>
+              <Textarea
+                placeholder="Sorununuzu detaylı bir şekilde açıklayın..."
+                minRows={12}
+                value={newTicketMessage}
+                onChange={(e) => setNewTicketMessage(e.currentTarget.value)}
+                size="md"
+                styles={{ 
+                  input: { 
+                    backgroundColor: 'rgba(255,255,255,0.05)', 
+                    color: '#fff', 
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    fontSize: '16px',
+                    minHeight: '200px'
+                  }
+                }}
+              />
+            </div>
             <Button 
               color="teal" 
               size="lg"
