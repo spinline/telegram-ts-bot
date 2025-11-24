@@ -17,11 +17,20 @@ RUN npm run build
 # Runtime stage
 FROM nginx:alpine
 
-# Copy nginx config
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy our nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built assets
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# Expose port
 EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s \
+    CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+
 CMD ["nginx", "-g", "daemon off;"]
