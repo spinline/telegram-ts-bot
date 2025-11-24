@@ -19,6 +19,7 @@ export function ShieldAnimation({ size = 100, color = 'teal' }: ShieldAnimationP
         position: 'absolute',
         top: -40,
         zIndex: 3,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ['--signal-color' as any]: 'rgba(20, 184, 166, 0.55)',
       }}
     >

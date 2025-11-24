@@ -24,10 +24,10 @@ function WelcomeScreen({
   loading
 }: WelcomeScreenProps) {
   // Telegram WebApp ve kullanıcıyı al
-  const webApp = (window as any)?.Telegram?.WebApp;
+  const webApp = window.Telegram?.WebApp;
 
   useEffect(() => {
-    try { webApp?.ready?.(); } catch {}
+    try { webApp?.ready?.(); } catch { /* ignore */ }
   }, [webApp]);
 
   const isOnline = useMemo(() => onlineStatus === 'online', [onlineStatus]);
@@ -47,7 +47,7 @@ function WelcomeScreen({
   const triggerHaptic = () => {
     try {
       webApp?.HapticFeedback?.impactOccurred?.('light');
-    } catch (e) {
+    } catch {
       console.log('Haptic feedback desteklenmiyor');
     }
   };
@@ -137,6 +137,7 @@ function WelcomeScreen({
             position: 'absolute',
             top: -40,
             zIndex: 3,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ['--signal-color' as any]: 'rgba(20, 184, 166, 0.55)',
           }}
         >
@@ -220,7 +221,7 @@ function WelcomeScreen({
                 onClick={() => {
                   triggerHaptic();
                   // Telegram botuna yönlendir
-                  const webApp = (window as any)?.Telegram?.WebApp;
+                  const webApp = window.Telegram?.WebApp;
                   webApp?.close();
                 }}
               >
@@ -243,6 +244,7 @@ function WelcomeScreen({
           position: 'absolute',
           top: -170,
           zIndex: 3,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ['--signal-color' as any]: 'rgba(20, 184, 166, 0.55)',
         }}
       >
@@ -340,10 +342,10 @@ function WelcomeScreen({
                 <IconSettings size={20} style={{ color: '#fff' }} />
                 <Text size="md" fw={500} style={{ color: '#fff' }}>Kurulum ve Ayarlar</Text>
               </div>
-              <Badge 
-                size="md" 
-                radius="sm" 
-                style={{ 
+              <Badge
+                size="md"
+                radius="sm"
+                style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.15)',
                   color: '#14b8a6',
                   fontWeight: 600,

@@ -17,6 +17,7 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
 
   const fetchTicket = async () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = await ticketService.getTicketById(ticketId);
       setTicket(data);
       scrollToBottom();
@@ -32,6 +33,7 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
     // Poll for new messages every 10 seconds
     const interval = setInterval(fetchTicket, 10000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId]);
 
   const scrollToBottom = () => {
@@ -93,20 +95,20 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
       <ScrollArea style={{ flex: 1, marginBottom: 20 }} viewportRef={viewport}>
         <Stack gap="md">
           {ticket.messages?.map((msg) => (
-            <Group 
-              key={msg.id} 
-              align="flex-start" 
+            <Group
+              key={msg.id}
+              align="flex-start"
               justify={msg.isUserMessage ? 'flex-end' : 'flex-start'}
               gap="xs"
             >
               {!msg.isUserMessage && (
                 <IconHeadset size={24} style={{ marginTop: 4, color: '#14b8a6' }} />
               )}
-              
-              <Card 
-                padding="sm" 
-                radius="md" 
-                style={{ 
+
+              <Card
+                padding="sm"
+                radius="md"
+                style={{
                   maxWidth: '80%',
                   backgroundColor: msg.isUserMessage ? '#14b8a6' : 'rgba(255, 255, 255, 0.1)',
                   color: '#fff'
@@ -144,9 +146,9 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
             }}
             styles={{ input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }}
           />
-          <Button 
-            color="teal" 
-            onClick={handleReply} 
+          <Button
+            color="teal"
+            onClick={handleReply}
             loading={sending}
             disabled={!replyMessage.trim()}
             style={{ height: 36, width: 36, padding: 0 }}

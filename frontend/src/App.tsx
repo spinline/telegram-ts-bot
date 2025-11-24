@@ -48,7 +48,9 @@ function App() {
     try {
       localStorage.removeItem('currentScreen');
       localStorage.removeItem('screenHistory');
-    } catch {}
+    } catch {
+      // ignore
+    }
   }, []);
 
   // Navigation handlers
@@ -60,7 +62,7 @@ function App() {
   const handleAddSubscriptionNext = () => navigateTo('congratulations');
   const handleCongratulationsFinish = () => resetNavigation();
   const handleSupport = () => navigateTo('support');
-  
+
   const handleTicketClick = (ticketId: number) => {
     setSelectedTicketId(ticketId);
     navigateTo('ticketDetail');

@@ -26,8 +26,8 @@ import {
 } from '@tabler/icons-react';
 
 // Import types from centralized location
-// @ts-ignore - HwidDevice used in AccountResponse type
-import type { AccountResponse, HwidDevice } from '../../types/account';
+
+import type { AccountResponse } from '../../types/account';
 
 export function AccountPage({
   loading,
@@ -40,13 +40,13 @@ export function AccountPage({
   account: AccountResponse | null;
   onBuySubscription?: () => void;
 }) {
-  const webApp = (window as any).Telegram.WebApp;
+  const webApp = window.Telegram.WebApp;
   const user = webApp?.initDataUnsafe?.user;
   const [deletingHwid, setDeletingHwid] = useState<string | null>(null);
   const [deletedHwids, setDeletedHwids] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    try { webApp?.ready?.(); } catch {}
+    try { webApp?.ready?.(); } catch { /* ignore */ }
   }, [webApp?.colorScheme, webApp]);
 
   const accountStats = useMemo(() => {
@@ -96,7 +96,7 @@ export function AccountPage({
   };
 
   const openExternalLink = async (rawUrl: string | undefined, fallbackUrl?: string) => {
-    try { (window as any)?.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light'); } catch {}
+    try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light'); } catch { /* ignore */ }
     if (!rawUrl) { console.warn('Açılacak URL bulunamadı.'); return; }
     const url = encodeURI(rawUrl);
     const isHttp = /^https?:\/\//i.test(url);
@@ -105,8 +105,8 @@ export function AccountPage({
     const isAndroid = /Android/.test(ua);
     const isIOS = /iPad|iPhone|iPod/.test(ua);
     if (!isCustomScheme) {
-      if ((window as any).Telegram?.WebApp?.openLink) {
-        (window as any).Telegram.WebApp.openLink(url);
+      if (window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(url);
       } else {
         window.open(url, '_blank', 'noopener');
       }
@@ -119,38 +119,38 @@ export function AccountPage({
       return;
     }
     if (isIOS) {
-      try { await navigator.clipboard?.writeText(rawUrl); } catch {}
+      try { await navigator.clipboard?.writeText(rawUrl); } catch { /* ignore */ }
       try {
-        const tg = (window as any).Telegram?.WebApp;
+        const tg = window.Telegram?.WebApp;
         if (tg?.showPopup) {
           tg.showPopup({
             title: 'Happ bağlantısı',
             message: 'iOS Telegram mini app kısıtlaması nedeniyle bağlantı kopyalandı. Safari’de açıp adres çubuğuna yapıştırın.',
-            buttons: [ { id: 'store', type: 'default', text: 'App Store' }, { id: 'ok', type: 'ok', text: 'Tamam' } ],
+            buttons: [{ id: 'store', type: 'default', text: 'App Store' }, { id: 'ok', type: 'ok', text: 'Tamam' }],
           }, (btnId: string) => {
             if (btnId === 'store') tg.openLink?.('https://apps.apple.com/us/app/happ-proxy-utility/id6504287215');
           });
         } else {
           alert('Bağlantı kopyalandı. Safari’de açıp adres çubuğuna yapıştırın.');
         }
-      } catch {}
+      } catch { /* ignore */ }
       return;
     }
-    try { window.open(url, '_self'); } catch {}
+    try { window.open(url, '_self'); } catch { /* ignore */ }
   };
 
   const deleteHwidDevice = async (hwid: string) => {
     try {
       setDeletingHwid(hwid);
-      try { (window as any)?.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('medium'); } catch {}
-      
+      try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('medium'); } catch { /* ignore */ }
+
       const initData = webApp?.initData;
       if (!initData) {
         throw new Error('Telegram verisi bulunamadı');
       }
 
       const rawOrigin = import.meta.env.VITE_BACKEND_ORIGIN || '';
-      const apiOrigin = rawOrigin.replace(/\/+$/,'');
+      const apiOrigin = rawOrigin.replace(/\/+$/, '');
 
       const response = await fetch(`${apiOrigin}/api/hwid/device`, {
         method: 'DELETE',
@@ -166,15 +166,16 @@ export function AccountPage({
         throw new Error(errorData.error || 'Cihaz silinemedi');
       }
 
-      try { (window as any)?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success'); } catch {}
-      
+      try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success'); } catch { /* ignore */ }
+
       // Optimistic UI update - cihazı listeden kaldır
       setDeletedHwids(prev => new Set(prev).add(hwid));
-      
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Failed to delete HWID device:', error);
-      try { (window as any)?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('error'); } catch {}
-      const tg = (window as any).Telegram?.WebApp;
+      try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('error'); } catch { /* ignore */ }
+      const tg = window.Telegram?.WebApp;
       if (tg?.showAlert) {
         tg.showAlert(error.message || 'Cihaz silinirken bir hata oluştu');
       } else {
@@ -195,7 +196,7 @@ export function AccountPage({
                 <Title order={4} style={{ color: '#fff' }}>Hoş Geldin, {user.first_name}!</Title>
                 <Group gap="xs" align="center">
                   <Text size="sm" c="dimmed">ID: {user.id}</Text>
-                  <ThemeIcon color="gray" variant="subtle" radius="xl" size="sm" style={{ cursor: 'pointer' }} onClick={() => { navigator.clipboard.writeText(String(user.id)); try { (window as any)?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success'); } catch {} }}>
+                  <ThemeIcon color="gray" variant="subtle" radius="xl" size="sm" style={{ cursor: 'pointer' }} onClick={() => { navigator.clipboard.writeText(String(user.id)); try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success'); } catch { /* ignore */ } }}>
                     <IconCopy size={14} />
                   </ThemeIcon>
                 </Group>
@@ -269,7 +270,7 @@ export function AccountPage({
                 <Group grow mt="md">
                   <Button variant="light" color="blue" onClick={() => openExternalLink(account?.subscriptionUrl ?? account?.manageUrl ?? 'https://t.me/')} disabled={!account && !error}>Abonelik Linkini Aç</Button>
                   <Button variant="filled" color="teal" onClick={() => {
-                    try { (window as any)?.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light'); } catch {}
+                    try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light'); } catch { /* ignore */ }
                     if (onBuySubscription) {
                       onBuySubscription();
                     }

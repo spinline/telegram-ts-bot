@@ -27,8 +27,10 @@ export default function InstallSetup({ onInstallOnThisDevice }: InstallSetupProp
   // Haptic feedback
   const triggerHaptic = () => {
     try {
-      (window as any)?.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
-    } catch {}
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch {
+      // ignore
+    }
   };
 
   const handleInstallOnThisDevice = () => {
@@ -45,6 +47,7 @@ export default function InstallSetup({ onInstallOnThisDevice }: InstallSetupProp
           position: 'absolute',
           top: -170,
           zIndex: 3,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ['--signal-color' as any]: 'rgba(20, 184, 166, 0.55)',
         }}
       >

@@ -27,8 +27,10 @@ export default function InstallOnThisDevice({ onNext }: InstallOnThisDeviceProps
   // Haptic feedback
   const triggerHaptic = () => {
     try {
-      (window as any)?.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
-    } catch {}
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
+    } catch {
+      // ignore
+    }
   };
 
   const handleInstall = () => {
@@ -41,7 +43,7 @@ export default function InstallOnThisDevice({ onNext }: InstallOnThisDeviceProps
       macOS: 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215',
       Linux: 'https://github.com/Happ-proxy/happ-desktop/releases/',
     };
-    
+
     const link = links[platform as keyof typeof links];
     if (link) {
       window.open(link, '_blank');
@@ -62,6 +64,7 @@ export default function InstallOnThisDevice({ onNext }: InstallOnThisDeviceProps
           position: 'absolute',
           top: -170,
           zIndex: 3,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ['--signal-color' as any]: 'rgba(20, 184, 166, 0.55)',
         }}
       >

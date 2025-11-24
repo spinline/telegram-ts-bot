@@ -5,6 +5,7 @@
 // Telegram Web App script'inin eklediği global nesneyi tanımla
 interface Window {
     Telegram: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         WebApp: any;
     };
 }

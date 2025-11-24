@@ -9,7 +9,7 @@ class TelegramService {
   private webApp: TelegramWebApp;
 
   constructor() {
-    this.webApp = (window as any).Telegram?.WebApp;
+    this.webApp = window.Telegram?.WebApp;
 
     if (!this.webApp) {
       console.warn('Telegram WebApp not available');
@@ -99,7 +99,7 @@ class TelegramService {
   hapticFeedback(style: 'light' | 'medium' | 'heavy' = 'light'): void {
     try {
       this.webApp?.HapticFeedback?.impactOccurred?.(style);
-    } catch (e) {
+    } catch {
       console.log('Haptic feedback not supported');
     }
   }

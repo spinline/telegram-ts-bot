@@ -6,8 +6,7 @@ import {
   Title,
 } from '@mantine/core';
 
-interface BuySubscriptionProps {
-}
+
 
 interface SubscriptionOption {
   duration: string;
@@ -17,7 +16,7 @@ interface SubscriptionOption {
   months: number;
 }
 
-function BuySubscription({}: BuySubscriptionProps) {
+function BuySubscription() {
   const [deviceCount, setDeviceCount] = useState(1);
   const [selectedDurationIndex, setSelectedDurationIndex] = useState(2); // 6 месяцев по умолчанию
 
@@ -42,10 +41,10 @@ function BuySubscription({}: BuySubscriptionProps) {
   // Haptic helpers
   const haptic = window.Telegram?.WebApp?.HapticFeedback;
   const hapticSelect = () => {
-    try { haptic?.selectionChanged?.(); } catch {}
+    try { haptic?.selectionChanged?.(); } catch { /* ignore */ }
   };
   const hapticImpact = () => {
-    try { haptic?.impactOccurred?.('light'); } catch {}
+    try { haptic?.impactOccurred?.('light'); } catch { /* ignore */ }
   };
 
   const handlePayment = () => {
@@ -117,9 +116,9 @@ function BuySubscription({}: BuySubscriptionProps) {
           </div>
 
           {/* Abonelik kartları - Grid 2x2 */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
             gap: '12px',
             marginTop: '8px'
           }}>
@@ -157,17 +156,17 @@ function BuySubscription({}: BuySubscriptionProps) {
                   }}>
                     popüler
                   </div>
-                )}                
+                )}
 
                 <div style={{ marginTop: option.isPopular ? '24px' : '4px' }}>
                   <Text size="xs" style={{ color: '#9ca3af', marginBottom: '6px', fontSize: '12px' }}>
                     {option.duration}
                   </Text>
-                  
+
                   <Text size="22px" fw={700} style={{ color: '#fff', lineHeight: '1.2', fontSize: '22px' }}>
                     {option.price.toFixed(0)} ₺
                   </Text>
-                  
+
                   {option.months > 1 && (
                     <Text size="xs" style={{ color: '#6b7280', marginTop: '4px', fontSize: '10px' }}>
                       {option.monthlyPrice?.toFixed(0)}₺ / ay
