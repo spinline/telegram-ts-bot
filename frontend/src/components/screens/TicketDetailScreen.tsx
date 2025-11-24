@@ -149,7 +149,7 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
                 padding="sm"
                 radius="md"
                 style={{
-                  maxWidth: '90%',
+                  maxWidth: '95%',
                   backgroundColor: msg.isUserMessage ? '#14b8a6' : 'rgba(255, 255, 255, 0.1)',
                   color: '#fff'
                 }}
