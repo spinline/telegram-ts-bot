@@ -46,7 +46,7 @@ function SupportScreen({ onBack, onTicketClick }: {
         },
         onError: (error: any) => {
             console.error('Ticket creation error:', error)
-            const errorMessage = error.response?.data?.message || "Talep oluşturulurken bir hata oluştu"
+            const errorMessage = error.response?.data?.error || error.response?.data?.message || "Talep oluşturulurken bir hata oluştu"
             toast.error(errorMessage)
         }
     })
