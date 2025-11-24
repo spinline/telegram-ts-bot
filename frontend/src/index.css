@@ -1,6 +1,7 @@
 * {
   box-sizing: border-box;
 }
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -21,15 +22,20 @@ a {
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   touch-action: pan-y;
   -webkit-user-select: none;
   user-select: none;
+  position: relative;
+  z-index: 1;
 }
 
 body {
@@ -83,7 +89,7 @@ h1 {
 .shield-ripple .shield-core {
   position: relative;
   z-index: 2;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
 }
 
 .shield-ripple .ripple {
@@ -99,17 +105,24 @@ h1 {
   z-index: 1;
 }
 
-.shield-ripple .ripple-2 { animation-delay: 0.6s; }
-.shield-ripple .ripple-3 { animation-delay: 1.2s; }
+.shield-ripple .ripple-2 {
+  animation-delay: 0.6s;
+}
+
+.shield-ripple .ripple-3 {
+  animation-delay: 1.2s;
+}
 
 @keyframes ripple-pulse {
   0% {
     transform: translate(-50%, -50%) scale(0.9);
     opacity: 0.6;
   }
+
   60% {
     opacity: 0.15;
   }
+
   100% {
     transform: translate(-50%, -50%) scale(3.5);
     opacity: 0;
@@ -127,9 +140,11 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
   border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -149,7 +164,7 @@ button:focus-visible {
 .shield-static .shield-core {
   position: relative;
   z-index: 2;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
 }
 
 .shield-static .ring {
@@ -161,9 +176,20 @@ button:focus-visible {
   border: 2px solid var(--ring-color, rgba(20, 184, 166, 0.45));
 }
 
-.shield-static .ring-1 { width: 130px; height: 130px; }
-.shield-static .ring-2 { width: 160px; height: 160px; }
-.shield-static .ring-3 { width: 190px; height: 190px; }
+.shield-static .ring-1 {
+  width: 130px;
+  height: 130px;
+}
+
+.shield-static .ring-2 {
+  width: 160px;
+  height: 160px;
+}
+
+.shield-static .ring-3 {
+  width: 190px;
+  height: 190px;
+}
 
 /* Custom slider styles */
 .custom-slider::-webkit-slider-thumb {
