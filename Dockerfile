@@ -4,12 +4,16 @@ FROM node:22.12-alpine AS builder
 # Create app directory
 WORKDIR /app
 
-# Copy the entire frontend directory
-COPY frontend ./frontend
+# Copy package files first for better caching
+COPY frontend/package*.json ./
 
-# Install frontend dependencies and build
-WORKDIR /app/frontend
-RUN npm install
+# Install dependencies (cached unless package files change)
+RUN npm ci
+
+# Copy source code (changes frequently, so comes after deps)
+COPY frontend/ ./
+
+# Build application
 RUN npm run build
 
 # ---    

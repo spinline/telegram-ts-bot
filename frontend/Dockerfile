@@ -2,12 +2,16 @@
 FROM node:22.13.0-alpine AS build
 WORKDIR /app
 
-# Copy package files and npm config
+# Copy package files and npm config first (changes less frequently)
 COPY package*.json .npmrc ./
+
+# Install dependencies (cached unless package files change)
 RUN npm ci
 
-# Build app
+# Copy source code (changes frequently, so comes after deps)
 COPY . .
+
+# Build app
 RUN npm run build
 
 # ---------- Runtime stage ----------
