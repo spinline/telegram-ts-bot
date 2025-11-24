@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Stack, Title, Text, Button, Group, Card, Badge, Textarea, Loader, ScrollArea } from '@mantine/core';
+import { Stack, Title, Text, Button, Group, Card, Badge, Textarea, Loader, ScrollArea, useMantineTheme } from '@mantine/core';
 import { IconSend, IconUser, IconHeadset, IconLock } from '@tabler/icons-react';
 import { ticketService } from '../../services/ticket.service';
 import type { Ticket } from '../../services/ticket.service';
@@ -15,6 +15,7 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
   const [sending, setSending] = useState(false);
   const [closing, setClosing] = useState(false);
   const viewport = useRef<HTMLDivElement>(null);
+  const theme = useMantineTheme();
 
   const fetchTicket = async () => {
     try {
@@ -172,7 +173,7 @@ function TicketDetailScreen({ ticketId }: TicketDetailScreenProps) {
                 handleReply();
               }
             }}
-            styles={{ input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }}
+            styles={{ input: { backgroundColor: theme.colorScheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(15, 23, 42, 0.04)', color: theme.colorScheme === 'dark' ? '#fff' : '#0f172a', border: theme.colorScheme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(15, 23, 42, 0.06)' } }}
           />
           <Button 
             color="teal" 

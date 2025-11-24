@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Stack, Title, Text, Button, Group, Card, Badge, TextInput, Textarea, Loader, Alert } from '@mantine/core';
+import { Stack, Title, Text, Button, Group, Card, Badge, TextInput, Textarea, Loader, Alert, useMantineTheme } from '@mantine/core';
 import { IconPlus, IconMessage, IconArrowLeft, IconCheck, IconAlertCircle } from '@tabler/icons-react';
 import { ticketService } from '../../services/ticket.service';
 import type { Ticket } from '../../services/ticket.service';
@@ -15,6 +15,7 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
   const [newTicketTitle, setNewTicketTitle] = useState('');
   const [newTicketMessage, setNewTicketMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const theme = useMantineTheme();
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -186,13 +187,13 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
               size="md"
               styles={{ 
                 input: { 
-                  backgroundColor: 'rgba(255,255,255,0.05)', 
-                  color: '#fff', 
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  backgroundColor: theme.colorScheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(15, 23, 42, 0.04)',
+                  color: theme.colorScheme === 'dark' ? '#fff' : '#0f172a',
+                  border: theme.colorScheme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(15, 23, 42, 0.06)',
                   fontSize: '16px'
                 },
                 label: {
-                  color: '#fff',
+                  color: theme.colorScheme === 'dark' ? '#fff' : '#0f172a',
                   fontWeight: 600,
                   marginBottom: 8,
                   fontSize: '14px'
@@ -208,14 +209,14 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
               size="md"
               styles={{ 
                 input: { 
-                  backgroundColor: 'rgba(255,255,255,0.05)', 
-                  color: '#fff', 
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  backgroundColor: theme.colorScheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(15, 23, 42, 0.04)',
+                  color: theme.colorScheme === 'dark' ? '#fff' : '#0f172a',
+                  border: theme.colorScheme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(15, 23, 42, 0.06)',
                   fontSize: '16px',
                   minHeight: '200px'
                 },
                 label: {
-                  color: '#fff',
+                  color: theme.colorScheme === 'dark' ? '#fff' : '#0f172a',
                   fontWeight: 600,
                   marginBottom: 8,
                   fontSize: '14px'
