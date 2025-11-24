@@ -16,6 +16,8 @@ function AccountPage({ onBack }: { onBack: () => void }) {
         retry: false
     })
 
+    console.log('AccountPage Debug:', { account, user, isLoading })
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-teal-950 to-slate-950 p-6">

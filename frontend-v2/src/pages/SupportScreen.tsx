@@ -63,6 +63,7 @@ function SupportScreen({ onBack, onTicketClick }: {
     const handleCreateTicket = () => {
         if (!title || !message) return
         haptic('medium')
+        console.log('Creating ticket with:', { title, message })
         createMutation.mutate({ title, message })
     }
 

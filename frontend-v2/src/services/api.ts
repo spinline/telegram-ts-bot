@@ -13,6 +13,7 @@ export const api = axios.create({
 // Add Telegram InitData to headers
 api.interceptors.request.use((config) => {
   const initData = (window as any).Telegram?.WebApp?.initData;
+  console.log('API Request Interceptor:', { url: config.url, initDataPresent: !!initData });
   if (initData) {
     config.headers['X-Telegram-Init-Data'] = initData;
   }
