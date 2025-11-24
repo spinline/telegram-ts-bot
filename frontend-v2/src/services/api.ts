@@ -1,74 +1,53 @@
-/**
- * API Service
- * Handles all API calls to backend
- */
-
+import axios from 'axios';
 import type { AccountResponse } from '../types/account';
 
-const getBackendOrigin = (): string => {
-  const rawOrigin = import.meta.env.VITE_BACKEND_ORIGIN || '';
-  return rawOrigin.replace(/\/+$/, '');
-};
+const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_ORIGIN || 'http://localhost:3001/api';
 
-/**
- * Fetch account data
- */
-export const fetchAccount = async (initData: string): Promise<AccountResponse> => {
-  const apiOrigin = getBackendOrigin();
-  const res = await fetch(`${apiOrigin}/api/account`, {
-    headers: { 'x-telegram-init-data': initData },
-  });
+export const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-  if (!res.ok) {
-    throw new Error(`Hesap bilgileri alınamadı: ${res.status}`);
+// Add Telegram InitData to headers
+api.interceptors.request.use((config) => {
+  const initData = (window as any).Telegram?.WebApp?.initData;
+  if (initData) {
+    config.headers['X-Telegram-Init-Data'] = initData;
   }
+  return config;
+});
 
-  return await res.json();
-};
+export const accountService = {
+  getAccount: async (): Promise<AccountResponse> => {
+    const { data } = await api.get<AccountResponse>('/account');
+    return data;
+  },
 
-/**
- * Delete HWID device
- */
-export const deleteHwidDevice = async (
-  deviceId: string,
-  initData: string
-): Promise<void> => {
-  const apiOrigin = getBackendOrigin();
-  const res = await fetch(`${apiOrigin}/api/hwid/device`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-telegram-init-data': initData,
-    },
-    body: JSON.stringify({ deviceId }),
-  });
-
-  if (!res.ok) {
-    throw new Error('Cihaz silinemedi');
+  deleteDevice: async (deviceId: string): Promise<void> => {
+    await api.delete('/hwid/device', { data: { deviceId } });
   }
 };
 
-/**
- * Open Happ deeplink
- */
-export const openHappDeeplink = async (
-  cryptoLink: string,
-  initData: string
-): Promise<{ success: boolean; url?: string }> => {
-  const apiOrigin = getBackendOrigin();
-  const res = await fetch(`${apiOrigin}/api/happ/open`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-telegram-init-data': initData,
-    },
-    body: JSON.stringify({ cryptoLink }),
-  });
+export const ticketService = {
+  getTickets: async () => {
+    const { data } = await api.get('/tickets');
+    return data;
+  },
 
-  if (!res.ok) {
-    throw new Error('Happ linki oluşturulamadı');
+  createTicket: async (ticket: { title: string; message: string }) => {
+    const { data } = await api.post('/tickets', ticket);
+    return data;
+  },
+
+  getTicket: async (id: number) => {
+    const { data } = await api.get(`/tickets/${id}`);
+    return data;
+  },
+
+  sendMessage: async (ticketId: number, message: string) => {
+    const { data } = await api.post(`/tickets/${ticketId}/messages`, { message });
+    return data;
   }
-
-  return await res.json();
 };
-

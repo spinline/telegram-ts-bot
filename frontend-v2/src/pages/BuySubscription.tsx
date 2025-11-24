@@ -12,8 +12,11 @@ interface Plan {
     popular?: boolean
 }
 
+import { useTelegram } from "@/hooks/useTelegram"
+
 function BuySubscription({ onBack }: { onBack: () => void }) {
     const [selectedPlan, setSelectedPlan] = useState<number>(2)
+    const { haptic } = useTelegram()
 
     const plans: Plan[] = [
         { id: 1, duration: "1 Ay", price: "₺99", devices: 3 },
@@ -39,10 +42,13 @@ function BuySubscription({ onBack }: { onBack: () => void }) {
                         <Card
                             key={plan.id}
                             className={`cursor-pointer transition-all ${selectedPlan === plan.id
-                                    ? 'bg-teal-600/20 border-teal-500 ring-2 ring-teal-500'
-                                    : 'bg-slate-900/50 border-teal-800/30 hover:border-teal-700/50'
+                                ? 'bg-teal-600/20 border-teal-500 ring-2 ring-teal-500'
+                                : 'bg-slate-900/50 border-teal-800/30 hover:border-teal-700/50'
                                 } backdrop-blur relative`}
-                            onClick={() => setSelectedPlan(plan.id)}
+                            onClick={() => {
+                                haptic('selection')
+                                setSelectedPlan(plan.id)
+                            }}
                         >
                             {plan.popular && (
                                 <div className="absolute -top-2 left-1/2 -translate-x-1/2">
@@ -101,7 +107,10 @@ function BuySubscription({ onBack }: { onBack: () => void }) {
                 {/* Purchase Button */}
                 <Button
                     className="w-full bg-teal-600 hover:bg-teal-700 text-white h-12 text-lg"
-                    onClick={() => console.log("Purchasing plan:", selectedPlan)}
+                    onClick={() => {
+                        haptic('medium')
+                        console.log("Purchasing plan:", selectedPlan)
+                    }}
                 >
                     Satın Al - {plans.find(p => p.id === selectedPlan)?.price}
                 </Button>

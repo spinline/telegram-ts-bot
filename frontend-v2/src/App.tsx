@@ -7,16 +7,43 @@ import TicketDetailScreen from './pages/TicketDetailScreen'
 import BuySubscription from './pages/BuySubscription'
 import './index.css'
 
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from './lib/queryClient'
+import { AppToaster } from './components/ui/toaster'
+
+import { useTelegram } from './hooks/useTelegram'
+
 function App() {
+  const { webApp, themeParams } = useTelegram()
+
   useEffect(() => {
     document.documentElement.classList.add('dark')
-  }, [])
+
+    if (webApp) {
+      webApp.ready()
+      webApp.expand()
+
+      // Apply Telegram theme colors if available
+      if (themeParams?.bg_color) {
+        document.documentElement.style.setProperty('--tg-theme-bg-color', themeParams.bg_color || null)
+        document.documentElement.style.setProperty('--tg-theme-text-color', themeParams.text_color || null)
+        document.documentElement.style.setProperty('--tg-theme-hint-color', themeParams.hint_color || null)
+        document.documentElement.style.setProperty('--tg-theme-link-color', themeParams.link_color || null)
+        document.documentElement.style.setProperty('--tg-theme-button-color', themeParams.button_color || null)
+        document.documentElement.style.setProperty('--tg-theme-button-text-color', themeParams.button_text_color || null)
+        document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', themeParams.secondary_bg_color || null)
+      }
+    }
+  }, [webApp, themeParams])
   return (
-    <BrowserRouter>
-      <div className="dark min-h-screen">
-        <AppRoutes />
-      </div>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <div className="dark min-h-screen">
+          <AppRoutes />
+          <AppToaster />
+        </div>
+      </BrowserRouter>
+    </QueryClientProvider>
   )
 }
 
