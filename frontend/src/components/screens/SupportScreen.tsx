@@ -181,21 +181,46 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
               value={newTicketTitle}
               onChange={(e) => setNewTicketTitle(e.currentTarget.value)}
               size="md"
+              required
+              withAsterisk
               styles={{ 
-                input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
-                label: { color: '#fff', marginBottom: 8, fontWeight: 500 }
+                input: { 
+                  backgroundColor: 'rgba(255,255,255,0.05)', 
+                  color: '#fff', 
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  fontSize: '16px'
+                },
+                label: { 
+                  color: '#fff', 
+                  marginBottom: 10, 
+                  fontWeight: 600,
+                  fontSize: '15px'
+                }
               }}
             />
             <Textarea
               label="Açıklama"
-              placeholder="Sorununuzu buraya yazın..."
-              minRows={8}
+              placeholder="Sorununuzu detaylı bir şekilde açıklayın..."
+              minRows={12}
               value={newTicketMessage}
               onChange={(e) => setNewTicketMessage(e.currentTarget.value)}
               size="md"
+              required
+              withAsterisk
               styles={{ 
-                input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
-                label: { color: '#fff', marginBottom: 8, fontWeight: 500 }
+                input: { 
+                  backgroundColor: 'rgba(255,255,255,0.05)', 
+                  color: '#fff', 
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  fontSize: '16px',
+                  minHeight: '200px'
+                },
+                label: { 
+                  color: '#fff', 
+                  marginBottom: 10, 
+                  fontWeight: 600,
+                  fontSize: '15px'
+                }
               }}
             />
             <Button 
