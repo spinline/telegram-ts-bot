@@ -163,29 +163,31 @@ function SupportScreen({ onTicketClick }: SupportScreenProps) {
           )}
 
           <Stack gap="md">
-            <TextInput
-              label="Konu"
-              placeholder="Örn: Bağlantı sorunu"
-              value={newTicketTitle}
-              onChange={(e) => setNewTicketTitle(e.currentTarget.value)}
-              size="md"
-              styles={{
-                input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
-                label: { color: '#fff', marginBottom: 8, fontWeight: 500 }
-              }}
-            />
-            <Textarea
-              label="Mesajınız"
-              placeholder="Sorununuzu buraya yazın..."
-              minRows={8}
-              value={newTicketMessage}
-              onChange={(e) => setNewTicketMessage(e.currentTarget.value)}
-              size="md"
-              styles={{
-                input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
-                label: { color: '#fff', marginBottom: 8, fontWeight: 500 }
-              }}
-            />
+            <div>
+              <Text size="sm" fw={500} mb={4} style={{ color: '#fff' }}>Konu</Text>
+              <TextInput
+                placeholder="Örn: Bağlantı sorunu"
+                value={newTicketTitle}
+                onChange={(e) => setNewTicketTitle(e.currentTarget.value)}
+                size="md"
+                styles={{
+                  input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }
+                }}
+              />
+            </div>
+            <div>
+              <Text size="sm" fw={500} mb={4} style={{ color: '#fff' }}>Mesajınız</Text>
+              <Textarea
+                placeholder="Sorununuzu buraya yazın..."
+                minRows={8}
+                value={newTicketMessage}
+                onChange={(e) => setNewTicketMessage(e.currentTarget.value)}
+                size="md"
+                styles={{
+                  input: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }
+                }}
+              />
+            </div>
             <Button
               color="teal"
               size="lg"
