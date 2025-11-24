@@ -3,7 +3,13 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Badge } from "@/components/ui/badge"
 import { Shield, Wifi, HelpCircle } from "lucide-react"
 
-function WelcomeScreen() {
+function WelcomeScreen({
+    onAccountClick,
+    onSupportClick
+}: {
+    onAccountClick?: () => void
+    onSupportClick?: () => void
+}) {
     const isOnline = true
 
     return (
@@ -29,14 +35,20 @@ function WelcomeScreen() {
 
                 {/* Action Cards */}
                 <div className="space-y-3">
-                    <Card className="cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg border-primary/20">
+                    <Card
+                        className="cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg border-teal-700/30"
+                        onClick={onAccountClick}
+                    >
                         <CardHeader>
                             <CardTitle className="text-lg">Hesabım</CardTitle>
                             <CardDescription>Abonelik ve cihaz yönetimi</CardDescription>
                         </CardHeader>
                     </Card>
 
-                    <Card className="cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg border-primary/20">
+                    <Card
+                        className="cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg border-teal-700/30"
+                        onClick={onSupportClick}
+                    >
                         <CardHeader>
                             <CardTitle className="text-lg">
                                 <HelpCircle className="inline h-5 w-5 mr-2" />

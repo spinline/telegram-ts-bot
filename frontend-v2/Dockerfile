@@ -17,8 +17,8 @@ RUN npm run build
 # Runtime stage
 FROM nginx:alpine
 
-# Copy nginx config if needed
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built assets
 COPY --from=build /app/dist /usr/share/nginx/html
