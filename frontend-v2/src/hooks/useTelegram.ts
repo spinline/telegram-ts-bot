@@ -9,6 +9,24 @@ export function useTelegram() {
         if (app) {
             app.ready()
             setWebApp(app)
+        } else {
+            // Mock for development
+            if (import.meta.env.DEV) {
+                console.log('Running in DEV mode, using mock Telegram WebApp')
+                setWebApp({
+                    initDataUnsafe: {
+                        user: {
+                            id: 123456789,
+                            first_name: "Test",
+                            last_name: "User",
+                            username: "testuser"
+                        }
+                    },
+                    themeParams: {},
+                    isExpanded: true,
+                    viewportHeight: 800,
+                } as any)
+            }
         }
     }, [])
 

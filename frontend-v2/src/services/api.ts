@@ -1,7 +1,8 @@
 import axios from 'axios';
 import type { AccountResponse } from '../types/account';
 
-const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_ORIGIN || 'http://localhost:3001/api';
+const BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_ORIGIN || 'http://localhost:3001';
+const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
 export const api = axios.create({
   baseURL: API_URL,
