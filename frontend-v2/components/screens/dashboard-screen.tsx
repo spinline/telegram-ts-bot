@@ -56,26 +56,6 @@ export default function DashboardScreen() {
                         </CardContent>
                     </Card>
 
-                    {/* My Account */}
-                    <Card
-                        className="bg-slate-900/50 border-teal-800/30 backdrop-blur cursor-pointer hover:bg-slate-900/70 hover:scale-[1.02] transition-all duration-300"
-                        onClick={() => handleNavigation('/account')}
-                    >
-                        <CardContent className="p-6 flex items-center gap-4">
-                            <div className="h-14 w-14 rounded-full bg-teal-500/10 flex items-center justify-center ring-1 ring-teal-500/30">
-                                <User className="h-7 w-7 text-teal-400" />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-xl font-semibold text-white mb-1">
-                                    Hesabım
-                                </h3>
-                                <p className="text-sm text-slate-400">
-                                    Hesap bilgileri ve istatistikler
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
                     {/* Setup/Installation */}
                     <Card
                         className="bg-slate-900/50 border-teal-800/30 backdrop-blur cursor-pointer hover:bg-slate-900/70 hover:scale-[1.02] transition-all duration-300"
@@ -96,25 +76,48 @@ export default function DashboardScreen() {
                         </CardContent>
                     </Card>
 
-                    {/* Support */}
-                    <Card
-                        className="bg-slate-900/50 border-teal-800/30 backdrop-blur cursor-pointer hover:bg-slate-900/70 hover:scale-[1.02] transition-all duration-300"
-                        onClick={() => handleNavigation('/support')}
-                    >
-                        <CardContent className="p-6 flex items-center gap-4">
-                            <div className="h-14 w-14 rounded-full bg-teal-500/10 flex items-center justify-center ring-1 ring-teal-500/30">
-                                <Headset className="h-7 w-7 text-teal-400" />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-xl font-semibold text-white mb-1">
-                                    Destek
-                                </h3>
-                                <p className="text-sm text-slate-400">
-                                    Yardım ve teknik destek
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Account and Support - Side by Side */}
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* My Account */}
+                        <Card
+                            className="bg-slate-900/50 border-teal-800/30 backdrop-blur cursor-pointer hover:bg-slate-900/70 hover:scale-[1.02] transition-all duration-300"
+                            onClick={() => handleNavigation('/account')}
+                        >
+                            <CardContent className="p-5 flex flex-col items-center gap-3 text-center">
+                                <div className="h-12 w-12 rounded-full bg-teal-500/10 flex items-center justify-center ring-1 ring-teal-500/30">
+                                    <User className="h-6 w-6 text-teal-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-white mb-1">
+                                        Hesabım
+                                    </h3>
+                                    <p className="text-xs text-slate-400">
+                                        Hesap bilgileri
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Support */}
+                        <Card
+                            className="bg-slate-900/50 border-teal-800/30 backdrop-blur cursor-pointer hover:bg-slate-900/70 hover:scale-[1.02] transition-all duration-300"
+                            onClick={() => handleNavigation('/support')}
+                        >
+                            <CardContent className="p-5 flex flex-col items-center gap-3 text-center">
+                                <div className="h-12 w-12 rounded-full bg-teal-500/10 flex items-center justify-center ring-1 ring-teal-500/30">
+                                    <Headset className="h-6 w-6 text-teal-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-white mb-1">
+                                        Destek
+                                    </h3>
+                                    <p className="text-xs text-slate-400">
+                                        Teknik destek
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
 
                 {/* Footer Info */}
