@@ -5,18 +5,21 @@ import type { TelegramWebApp } from '@/types/telegram'
 
 export function useTelegram() {
     const [webApp, setWebApp] = useState<TelegramWebApp | null>(null)
+    const [initData, setInitData] = useState<string | null>(null)
+    const [user, setUser] = useState<any>(null)
 
     useEffect(() => {
         const app = (window as any).Telegram?.WebApp
         if (app) {
             app.ready()
             setWebApp(app)
+            setInitData(app.initData)
+            setUser(app.initDataUnsafe?.user)
         }
     }, [])
 
     const haptic = (style: 'light' | 'medium' | 'heavy' | 'selection' | 'error' | 'success' | 'warning' = 'medium') => {
         if (!webApp) return
-
         if (style === 'selection') {
             webApp.HapticFeedback.selectionChanged()
         } else if (style === 'error' || style === 'success' || style === 'warning') {
@@ -40,7 +43,8 @@ export function useTelegram() {
 
     return {
         webApp,
-        user: webApp?.initDataUnsafe?.user,
+        user,
+        initData,
         themeParams: webApp?.themeParams,
         haptic,
         showBackButton,
