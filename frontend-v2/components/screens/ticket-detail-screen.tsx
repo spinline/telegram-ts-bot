@@ -26,7 +26,7 @@ interface Ticket {
 }
 
 export default function TicketDetailScreen({ ticket, ticketId }: { ticket: Ticket | null, ticketId: number }) {
-    const { haptic, showBackButton, hideBackButton } = useTelegram()
+    const { haptic } = useTelegram()
     const router = useRouter()
     const [message, setMessage] = useState("")
     const scrollRef = useRef<HTMLDivElement>(null)
@@ -38,10 +38,7 @@ export default function TicketDetailScreen({ ticket, ticketId }: { ticket: Ticke
         (state, newMessage: Message) => [...state, newMessage]
     )
 
-    useEffect(() => {
-        showBackButton(() => router.push('/support'))
-        return () => hideBackButton()
-    }, [showBackButton, hideBackButton, router])
+
 
     useEffect(() => {
         if (scrollRef.current) {

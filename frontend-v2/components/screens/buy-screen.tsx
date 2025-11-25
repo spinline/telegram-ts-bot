@@ -18,15 +18,12 @@ interface Plan {
 }
 
 export default function BuyScreen() {
-    const { haptic, showBackButton, hideBackButton } = useTelegram()
+    const { haptic } = useTelegram()
     const router = useRouter()
     const [selectedPlan, setSelectedPlan] = useState<number | null>(null)
     const [isProcessing, setIsProcessing] = useState(false)
 
-    useEffect(() => {
-        showBackButton(() => router.push('/account'))
-        return () => hideBackButton()
-    }, [showBackButton, hideBackButton, router])
+
 
     const plans: Plan[] = [
         { id: 1, duration: "1 Ay", price: "₺99", devices: 3 },

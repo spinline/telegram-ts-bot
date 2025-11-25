@@ -26,17 +26,14 @@ const initialState: ActionState = {
 }
 
 export default function SupportScreen({ initialTickets }: { initialTickets: Ticket[] }) {
-    const { haptic, showBackButton, hideBackButton } = useTelegram()
+    const { haptic } = useTelegram()
     const router = useRouter()
     const [showNewTicket, setShowNewTicket] = useState(false)
 
     // Server Action State
     const [state, formAction, isPending] = useActionState(createTicket, initialState)
 
-    useEffect(() => {
-        showBackButton(() => router.push('/account'))
-        return () => hideBackButton()
-    }, [showBackButton, hideBackButton, router])
+
 
     useEffect(() => {
         if (state?.success) {
