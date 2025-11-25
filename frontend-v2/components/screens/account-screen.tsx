@@ -1,11 +1,9 @@
 "use client"
 
-import { useOptimistic, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { User, Shield, Wifi, Calendar, HardDrive, LogOut } from "lucide-react"
-import { logout } from "@/actions/auth"
+import { User, Shield, Wifi, Calendar, HardDrive } from "lucide-react"
 import { useTelegram } from "@/hooks/useTelegram"
 
 interface AccountData {
@@ -22,13 +20,12 @@ interface AccountData {
 }
 
 export default function AccountScreen({ initialAccount }: { initialAccount: AccountData | null }) {
-    const { user, haptic } = useTelegram()
-    const [isPending, startTransition] = useTransition()
+    const { haptic } = useTelegram()
 
     // Fallback/Demo data if API fails
     const defaultAccount = {
-        username: user?.username || "Demo User",
-        telegramId: user?.id?.toString() || "-",
+        username: "Demo User",
+        telegramId: "-",
         tag: "-",
         status: "FREE",
         expireAt: "",
@@ -52,12 +49,7 @@ export default function AccountScreen({ initialAccount }: { initialAccount: Acco
         isOnline: !!account.onlineAt
     }
 
-    const handleLogout = () => {
-        haptic('medium')
-        startTransition(async () => {
-            await logout()
-        })
-    }
+
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-teal-950 to-slate-950 p-6 animate-in fade-in duration-500">
@@ -65,15 +57,6 @@ export default function AccountScreen({ initialAccount }: { initialAccount: Acco
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold text-white">Hesabım</h1>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleLogout}
-                        className="text-slate-400 hover:text-white hover:bg-white/10"
-                        disabled={isPending}
-                    >
-                        <LogOut className="h-5 w-5" />
-                    </Button>
                 </div>
 
                 {!initialAccount && (
