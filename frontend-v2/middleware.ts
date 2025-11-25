@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { decrypt } from '@/lib/session'
 
 export async function middleware(request: NextRequest) {
     const session = request.cookies.get('session')?.value
@@ -14,16 +13,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/', request.url))
     }
 
-    if (session) {
-        try {
-            await decrypt(session)
-        } catch (error) {
-            // Invalid session
-            const response = NextResponse.redirect(new URL('/', request.url))
-            response.cookies.delete('session')
-            return response
-        }
-    }
+    // Session doğrulama kaldırıldı, sadece cookie var mı kontrolü yapılır
 
     return NextResponse.next()
 }
