@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Shield, ShoppingCart, Settings, Headset } from "lucide-react"
+import { Shield, ShoppingCart, Settings, Headset, User } from "lucide-react"
 import { useTelegram } from "@/hooks/useTelegram"
 import { useRouter } from "next/navigation"
 
@@ -56,6 +56,26 @@ export default function DashboardScreen() {
                         </CardContent>
                     </Card>
 
+                    {/* My Account */}
+                    <Card
+                        className="bg-slate-900/50 border-teal-800/30 backdrop-blur cursor-pointer hover:bg-slate-900/70 hover:scale-[1.02] transition-all duration-300"
+                        onClick={() => handleNavigation('/account')}
+                    >
+                        <CardContent className="p-6 flex items-center gap-4">
+                            <div className="h-14 w-14 rounded-full bg-teal-500/10 flex items-center justify-center ring-1 ring-teal-500/30">
+                                <User className="h-7 w-7 text-teal-400" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-semibold text-white mb-1">
+                                    Hesabım
+                                </h3>
+                                <p className="text-sm text-slate-400">
+                                    Hesap bilgileri ve istatistikler
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     {/* Setup/Installation */}
                     <Card
                         className="bg-slate-900/50 border-teal-800/30 backdrop-blur cursor-pointer hover:bg-slate-900/70 hover:scale-[1.02] transition-all duration-300"
@@ -70,7 +90,7 @@ export default function DashboardScreen() {
                                     Kurulum
                                 </h3>
                                 <p className="text-sm text-slate-400">
-                                    Hesap ayarları ve yapılandırma
+                                    VPN yapılandırma ve kurulum
                                 </p>
                             </div>
                         </CardContent>
