@@ -1,19 +1,29 @@
+"use client"
+
+import { useEffect, useState } from 'react'
 import { fetchWithAuth } from '@/lib/api'
 import SupportScreen from '@/components/screens/support-screen'
 
-async function getTickets() {
-    try {
-        const res = await fetchWithAuth('/tickets')
-        if (!res.ok) return []
-        const data = await res.json()
-        return data.tickets || []
-    } catch (error) {
-        console.error('Error fetching tickets:', error)
-        return []
-    }
-}
+export default function SupportPage() {
+    const [tickets, setTickets] = useState([])
+    const [loading, setLoading] = useState(true)
 
-export default async function SupportPage() {
-    const tickets = await getTickets()
+    useEffect(() => {
+        async function load() {
+            try {
+                const res = await fetchWithAuth('/tickets')
+                if (res.ok) {
+                    const data = await res.json()
+                    setTickets(data.tickets || [])
+                }
+            } catch (error) {
+                console.error('Error fetching tickets:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        load()
+    }, [])
+
     return <SupportScreen initialTickets={tickets} />
 }

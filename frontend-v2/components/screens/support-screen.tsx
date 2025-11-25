@@ -1,16 +1,16 @@
 "use client"
 
-import { useState, useActionState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Plus, MessageCircle, Clock, Loader2 } from "lucide-react"
-import { createTicket, type ActionState } from "@/actions/support"
 import { useTelegram } from "@/hooks/useTelegram"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { fetchWithAuth } from "@/lib/api"
 
 interface Ticket {
     id: number
@@ -20,29 +20,42 @@ interface Ticket {
     lastMessage?: string
 }
 
-const initialState: ActionState = {
-    error: '',
-    success: false
-}
-
 export default function SupportScreen({ initialTickets }: { initialTickets: Ticket[] }) {
     const { haptic } = useTelegram()
     const router = useRouter()
     const [showNewTicket, setShowNewTicket] = useState(false)
+    const [isPending, setIsPending] = useState(false)
 
-    // Server Action State
-    const [state, formAction, isPending] = useActionState(createTicket, initialState)
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault()
+        setIsPending(true)
+        
+        const formData = new FormData(e.currentTarget)
+        const title = formData.get('title') as string
+        const message = formData.get('message') as string
 
+        try {
+            const res = await fetchWithAuth('/tickets', {
+                method: 'POST',
+                body: JSON.stringify({ title, message }),
+            })
 
-
-    useEffect(() => {
-        if (state?.success) {
-            setShowNewTicket(false)
-            toast.success("Destek talebi oluşturuldu")
-        } else if (state?.error) {
-            toast.error(state.error)
+            if (!res.ok) {
+                const data = await res.json()
+                toast.error(data.message || 'Destek talebi oluşturulamadı')
+            } else {
+                toast.success("Destek talebi oluşturuldu")
+                setShowNewTicket(false)
+                router.refresh() // Refresh to show new ticket
+                // Ideally we should also update the local list or re-fetch
+                window.location.reload() // Simple reload to fetch new data since we are client-side now
+            }
+        } catch (error) {
+            toast.error('Bir hata oluştu')
+        } finally {
+            setIsPending(false)
         }
-    }, [state])
+    }
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -85,7 +98,7 @@ export default function SupportScreen({ initialTickets }: { initialTickets: Tick
                             <CardTitle className="text-white">Yeni Destek Talebi</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <form action={formAction} className="space-y-4">
+                            <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
                                     <label className="text-sm text-slate-300 mb-2 block">Konu</label>
                                     <Input

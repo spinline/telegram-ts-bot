@@ -8,8 +8,8 @@ function getTelegramInitData(): string | null {
     return null
 }
 
-export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-    const initData = getTelegramInitData()
+export async function fetchWithAuth(endpoint: string, options: RequestInit = {}, manualInitData?: string) {
+    const initData = manualInitData || getTelegramInitData()
     if (!initData) {
         throw new Error('No Telegram initData found')
     }
